@@ -2,6 +2,8 @@
 
 This is a learning project.
 
+You can play the game [here](https://leomeinel.github.io/bevy-obstacle-dodge) or download a [release](https://github.com/leomeinel/bevy-obstacle-dodge/releases).
+
 ## Mixed license
 
 This repository is not entirely licensed as Apache-2.0.

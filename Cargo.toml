@@ -8,6 +8,7 @@ license = "Apache-2.0"
 
 [dependencies]
 bevy = { version = "0.17.3", features = ["wayland", "webp", "x11"] }
+bevy_rapier2d = "0.32.0"
 rand = "0.9.2"
 # Compile out low-severity logs to improve performance.
 # Remove these features if you want to profile your game with tracy.

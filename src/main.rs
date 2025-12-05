@@ -9,7 +9,7 @@
 
 //! Main with [`AppPlugin`]
 //!
-//! Heavily inspired by: https://github.com/TheBevyFlock/bevy_new_2d
+//! Heavily inspired by: <https://github.com/TheBevyFlock/bevy_new_2d>
 
 mod asset_tracking;
 mod audio;

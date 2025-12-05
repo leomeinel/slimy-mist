@@ -15,7 +15,7 @@ permissions:
 
 env:
   # update with the name of the main binary
-  binary: bevy-obstacle-dodge
+  binary: bevy-slime-dodge
   add_binaries_to_github_release: true
   #itch_target: <itch.io-username>/<game-name>
 

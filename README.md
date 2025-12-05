@@ -1,8 +1,8 @@
-# Bevy - Obstacle Dodge
+# Bevy - Slime Dodge
 
 This is a learning project.
 
-You can play the game [here](https://leomeinel.github.io/bevy-obstacle-dodge) or download a [release](https://github.com/leomeinel/bevy-obstacle-dodge/releases).
+You can play the game [here](https://leomeinel.github.io/bevy-slime-dodge) or download a [release](https://github.com/leomeinel/bevy-slime-dodge/releases).
 
 ## Mixed license
 

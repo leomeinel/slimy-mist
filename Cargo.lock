@@ -324,7 +324,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy-obstacle-dodge"
+name = "bevy-slime-dodge"
 version = "0.1.0"
 dependencies = [
  "bevy",

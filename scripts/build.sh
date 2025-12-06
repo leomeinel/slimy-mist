@@ -16,10 +16,10 @@ SCRIPT_DIR="$(dirname -- "$(readlink -f -- "${0}")")"
 
 # Build specific build for given argument
 if [[ -z "${1}" ]]; then
-    cargo build --release
+    cargo build --no-default-features --release
 elif [[ "${1}" == "web" ]]; then
     rustup target add wasm32-unknown-unknown
-    cargo build --target wasm32-unknown-unknown --profile web-release
+    cargo build --no-default-features --target wasm32-unknown-unknown --profile web-release
     ## Optimize binary
     PACKAGE_NAME="$(tomlq -r '.package.name' "${SCRIPT_DIR}"/Cargo.toml)"
     OUTPUT="${SCRIPT_DIR}"/target/wasm32-unknown-unknown/web-release/"${PACKAGE_NAME}".wasm
@@ -29,7 +29,7 @@ elif [[ "${1}" == "web" ]]; then
     rm -f "${tmpfile}"
 elif [[ "${1}" == "web-dev" ]]; then
     rustup target add wasm32-unknown-unknown
-    cargo build --target wasm32-unknown-unknown --profile web-dev
+    cargo build --no-default-features --target wasm32-unknown-unknown --profile web-dev
 else
     cargo build
 fi

@@ -23,3 +23,10 @@ This repository is not entirely licensed as Apache-2.0.
 - [perf](https://archlinux.org/packages/extra/x86_64/perf/)
 - [wasm-server-runner](https://crates.io/crates/wasm-server-runner)
 - [yq](https://archlinux.org/packages/extra/any/yq/)
+
+# Credit
+
+- [bevy_new_2d](https://github.com/TheBevyFlock/bevy_new_2d) for button sound effects and a lot of the structure
+- [freepd.com](https://freepd.com/) for music
+- [Google Fonts](https://fonts.google.com) for fonts
+- [TinyWorlds](https://opengameart.org/content/different-steps-on-wood-stone-leaves-gravel-and-mud) for walking sounds

@@ -8,7 +8,7 @@ license = "Apache-2.0"
 
 [dependencies]
 bevy = { version = "0.17.3", features = ["wayland", "webp", "x11"] }
-bevy_asset_loader = "0.24.0-rc.1"
+bevy_asset_loader = { version = "0.24.0-rc.1", features = ["2d"] }
 bevy_enhanced_input = "0.20.0"
 bevy_prng = { version = "0.12.1", features = ["rand_chacha", "wyrand"] }
 bevy_rand = { version = "0.12.1" }

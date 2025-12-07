@@ -10,10 +10,11 @@
 //! Overworld-specific behavior.
 
 use bevy::{color::palettes::tailwind, prelude::*};
+use bevy_asset_loader::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    asset_tracking::LoadResource,
+    asset_tracking::AssetStates,
     audio::music,
     characters::player::{PlayerAssets, player},
     screens::Screen,
@@ -21,23 +22,17 @@ use crate::{
 
 /// Plugin
 pub(super) fn plugin(app: &mut App) {
-    app.load_resource::<LevelAssets>();
+    app.add_loading_state(
+        LoadingState::new(AssetStates::AssetLoading)
+            .continue_to_state(AssetStates::Next)
+            .load_collection::<LevelAssets>(),
+    );
 }
 
-#[derive(Resource, Asset, Clone, Reflect)]
-#[reflect(Resource)]
+#[derive(AssetCollection, Resource)]
 pub struct LevelAssets {
-    #[dependency]
+    #[asset(path = "audio/music/bit-bit-loop.ogg")]
     music: Handle<AudioSource>,
-}
-
-impl FromWorld for LevelAssets {
-    fn from_world(world: &mut World) -> Self {
-        let assets = world.resource::<AssetServer>();
-        Self {
-            music: assets.load("audio/music/bit-bit-loop.ogg"),
-        }
-    }
 }
 
 // rgb(107, 114, 128)

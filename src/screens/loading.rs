@@ -12,9 +12,12 @@
 //! A loading screen during which game assets are loaded if necessary.
 //! This reduces stuttering, especially for audio on Wasm.
 
+// FIXME: This is currently unsupported. After it is, we should implement this: https://github.com/NiklasEi/bevy_asset_loader/blob/main/bevy_asset_loader/examples/progress_tracking.rs
+// See: https://github.com/NiklasEi/bevy_asset_loader/pull/259
+/*
 use bevy::prelude::*;
 
-use crate::{asset_tracking::ResourceHandles, screens::Screen, theme::prelude::*};
+use crate::{screens::Screen, theme::prelude::*};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Screen::Loading), spawn_loading_screen);
@@ -37,6 +40,9 @@ fn enter_gameplay_screen(mut next_screen: ResMut<NextState<Screen>>) {
     next_screen.set(Screen::Gameplay);
 }
 
+
+
 fn all_assets_loaded(resource_handles: Res<ResourceHandles>) -> bool {
     resource_handles.is_all_done()
 }
+*/

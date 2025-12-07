@@ -11,20 +11,22 @@
 
 //! Player-specific behavior.
 
-use bevy::{
-    image::{ImageLoaderSettings, ImageSampler},
-    prelude::*,
-};
+use bevy::prelude::*;
+use bevy_asset_loader::prelude::*;
 use bevy_enhanced_input::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-use crate::{asset_tracking::LoadResource, characters::animation::PlayerAnimation};
+use crate::{asset_tracking::AssetStates, characters::animation::PlayerAnimation};
 
 /// Plugin
 pub(super) fn plugin(app: &mut App) {
-    app.add_input_context::<Player>();
-    app.load_resource::<PlayerAssets>();
+    app.add_loading_state(
+        LoadingState::new(AssetStates::AssetLoading)
+            .continue_to_state(AssetStates::Next)
+            .load_collection::<PlayerAssets>(),
+    );
 
+    app.add_input_context::<Player>();
     app.add_observer(apply_movement);
 }
 
@@ -32,45 +34,23 @@ pub(super) fn plugin(app: &mut App) {
 #[action_output(Vec2)]
 struct Movement;
 
-#[derive(Resource, Asset, Clone, Reflect)]
-#[reflect(Resource)]
+#[derive(AssetCollection, Resource)]
 pub struct PlayerAssets {
-    #[dependency]
-    image: Handle<Image>,
-    #[dependency]
-    pub steps: Vec<Handle<AudioSource>>,
+    #[asset(
+        paths(
+            "audio/sound-effects/movement/player-step-hard0.ogg",
+            "audio/sound-effects/movement/player-step-hard1.ogg",
+            "audio/sound-effects/movement/player-step-hard2.ogg"
+        ),
+        collection(typed)
+    )]
+    pub(crate) steps: Vec<Handle<AudioSource>>,
 
-    sprite_sheet: Handle<TextureAtlasLayout>,
-}
-
-impl FromWorld for PlayerAssets {
-    fn from_world(world: &mut World) -> Self {
-        let atlas = TextureAtlasLayout::from_grid((24, 24).into(), 9, 1, None, None);
-        let mut atlases = world
-            .get_resource_mut::<Assets<TextureAtlasLayout>>()
-            .unwrap();
-        let sprite_sheet = atlases.add(atlas);
-
-        let assets = world.resource::<AssetServer>();
-        let image: Handle<Image> = assets.load_with_settings(
-            "images/characters/player/male.webp",
-            |settings: &mut ImageLoaderSettings| {
-                // Use `nearest` image sampling to preserve pixel art style.
-                settings.sampler = ImageSampler::nearest();
-            },
-        );
-
-        Self {
-            image,
-            sprite_sheet,
-            steps: vec![
-                assets.load("audio/sound-effects/movement/player-step-hard0.ogg"),
-                assets.load("audio/sound-effects/movement/player-step-hard1.ogg"),
-                assets.load("audio/sound-effects/movement/player-step-hard2.ogg"),
-                assets.load("audio/sound-effects/movement/player-step-hard4.ogg"),
-            ],
-        }
-    }
+    #[asset(texture_atlas_layout(tile_size_x = 24, tile_size_y = 24, columns = 9, rows = 1))]
+    pub(crate) sprite_sheet: Handle<TextureAtlasLayout>,
+    #[asset(image(sampler(filter = nearest)))]
+    #[asset(path = "images/characters/player/male.webp")]
+    pub(crate) image: Handle<Image>,
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
@@ -84,14 +64,10 @@ pub fn player(player_assets: &PlayerAssets) -> impl Bundle {
     (
         Name::new("Player"),
         Player,
-        Sprite {
-            image: player_assets.image.clone(),
-            texture_atlas: Some(TextureAtlas {
-                layout: player_assets.sprite_sheet.clone(),
-                ..default()
-            }),
-            ..default()
-        },
+        Sprite::from_atlas_image(
+            player_assets.image.clone(),
+            TextureAtlas::from(player_assets.sprite_sheet.clone()),
+        ),
         RigidBody::Dynamic,
         GravityScale(0.),
         Collider::cuboid(12., 12.),

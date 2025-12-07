@@ -12,8 +12,9 @@
 //! The credits menu.
 
 use bevy::{ecs::spawn::SpawnIter, input::common_conditions::input_just_pressed, prelude::*};
+use bevy_asset_loader::prelude::*;
 
-use crate::{asset_tracking::LoadResource, audio::music, menus::Menu, theme::prelude::*};
+use crate::{asset_tracking::AssetStates, audio::music, menus::Menu, theme::prelude::*};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Menu::Credits), spawn_credits_menu);
@@ -21,8 +22,11 @@ pub(super) fn plugin(app: &mut App) {
         Update,
         go_back.run_if(in_state(Menu::Credits).and(input_just_pressed(KeyCode::Escape))),
     );
-
-    app.load_resource::<CreditsAssets>();
+    app.add_loading_state(
+        LoadingState::new(AssetStates::AssetLoading)
+            .continue_to_state(AssetStates::Next)
+            .load_collection::<CreditsAssets>(),
+    );
     app.add_systems(OnEnter(Menu::Credits), start_credits_music);
 }
 
@@ -42,10 +46,7 @@ fn spawn_credits_menu(mut commands: Commands) {
 }
 
 fn created_by() -> impl Bundle {
-    grid(vec![[
-        "Leopold Meinel",
-        "Wrote code on top of bevy_new_2d",
-    ]])
+    grid(vec![["Leopold Meinel", "Wrote code on top of bevy_new_2d"]])
 }
 
 fn assets() -> impl Bundle {
@@ -102,20 +103,10 @@ fn go_back(mut next_menu: ResMut<NextState<Menu>>) {
     next_menu.set(Menu::Main);
 }
 
-#[derive(Resource, Asset, Clone, Reflect)]
-#[reflect(Resource)]
+#[derive(AssetCollection, Resource)]
 struct CreditsAssets {
-    #[dependency]
+    #[asset(path = "audio/music/screen-saver.ogg")]
     music: Handle<AudioSource>,
-}
-
-impl FromWorld for CreditsAssets {
-    fn from_world(world: &mut World) -> Self {
-        let assets = world.resource::<AssetServer>();
-        Self {
-            music: assets.load("audio/music/screen-saver.ogg"),
-        }
-    }
 }
 
 fn start_credits_music(mut commands: Commands, credits_music: Res<CreditsAssets>) {

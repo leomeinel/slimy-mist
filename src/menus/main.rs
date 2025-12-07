@@ -13,7 +13,7 @@
 
 use bevy::prelude::*;
 
-use crate::{asset_tracking::ResourceHandles, menus::Menu, screens::Screen, theme::widgets};
+use crate::{menus::Menu, screens::Screen, theme::widgets};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Menu::Main), spawn_main_menu);
@@ -40,9 +40,12 @@ fn spawn_main_menu(mut commands: Commands) {
     ));
 }
 
+// FIXME: This is currently unsupported. After it is, we should implement this: https://github.com/NiklasEi/bevy_asset_loader/blob/main/bevy_asset_loader/examples/progress_tracking.rs
+// See: https://github.com/NiklasEi/bevy_asset_loader/pull/259
+/*
 fn enter_loading_or_gameplay_screen(
     _: On<Pointer<Click>>,
-    resource_handles: Res<ResourceHandles>,
+    resource_handles: Res<ResourceStates>,
     mut next_screen: ResMut<NextState<Screen>>,
 ) {
     if resource_handles.is_all_done() {
@@ -50,6 +53,15 @@ fn enter_loading_or_gameplay_screen(
     } else {
         next_screen.set(Screen::Loading);
     }
+}
+*/
+
+// FIXME: Remove this workaround after above has been adressed
+fn enter_loading_or_gameplay_screen(
+    _: On<Pointer<Click>>,
+    mut next_screen: ResMut<NextState<Screen>>,
+) {
+    next_screen.set(Screen::Gameplay);
 }
 
 fn open_settings_menu(_: On<Pointer<Click>>, mut next_menu: ResMut<NextState<Menu>>) {

@@ -9,14 +9,17 @@
  * Heavily inspired by: https://github.com/TheBevyFlock/bevy_new_2d
  */
 
+use crate::{asset_tracking::AssetStates, audio::sound_effect};
 use bevy::prelude::*;
-
-use crate::{asset_tracking::LoadResource, audio::sound_effect};
+use bevy_asset_loader::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(Update, apply_interaction_palette);
-
-    app.load_resource::<InteractionAssets>();
+    app.add_loading_state(
+        LoadingState::new(AssetStates::AssetLoading)
+            .continue_to_state(AssetStates::Next)
+            .load_collection::<InteractionAssets>(),
+    );
     app.add_observer(play_on_hover_sound_effect);
     app.add_observer(play_on_click_sound_effect);
 }
@@ -48,23 +51,12 @@ fn apply_interaction_palette(
     }
 }
 
-#[derive(Resource, Asset, Clone, Reflect)]
-#[reflect(Resource)]
+#[derive(AssetCollection, Resource)]
 struct InteractionAssets {
-    #[dependency]
+    #[asset(path = "audio/sound-effects/ui/hover.ogg")]
     hover: Handle<AudioSource>,
-    #[dependency]
+    #[asset(path = "audio/sound-effects/ui/click.ogg")]
     click: Handle<AudioSource>,
-}
-
-impl FromWorld for InteractionAssets {
-    fn from_world(world: &mut World) -> Self {
-        let assets = world.resource::<AssetServer>();
-        Self {
-            hover: assets.load("audio/sound-effects/ui/hover.ogg"),
-            click: assets.load("audio/sound-effects/ui/click.ogg"),
-        }
-    }
 }
 
 fn play_on_hover_sound_effect(

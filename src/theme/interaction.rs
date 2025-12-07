@@ -61,8 +61,8 @@ impl FromWorld for InteractionAssets {
     fn from_world(world: &mut World) -> Self {
         let assets = world.resource::<AssetServer>();
         Self {
-            hover: assets.load("audio/sound-effects/button/hover.ogg"),
-            click: assets.load("audio/sound-effects/button/click.ogg"),
+            hover: assets.load("audio/sound-effects/ui/hover.ogg"),
+            click: assets.load("audio/sound-effects/ui/click.ogg"),
         }
     }
 }

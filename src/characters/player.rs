@@ -63,7 +63,12 @@ impl FromWorld for PlayerAssets {
         Self {
             image,
             sprite_sheet,
-            steps: vec![assets.load("audio/sound-effects/step/stone01.ogg")],
+            steps: vec![
+                assets.load("audio/sound-effects/movement/player-step-hard0.ogg"),
+                assets.load("audio/sound-effects/movement/player-step-hard1.ogg"),
+                assets.load("audio/sound-effects/movement/player-step-hard2.ogg"),
+                assets.load("audio/sound-effects/movement/player-step-hard4.ogg"),
+            ],
         }
     }
 }

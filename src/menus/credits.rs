@@ -42,11 +42,28 @@ fn spawn_credits_menu(mut commands: Commands) {
 }
 
 fn created_by() -> impl Bundle {
-    grid(vec![["Joe Shmoe", "Implemented alligator wrestling AI"]])
+    grid(vec![[
+        "Leopold Meinel",
+        "Wrote code on top of bevy_new_2d",
+    ]])
 }
 
 fn assets() -> impl Bundle {
-    grid(vec![["Button SFX", "CC0 by Jaszunio15"]])
+    grid(vec![
+        [
+            "Code & Structure",
+            "CC0-1.0/Apache-2.0/MIT by bevy_new_2d and contributors",
+        ],
+        [
+            "Code & Game Engine",
+            "Apache-2.0/MIT by bevyengine and contributors",
+        ],
+        ["Music", "CC0-1.0 by freepd.com and creators"],
+        ["SFX", "CC0-1.0 by Jaszunio15"],
+        ["SFX", "CC0-1.0 by OwlishMedia"],
+        ["SFX", "CC-BY-4.0/CC-BY-3.0 by leohpaz"],
+        ["Fonts", "OFL-1.1 by Google Fonts"],
+    ])
 }
 
 fn grid(content: Vec<[&'static str; 2]>) -> impl Bundle {

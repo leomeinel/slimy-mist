@@ -31,6 +31,8 @@ use bevy_prng::WyRand;
 use bevy_rand::plugin::EntropyPlugin;
 use bevy_rapier2d::plugin::RapierPhysicsPlugin;
 
+use crate::characters::player::Player;
+
 /// Main function
 fn main() -> AppExit {
     App::new().add_plugins(AppPlugin).run()
@@ -89,14 +91,14 @@ impl Plugin for AppPlugin {
                 .chain(),
         );
 
-        // Set up the `Pause` state.
+        // Set up the `Pause` state and resource.
         app.init_state::<Pause>();
         app.configure_sets(Update, PausableSystems.run_if(in_state(Pause(false))));
 
         // Spawn the main camera.
         app.add_systems(Startup, spawn_camera);
 
-        app.add_systems(Update, fit_canvas);
+        app.add_systems(Update, (fit_canvas, update_camera));
     }
 }
 
@@ -127,11 +129,13 @@ struct CanvasCamera;
 
 /// Spawn [`Camera2d`]
 fn spawn_camera(mut commands: Commands) {
-    commands.spawn((Name::new("Camera"), Camera2d, Msaa::Off, CanvasCamera));
+    commands.spawn((
+        Name::new("Canvas Camera"),
+        Camera2d,
+        Msaa::Off,
+        CanvasCamera,
+    ));
 }
-
-/// In-game resolution width.
-const RES_WIDTH: u32 = 320;
 
 /// In-game resolution height.
 const RES_HEIGHT: u32 = 180;
@@ -140,15 +144,33 @@ const RES_HEIGHT: u32 = 180;
 ///
 /// Source: https://bevy.org/examples/2d-rendering/pixel-grid-snap/
 fn fit_canvas(
-    mut resize_messages: MessageReader<WindowResized>,
+    mut msgs: MessageReader<WindowResized>,
     mut projection: Single<&mut Projection, With<CanvasCamera>>,
 ) {
     let Projection::Orthographic(projection) = &mut **projection else {
         return;
     };
-    for window_resized in resize_messages.read() {
-        let h_scale = window_resized.width / RES_WIDTH as f32;
-        let v_scale = window_resized.height / RES_HEIGHT as f32;
-        projection.scale = 1. / h_scale.min(v_scale).round();
+    for msg in msgs.read() {
+        let vertical_scale = msg.height / RES_HEIGHT as f32;
+        projection.scale = 1. / vertical_scale.round();
     }
+}
+
+/// How quickly should the camera snap to the desired location.
+const CAMERA_DECAY_RATE: f32 = 1.;
+
+/// Update the camera position by tracking the player.
+fn update_camera(
+    mut camera: Single<&mut Transform, (With<Camera2d>, Without<Player>)>,
+    player: Single<&Transform, (With<Player>, Without<Camera2d>)>,
+    time: Res<Time>,
+) {
+    let Vec3 { x, y, .. } = player.translation;
+    let direction = Vec3::new(x, y, camera.translation.z);
+
+    // Applies a smooth effect to camera movement using stable interpolation
+    // between the camera position and the player position on the x and y axes.
+    camera
+        .translation
+        .smooth_nudge(&direction, CAMERA_DECAY_RATE, time.delta_secs());
 }

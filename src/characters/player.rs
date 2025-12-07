@@ -15,95 +15,22 @@ use bevy::{
     image::{ImageLoaderSettings, ImageSampler},
     prelude::*,
 };
+use bevy_enhanced_input::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-use crate::{
-    AppSystems, PausableSystems, asset_tracking::LoadResource,
-    characters::animation::PlayerAnimation,
-};
+use crate::{asset_tracking::LoadResource, characters::animation::PlayerAnimation};
 
 /// Plugin
 pub(super) fn plugin(app: &mut App) {
+    app.add_input_context::<Player>();
     app.load_resource::<PlayerAssets>();
-    app.load_resource::<PlayerSpriteSheet>();
 
-    app.add_systems(
-        Update,
-        record_player_directional_input
-            .in_set(AppSystems::RecordInput)
-            .in_set(PausableSystems),
-    );
+    app.add_observer(apply_movement);
 }
 
-/// The player character.
-pub fn player(
-    player_assets: &PlayerAssets,
-    player_sprite_sheet: &PlayerSpriteSheet,
-) -> impl Bundle {
-    let player_animation = PlayerAnimation::new();
-
-    (
-        Name::new("Player"),
-        Player,
-        Sprite {
-            image: player_assets.image.clone(),
-            texture_atlas: Some(TextureAtlas {
-                layout: player_sprite_sheet.0.clone(),
-                ..default()
-            }),
-            ..default()
-        },
-        RigidBody::KinematicPositionBased,
-        Collider::cuboid(12., 12.),
-        KinematicCharacterController::default(),
-        player_animation,
-    )
-}
-
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
-#[reflect(Component)]
-struct Player;
-
-fn record_player_directional_input(
-    input: Res<ButtonInput<KeyCode>>,
-    time: Res<Time>,
-    mut controller_q: Single<&mut KinematicCharacterController, With<Player>>,
-) {
-    let velocity = 100.0 * time.delta_secs();
-    let mut intent = Vec2::ZERO;
-
-    if input.pressed(KeyCode::KeyW) || input.pressed(KeyCode::ArrowUp) {
-        intent.y += velocity;
-    }
-    if input.pressed(KeyCode::KeyS) || input.pressed(KeyCode::ArrowDown) {
-        intent.y -= velocity;
-    }
-    if input.pressed(KeyCode::KeyA) || input.pressed(KeyCode::ArrowLeft) {
-        intent.x -= velocity;
-    }
-    if input.pressed(KeyCode::KeyD) || input.pressed(KeyCode::ArrowRight) {
-        intent.x += velocity;
-    }
-
-    controller_q.translation = Some(intent);
-}
-
-#[derive(Resource, Asset, Clone, Reflect)]
-#[reflect(Resource)]
-pub(crate) struct PlayerSpriteSheet(Handle<TextureAtlasLayout>);
-
-impl FromWorld for PlayerSpriteSheet {
-    // Source: https://taintedcoders.com/bevy/sprites
-    fn from_world(world: &mut World) -> Self {
-        let texture_atlas = TextureAtlasLayout::from_grid((24, 24).into(), 9, 1, None, None);
-        let mut texture_atlases = world
-            .get_resource_mut::<Assets<TextureAtlasLayout>>()
-            .unwrap();
-        let texture_atlas_handle = texture_atlases.add(texture_atlas);
-
-        Self(texture_atlas_handle)
-    }
-}
+#[derive(Debug, InputAction)]
+#[action_output(Vec2)]
+struct Movement;
 
 #[derive(Resource, Asset, Clone, Reflect)]
 #[reflect(Resource)]
@@ -112,10 +39,18 @@ pub struct PlayerAssets {
     image: Handle<Image>,
     #[dependency]
     pub steps: Vec<Handle<AudioSource>>,
+
+    sprite_sheet: Handle<TextureAtlasLayout>,
 }
 
 impl FromWorld for PlayerAssets {
     fn from_world(world: &mut World) -> Self {
+        let atlas = TextureAtlasLayout::from_grid((24, 24).into(), 9, 1, None, None);
+        let mut atlases = world
+            .get_resource_mut::<Assets<TextureAtlasLayout>>()
+            .unwrap();
+        let sprite_sheet = atlases.add(atlas);
+
         let assets = world.resource::<AssetServer>();
         let image: Handle<Image> = assets.load_with_settings(
             "images/characters/player/male.webp",
@@ -127,7 +62,57 @@ impl FromWorld for PlayerAssets {
 
         Self {
             image,
+            sprite_sheet,
             steps: vec![assets.load("audio/sound-effects/step/stone01.ogg")],
         }
     }
+}
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
+#[reflect(Component)]
+pub(crate) struct Player;
+
+/// The player character.
+pub fn player(player_assets: &PlayerAssets) -> impl Bundle {
+    let player_animation = PlayerAnimation::new();
+
+    (
+        Name::new("Player"),
+        Player,
+        Sprite {
+            image: player_assets.image.clone(),
+            texture_atlas: Some(TextureAtlas {
+                layout: player_assets.sprite_sheet.clone(),
+                ..default()
+            }),
+            ..default()
+        },
+        RigidBody::Dynamic,
+        GravityScale(0.),
+        Collider::cuboid(12., 12.),
+        KinematicCharacterController::default(),
+        player_animation,
+        actions!(
+            Player[(
+                Action::<Movement>::new(),
+                DeadZone::default(),
+                SmoothNudge::default(),
+                Scale::splat(120.),
+                Bindings::spawn((
+                    Cardinal::arrows(),
+                    Cardinal::wasd_keys(),
+                    Axial::left_stick(),
+                )),
+            )]
+        ),
+    )
+}
+
+/// Apply movement
+fn apply_movement(
+    movement_event: On<Fire<Movement>>,
+    time: Res<Time>,
+    mut controller_query: Single<&mut KinematicCharacterController, With<Player>>,
+) {
+    controller_query.translation = Some(movement_event.value * time.delta_secs());
 }

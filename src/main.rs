@@ -27,6 +27,7 @@ mod theme;
 mod worlds;
 
 use bevy::{asset::AssetMetaCheck, prelude::*, window::WindowResized};
+use bevy_enhanced_input::prelude::*;
 use bevy_prng::WyRand;
 use bevy_rand::plugin::EntropyPlugin;
 use bevy_rapier2d::plugin::RapierPhysicsPlugin;
@@ -65,6 +66,7 @@ impl Plugin for AppPlugin {
         app.add_plugins((
             RapierPhysicsPlugin::<()>::default(),
             EntropyPlugin::<WyRand>::default(),
+            EnhancedInputPlugin,
         ));
 
         // Add other plugins.

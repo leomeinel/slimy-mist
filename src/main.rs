@@ -162,6 +162,8 @@ fn fit_canvas(
 const CAMERA_DECAY_RATE: f32 = 1.;
 
 /// Update the camera position by tracking the player.
+///
+/// Source: https://bevy.org/examples/camera/2d-top-down-camera/
 fn update_camera(
     mut camera: Single<&mut Transform, (With<Camera2d>, Without<Player>)>,
     player: Single<&Transform, (With<Player>, Without<Camera2d>)>,

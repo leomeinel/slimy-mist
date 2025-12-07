@@ -66,30 +66,36 @@ pub(crate) fn spawn_level(
                 music(level_assets.music.clone())
             ),
             border(
-                Transform::from_xyz(320. + 10., 0., 3.),
-                Some(Transform::from_rotation(Quat::from_rotation_z(
-                    std::f32::consts::PI / 2.0
-                ))),
+                Transform {
+                    translation: Vec3::new(320. + 10., 0., 3.),
+                    rotation: Quat::from_rotation_z(std::f32::consts::PI / 2.0),
+                    ..default()
+                },
                 &mut meshes,
                 &mut materials
             ),
             border(
-                Transform::from_xyz(-320. - 10., 0., 3.),
-                Some(Transform::from_rotation(Quat::from_rotation_z(
-                    std::f32::consts::PI / 2.0
-                ))),
+                Transform {
+                    translation: Vec3::new(-320. - 10., 0., 3.),
+                    rotation: Quat::from_rotation_z(std::f32::consts::PI / 2.0),
+                    ..default()
+                },
                 &mut meshes,
                 &mut materials
             ),
             border(
-                Transform::from_xyz(0., 320. + 10., 3.),
-                None,
+                Transform {
+                    translation: Vec3::new(0., 320. + 10., 3.),
+                    ..default()
+                },
                 &mut meshes,
                 &mut materials
             ),
             border(
-                Transform::from_xyz(2., -320. - 10., 3.),
-                None,
+                Transform {
+                    translation: Vec3::new(0., -320. - 10., 3.),
+                    ..default()
+                },
                 &mut meshes,
                 &mut materials
             ),
@@ -98,16 +104,14 @@ pub(crate) fn spawn_level(
 }
 
 fn border(
-    position: Transform,
-    rotation: Option<Transform>,
+    transform: Transform,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
 ) -> impl Bundle {
     (
         RigidBody::Fixed,
         Collider::cuboid(340.0, 10.0),
-        position,
-        rotation.unwrap_or_default(),
+        transform,
         Mesh2d(meshes.add(Rectangle::new(680., 20.))),
         MeshMaterial2d(materials.add(Into::<Color>::into(BORDER_COLOR))),
         Visibility::default(),

@@ -159,7 +159,7 @@ fn fit_canvas(
 }
 
 /// How quickly should the camera snap to the desired location.
-const CAMERA_DECAY_RATE: f32 = 1.;
+const CAMERA_DECAY_RATE: f32 = 3.;
 
 /// Update the camera position by tracking the player.
 ///

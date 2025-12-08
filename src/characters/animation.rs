@@ -144,19 +144,21 @@ pub(crate) trait SoundFrames {
 }
 
 /// Update the animation timer.
-pub(crate) fn update_animation_timer<T: Component<Mutability = Mutable> + MovementAnimation>(
-    time: Res<Time>,
-    mut query: Query<&mut T>,
-) {
+pub(crate) fn update_animation_timer<T>(time: Res<Time>, mut query: Query<&mut T>)
+where
+    T: Component<Mutability = Mutable> + MovementAnimation,
+{
     for mut animation in &mut query {
         animation.update_timer(time.delta());
     }
 }
 
 /// Update the sprite direction and animation state (idling/walking).
-pub(crate) fn update_animation_movement<T: Component<Mutability = Mutable> + MovementAnimation>(
+pub(crate) fn update_animation_movement<T>(
     mut query: Query<(&KinematicCharacterController, &mut Sprite, &mut T)>,
-) {
+) where
+    T: Component<Mutability = Mutable> + MovementAnimation,
+{
     for (controller, mut sprite, mut animation) in &mut query {
         let Some(intent) = controller.translation else {
             return;
@@ -176,9 +178,10 @@ pub(crate) fn update_animation_movement<T: Component<Mutability = Mutable> + Mov
 }
 
 /// Update the texture atlas to reflect changes in the animation.
-pub(crate) fn update_animation_atlas<T: Component<Mutability = Mutable> + MovementAnimation>(
-    mut query: Query<(&T, &mut Sprite)>,
-) {
+pub(crate) fn update_animation_atlas<T>(mut query: Query<(&T, &mut Sprite)>)
+where
+    T: Component<Mutability = Mutable> + MovementAnimation,
+{
     for (animation, mut sprite) in &mut query {
         let Some(atlas) = sprite.texture_atlas.as_mut() else {
             continue;
@@ -191,17 +194,17 @@ pub(crate) fn update_animation_atlas<T: Component<Mutability = Mutable> + Moveme
 
 /// If the character is moving, play a step sound effect synchronized with the
 /// animation.
-pub(crate) fn trigger_step_sound_effect<
-    T: Component<Mutability = Mutable> + MovementAnimation,
-    A: Resource + CharacterAssets<Animation = T>,
-    B: Resource + SoundFrames,
->(
+pub(crate) fn trigger_step_sound_effect<T, A, B>(
     mut commands: Commands,
     assets: If<Res<A>>,
     sound_frames: Res<B>,
     mut step_query: Query<&T>,
     mut rng_query: Single<&mut WyRand, With<Rng>>,
-) {
+) where
+    T: Component<Mutability = Mutable> + MovementAnimation,
+    A: Resource + CharacterAssets<Animation = T>,
+    B: Resource + SoundFrames,
+{
     for animation in &mut step_query {
         if *animation.get_state() == MovementAnimationState::Walking
             && animation.changed()

@@ -55,26 +55,88 @@ pub(crate) trait MovementAnimation {
     /// The duration of each walking frame.
     const WALKING_INTERVAL: Duration = Duration::from_millis(100);
 
-    fn idling() -> Self;
+    fn with_state(timer: Timer, state: MovementAnimationState) -> Self;
 
-    fn walking() -> Self;
+    fn idling() -> Self
+    where
+        Self: Sized,
+    {
+        Self::with_state(
+            Timer::new(Self::IDLE_INTERVAL, TimerMode::Repeating),
+            MovementAnimationState::Idling,
+        )
+    }
 
-    fn new() -> Self;
+    fn walking() -> Self
+    where
+        Self: Sized,
+    {
+        Self::with_state(
+            Timer::new(Self::WALKING_INTERVAL, TimerMode::Repeating),
+            MovementAnimationState::Walking,
+        )
+    }
+
+    fn new() -> Self
+    where
+        Self: Sized,
+    {
+        Self::idling()
+    }
 
     /// Update animation timers.
-    fn update_timer(&mut self, delta: Duration);
+    fn update_timer(&mut self, delta: Duration) {
+        let timer = self.get_timer_mut();
+        timer.tick(delta);
+        if !timer.is_finished() {
+            return;
+        }
+
+        let frame = self.get_frame();
+        let state = self.get_state();
+
+        let frame_ = (*frame + 1)
+            % match state {
+                MovementAnimationState::Idling => Self::IDLE_FRAMES,
+                MovementAnimationState::Walking => Self::WALKING_FRAMES,
+            };
+
+        self.set_frame(frame_);
+    }
 
     /// Update animation state if it changes.
-    fn update_state(&mut self, state: MovementAnimationState);
+    fn update_state(&mut self, state: MovementAnimationState)
+    where
+        Self: Sized,
+    {
+        if *self.get_state() != state {
+            match state {
+                MovementAnimationState::Idling => *self = Self::idling(),
+                MovementAnimationState::Walking => *self = Self::walking(),
+            }
+        }
+    }
 
     /// Whether animation changed this tick.
-    fn changed(&self) -> bool;
+    fn changed(&self) -> bool {
+        self.get_timer().is_finished()
+    }
 
     /// Return sprite index in the atlas.
-    fn get_atlas_index(&self) -> usize;
+    fn get_atlas_index(&self) -> usize {
+        match self.get_state() {
+            MovementAnimationState::Idling => *self.get_frame(),
+            MovementAnimationState::Walking => 1 + self.get_frame(),
+        }
+    }
 
-    fn get_frame(&self) -> usize;
-    fn get_state(&self) -> MovementAnimationState;
+    fn get_timer(&self) -> &Timer;
+    fn get_timer_mut(&mut self) -> &mut Timer;
+
+    fn get_frame(&self) -> &usize;
+    fn set_frame(&mut self, frame_: usize);
+
+    fn get_state(&self) -> &MovementAnimationState;
 }
 
 pub(crate) trait SoundFrames {
@@ -136,16 +198,14 @@ pub(crate) fn trigger_step_sound_effect<
 >(
     mut commands: Commands,
     assets: If<Res<A>>,
-    animation_frames: Res<B>,
+    sound_frames: Res<B>,
     mut step_query: Query<&T>,
     mut rng_query: Single<&mut WyRand, With<Rng>>,
 ) {
     for animation in &mut step_query {
-        if animation.get_state() == MovementAnimationState::Walking
+        if *animation.get_state() == MovementAnimationState::Walking
             && animation.changed()
-            && animation_frames
-                .get_frames()
-                .contains(&animation.get_frame())
+            && sound_frames.get_frames().contains(animation.get_frame())
         {
             let random_step = assets
                 .get_step_sounds()

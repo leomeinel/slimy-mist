@@ -101,9 +101,8 @@ fn apply_movement(
 
 /// Stop movement
 fn stop_movement(
-    movement_event: On<Complete<Movement>>,
+    _movement_event: On<Complete<Movement>>,
     mut controller_query: Single<&mut KinematicCharacterController, With<Player>>,
 ) {
-    println!("{}", movement_event.value);
     controller_query.translation = Some(Vec2::ZERO);
 }

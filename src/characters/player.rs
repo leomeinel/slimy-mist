@@ -54,10 +54,10 @@ pub(crate) enum PlayerAssetState {
 /// Assets that are serialized from a ron file
 #[derive(AssetCollection, Resource)]
 pub(crate) struct PlayerAssets {
-    #[asset(key = "male_step_sounds", collection(typed))]
+    #[asset(key = "male.step_sounds", collection(typed))]
     pub(crate) step_sounds: Vec<Handle<AudioSource>>,
 
-    #[asset(key = "male_image")]
+    #[asset(key = "male.image")]
     pub(crate) image: Handle<Image>,
 }
 impl_character_assets!(PlayerAssets);

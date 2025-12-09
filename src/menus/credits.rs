@@ -14,13 +14,16 @@
 use bevy::{ecs::spawn::SpawnIter, input::common_conditions::input_just_pressed, prelude::*};
 use bevy_asset_loader::prelude::*;
 
-use crate::{asset_tracking::AssetState, audio::music, menus::Menu, theme::prelude::*};
+use crate::{audio::music, menus::Menu, theme::prelude::*};
 
 pub(super) fn plugin(app: &mut App) {
+    // Initialize asset state
+    app.init_state::<CreditsAssetState>();
+
     // Add loading states via bevy_asset_loader
     app.add_loading_state(
-        LoadingState::new(AssetState::AssetLoading)
-            .continue_to_state(AssetState::Next)
+        LoadingState::new(CreditsAssetState::AssetLoading)
+            .continue_to_state(CreditsAssetState::Next)
             .load_collection::<CreditsAssets>(),
     );
 
@@ -36,6 +39,22 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Menu::Credits), start_credits_music);
 }
 
+/// Asset state that tracks asset loading
+#[derive(Clone, Eq, PartialEq, Debug, Hash, Default, States)]
+enum CreditsAssetState {
+    #[default]
+    AssetLoading,
+    Next,
+}
+
+/// Assets for credits
+#[derive(AssetCollection, Resource)]
+struct CreditsAssets {
+    #[asset(path = "audio/music/screen-saver.ogg")]
+    music: Handle<AudioSource>,
+}
+
+/// Spawn menu with credits for assets and creators of the game
 fn spawn_credits_menu(mut commands: Commands) {
     commands.spawn((
         widgets::common::ui_root("Credits Menu"),
@@ -51,10 +70,12 @@ fn spawn_credits_menu(mut commands: Commands) {
     ));
 }
 
+/// Grid for created by section
 fn created_by() -> impl Bundle {
     grid(vec![["Leopold Meinel", "Wrote code on top of bevy_new_2d"]])
 }
 
+/// Grid for assets section
 fn assets() -> impl Bundle {
     grid(vec![
         [
@@ -73,6 +94,7 @@ fn assets() -> impl Bundle {
     ])
 }
 
+/// Grid with custom settings that fit the credits screen
 fn grid(content: Vec<[&'static str; 2]>) -> impl Bundle {
     (
         Name::new("Grid"),
@@ -101,20 +123,17 @@ fn grid(content: Vec<[&'static str; 2]>) -> impl Bundle {
     )
 }
 
+/// Go back to main menu on click
 fn go_back_on_click(_: On<Pointer<Click>>, mut next_menu: ResMut<NextState<Menu>>) {
     next_menu.set(Menu::Main);
 }
 
+/// Go back to main menu if a menu switch is initialized
 fn go_back(mut next_menu: ResMut<NextState<Menu>>) {
     next_menu.set(Menu::Main);
 }
 
-#[derive(AssetCollection, Resource)]
-struct CreditsAssets {
-    #[asset(path = "audio/music/screen-saver.ogg")]
-    music: Handle<AudioSource>,
-}
-
+/// Play music for credits
 fn start_credits_music(mut commands: Commands, credits_music: Res<CreditsAssets>) {
     commands.spawn((
         Name::new("Credits Music"),

@@ -12,65 +12,66 @@
 use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
 use bevy_rapier2d::prelude::*;
+use bevy_spritesheet_animation::prelude::*;
 
 use crate::{
-    asset_tracking::AssetState,
-    characters::{
-        CharacterAssets,
-        animation::{MovementAnimation as _, npc::SlimeAnimation},
-    },
+    characters::{CharacterAssets, animations::Animations},
+    impl_character_assets,
 };
 
 pub(super) fn plugin(app: &mut App) {
+    // Initialize asset state
+    app.init_state::<NpcAssetState>();
+
     // Add loading states via bevy_asset_loader
     app.add_loading_state(
-        LoadingState::new(AssetState::AssetLoading)
-            .continue_to_state(AssetState::Next)
+        LoadingState::new(NpcAssetState::AssetLoading)
+            .continue_to_state(NpcAssetState::Next)
+            .with_dynamic_assets_file::<StandardDynamicAssetCollection>(
+                "data/characters/npc/slime.assets.ron",
+            )
             .load_collection::<SlimeAssets>(),
     );
 }
 
+/// Asset state that tracks asset loading
+#[derive(Clone, Eq, PartialEq, Debug, Hash, Default, States)]
+pub(crate) enum NpcAssetState {
+    #[default]
+    AssetLoading,
+    Next,
+}
+
+/// Assets that are serialized from a ron file
 #[derive(AssetCollection, Resource)]
 pub(crate) struct SlimeAssets {
-    #[asset(paths("audio/sound-effects/movement/bounce.ogg"), collection(typed))]
+    #[asset(key = "slime_step_sounds", collection(typed))]
     pub(crate) step_sounds: Vec<Handle<AudioSource>>,
 
-    #[asset(texture_atlas_layout(tile_size_x = 16, tile_size_y = 16, columns = 3, rows = 1))]
-    pub(crate) sprite_sheet: Handle<TextureAtlasLayout>,
-    #[asset(image(sampler(filter = nearest)))]
-    #[asset(path = "images/characters/npc/slime.webp")]
+    #[asset(key = "slime_image")]
     pub(crate) image: Handle<Image>,
 }
+impl_character_assets!(SlimeAssets);
 
-impl CharacterAssets for SlimeAssets {
-    type Animation = SlimeAnimation;
-    fn get_step_sounds(&self) -> &Vec<Handle<AudioSource>> {
-        &self.step_sounds
-    }
-}
-
+/// Npc marker
 #[derive(Component)]
 pub(crate) struct Npc;
 
-#[derive(Component)]
+/// Slime marker
+#[derive(Component, Default)]
 pub(crate) struct Slime;
 
 /// The slime enemy.
-pub(crate) fn slime(slime_assets: &SlimeAssets) -> impl Bundle {
-    let player_animation = SlimeAnimation::new();
-
+pub(crate) fn slime(animations: &Res<Animations<Slime>>) -> impl Bundle {
     (
-        Name::new("Player"),
+        Name::new("Slime"),
         Npc,
         Slime,
-        Sprite::from_atlas_image(
-            slime_assets.image.clone(),
-            TextureAtlas::from(slime_assets.sprite_sheet.clone()),
-        ),
+        animations.sprite.clone(),
+        SpritesheetAnimation::new(animations.idle.clone()),
         RigidBody::Dynamic,
         GravityScale(0.),
         Collider::ball(8.),
         KinematicCharacterController::default(),
-        player_animation,
     )
 }

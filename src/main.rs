@@ -16,22 +16,21 @@
 // Disable console on Windows for non-dev builds.
 #![cfg_attr(not(feature = "dev"), windows_subsystem = "windows")]
 
-mod asset_tracking;
 mod audio;
 mod characters;
 #[cfg(feature = "dev")]
 mod dev_tools;
+mod levels;
 mod menus;
-mod rng;
 mod screens;
 mod theme;
-mod worlds;
 
 use bevy::{asset::AssetMetaCheck, prelude::*, window::WindowResized};
 use bevy_enhanced_input::prelude::*;
 use bevy_prng::WyRand;
 use bevy_rand::plugin::EntropyPlugin;
 use bevy_rapier2d::plugin::RapierPhysicsPlugin;
+use bevy_spritesheet_animation::prelude::*;
 
 use crate::characters::player::Player;
 
@@ -68,20 +67,19 @@ impl Plugin for AppPlugin {
             EnhancedInputPlugin,
             EntropyPlugin::<WyRand>::default(),
             RapierPhysicsPlugin::<()>::default(),
+            SpritesheetAnimationPlugin,
         ));
 
         // Add other plugins.
         app.add_plugins((
-            asset_tracking::plugin,
             audio::plugin,
             characters::plugin,
             #[cfg(feature = "dev")]
             dev_tools::plugin,
+            levels::plugin,
             menus::plugin,
-            rng::plugin,
             screens::plugin,
             theme::plugin,
-            worlds::plugin,
         ));
 
         // Order new `AppSystems` variants by adding them here:
@@ -121,7 +119,7 @@ enum AppSystems {
 
 /// Whether or not the game is paused.
 #[derive(States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
-struct Pause(pub bool);
+struct Pause(pub(crate) bool);
 
 /// A system set for systems that shouldn't run while the game is paused.
 #[derive(SystemSet, Copy, Clone, Eq, PartialEq, Hash, Debug)]
@@ -146,7 +144,7 @@ const RES_HEIGHT: u32 = 180;
 
 /// Scales camera projection to fit the window (integer multiples only).
 ///
-/// Source: <https://bevy.org/examples/2d-rendering/pixel-grid-snap/>
+/// Heavily inspired by: <https://bevy.org/examples/2d-rendering/pixel-grid-snap/>
 fn fit_canvas(
     mut msgs: MessageReader<WindowResized>,
     mut projection: Single<&mut Projection, With<CanvasCamera>>,
@@ -165,7 +163,7 @@ const CAMERA_DECAY_RATE: f32 = 3.;
 
 /// Update the camera position by tracking the player.
 ///
-/// Source: <https://bevy.org/examples/camera/2d-top-down-camera/>
+/// Heavily inspired by: <https://bevy.org/examples/camera/2d-top-down-camera/>
 fn update_camera(
     mut camera: Single<&mut Transform, (With<Camera2d>, Without<Player>)>,
     player: Single<&Transform, (With<Player>, Without<Camera2d>)>,

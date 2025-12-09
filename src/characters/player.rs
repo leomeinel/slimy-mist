@@ -15,79 +15,74 @@ use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
 use bevy_enhanced_input::prelude::*;
 use bevy_rapier2d::prelude::*;
+use bevy_spritesheet_animation::prelude::*;
 
 use crate::{
-    asset_tracking::AssetState,
-    characters::{
-        CharacterAssets,
-        animation::{MovementAnimation as _, player::PlayerAnimation},
-    },
+    characters::{CharacterAssets, animations::Animations},
+    impl_character_assets,
 };
 
 pub(super) fn plugin(app: &mut App) {
+    // Initialize asset state
+    app.init_state::<PlayerAssetState>();
+
     // Add loading states via bevy_asset_loader
     app.add_loading_state(
-        LoadingState::new(AssetState::AssetLoading)
-            .continue_to_state(AssetState::Next)
+        LoadingState::new(PlayerAssetState::AssetLoading)
+            .continue_to_state(PlayerAssetState::Next)
+            .with_dynamic_assets_file::<StandardDynamicAssetCollection>(
+                "data/characters/player/male.assets.ron",
+            )
             .load_collection::<PlayerAssets>(),
     );
 
     // Handle bevy_enhanced_input with input context and observers
+    // FIXME: This currently can not be paused
     app.add_input_context::<Player>();
     app.add_observer(apply_movement);
     app.add_observer(stop_movement);
 }
 
-#[derive(Debug, InputAction)]
-#[action_output(Vec2)]
-struct Movement;
+/// Asset state that tracks asset loading
+#[derive(Clone, Eq, PartialEq, Debug, Hash, Default, States)]
+pub(crate) enum PlayerAssetState {
+    #[default]
+    AssetLoading,
+    Next,
+}
 
+/// Assets that are serialized from a ron file
 #[derive(AssetCollection, Resource)]
-pub struct PlayerAssets {
-    #[asset(
-        paths(
-            "audio/sound-effects/movement/player-step-hard0.ogg",
-            "audio/sound-effects/movement/player-step-hard1.ogg",
-            "audio/sound-effects/movement/player-step-hard2.ogg"
-        ),
-        collection(typed)
-    )]
+pub(crate) struct PlayerAssets {
+    #[asset(key = "male_step_sounds", collection(typed))]
     pub(crate) step_sounds: Vec<Handle<AudioSource>>,
 
-    #[asset(texture_atlas_layout(tile_size_x = 24, tile_size_y = 24, columns = 9, rows = 1))]
-    pub(crate) sprite_sheet: Handle<TextureAtlasLayout>,
-    #[asset(image(sampler(filter = nearest)))]
-    #[asset(path = "images/characters/player/male.webp")]
+    #[asset(key = "male_image")]
     pub(crate) image: Handle<Image>,
 }
+impl_character_assets!(PlayerAssets);
 
-impl CharacterAssets for PlayerAssets {
-    type Animation = PlayerAnimation;
-    fn get_step_sounds(&self) -> &Vec<Handle<AudioSource>> {
-        &self.step_sounds
-    }
-}
-
+/// Player marker
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
 #[reflect(Component)]
 pub(crate) struct Player;
 
-/// The player character.
-pub(crate) fn player(player_assets: &PlayerAssets) -> impl Bundle {
-    let player_animation = PlayerAnimation::new();
+/// Movement marker
+#[derive(Debug, InputAction)]
+#[action_output(Vec2)]
+struct Movement;
 
+/// The player character.
+pub(crate) fn player(animations: &Res<Animations<Player>>) -> impl Bundle {
     (
         Name::new("Player"),
         Player,
-        Sprite::from_atlas_image(
-            player_assets.image.clone(),
-            TextureAtlas::from(player_assets.sprite_sheet.clone()),
-        ),
+        animations.sprite.clone(),
+        SpritesheetAnimation::new(animations.idle.clone()),
         RigidBody::Dynamic,
         GravityScale(0.),
         Collider::cuboid(12., 12.),
         KinematicCharacterController::default(),
-        player_animation,
         actions!(
             Player[(
                 Action::<Movement>::new(),
@@ -104,7 +99,7 @@ pub(crate) fn player(player_assets: &PlayerAssets) -> impl Bundle {
     )
 }
 
-/// Apply movement
+/// On a fired movement, set translation to the given input
 fn apply_movement(
     event: On<Fire<Movement>>,
     time: Res<Time>,
@@ -113,7 +108,7 @@ fn apply_movement(
     controller.translation = Some(event.value * time.delta_secs());
 }
 
-/// Stop movement
+/// On a completed movement, set translation to zero
 fn stop_movement(
     _: On<Complete<Movement>>,
     mut controller: Single<&mut KinematicCharacterController, With<Player>>,

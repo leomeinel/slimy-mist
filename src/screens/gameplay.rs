@@ -13,11 +13,11 @@
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
-use crate::{Pause, menus::Menu, screens::Screen, worlds::overworld::spawn_level};
+use crate::{Pause, levels::arena::spawn_arena, menus::Menu, screens::Screen};
 
 pub(super) fn plugin(app: &mut App) {
     // Open gameplay screen
-    app.add_systems(OnEnter(Screen::Gameplay), spawn_level);
+    app.add_systems(OnEnter(Screen::Gameplay), spawn_arena);
 
     // Open pause on pressing P or Escape and pause game
     app.add_systems(
@@ -45,10 +45,12 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
+/// Unpause the game
 fn unpause(mut next_pause: ResMut<NextState<Pause>>) {
     next_pause.set(Pause(false));
 }
 
+/// Pause the game
 fn pause(mut next_pause: ResMut<NextState<Pause>>) {
     next_pause.set(Pause(true));
 }
@@ -56,6 +58,7 @@ fn pause(mut next_pause: ResMut<NextState<Pause>>) {
 /// rgba(0, 0, 0, 204)
 const BACKGROUND_COLOR: Color = Color::srgba(0.0, 0.0, 0.0, 0.8);
 
+/// Spawn pause overlay
 fn spawn_pause_overlay(mut commands: Commands) {
     commands.spawn((
         Name::new("Pause Overlay"),
@@ -70,10 +73,12 @@ fn spawn_pause_overlay(mut commands: Commands) {
     ));
 }
 
+/// Open pause menu
 fn open_pause_menu(mut next_menu: ResMut<NextState<Menu>>) {
     next_menu.set(Menu::Pause);
 }
 
+/// Close pause menu
 fn close_menu(mut next_menu: ResMut<NextState<Menu>>) {
     next_menu.set(Menu::None);
 }

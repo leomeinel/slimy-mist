@@ -26,6 +26,7 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
+/// Spawn pause menu
 fn spawn_pause_menu(mut commands: Commands) {
     commands.spawn((
         widgets::common::ui_root("Pause Menu"),
@@ -40,18 +41,22 @@ fn spawn_pause_menu(mut commands: Commands) {
     ));
 }
 
+/// Open settings
 fn open_settings_menu(_: On<Pointer<Click>>, mut next_menu: ResMut<NextState<Menu>>) {
     next_menu.set(Menu::Settings);
 }
 
+/// Close menu via on click
 fn close_menu(_: On<Pointer<Click>>, mut next_menu: ResMut<NextState<Menu>>) {
     next_menu.set(Menu::None);
 }
 
-fn quit_to_title(_: On<Pointer<Click>>, mut next_screen: ResMut<NextState<Screen>>) {
-    next_screen.set(Screen::Title);
-}
-
+/// Close menu manually
 fn go_back(mut next_menu: ResMut<NextState<Menu>>) {
     next_menu.set(Menu::None);
+}
+
+/// Quit to title
+fn quit_to_title(_: On<Pointer<Click>>, mut next_screen: ResMut<NextState<Screen>>) {
+    next_screen.set(Screen::Title);
 }

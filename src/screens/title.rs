@@ -23,10 +23,12 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnExit(Screen::Title), close_menu);
 }
 
+/// Open main menu
 fn open_main_menu(mut next_menu: ResMut<NextState<Menu>>) {
     next_menu.set(Menu::Main);
 }
 
+/// Close main menu
 fn close_menu(mut next_menu: ResMut<NextState<Menu>>) {
     next_menu.set(Menu::None);
 }

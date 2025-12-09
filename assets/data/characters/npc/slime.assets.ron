@@ -1,0 +1,11 @@
+({
+    "slime_step_sounds": Files (
+            paths: [
+                "audio/sound-effects/movement/bounce.ogg",
+            ],
+        ),
+    "slime_image": Image (
+        path: "images/characters/npc/slime.webp",
+        sampler: Nearest,
+    ),
+})

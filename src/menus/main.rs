@@ -43,23 +43,10 @@ fn spawn_main_menu(mut commands: Commands) {
     ));
 }
 
-// FIXME: This is currently unsupported. After it is, we should implement this: https://github.com/NiklasEi/bevy_asset_loader/blob/main/bevy_asset_loader/examples/progress_tracking.rs
+// FIXME: Previous solution is currently unsupoorted, after it is add loading and gameplay states here.
 // See: https://github.com/NiklasEi/bevy_asset_loader/pull/259
-/*
-fn enter_loading_or_gameplay_screen(
-    _: On<Pointer<Click>>,
-    resource_handles: Res<ResourceStates>,
-    mut next_screen: ResMut<NextState<Screen>>,
-) {
-    if resource_handles.is_all_done() {
-        next_screen.set(Screen::Gameplay);
-    } else {
-        next_screen.set(Screen::Loading);
-    }
-}
-*/
-
-// FIXME: Remove this workaround after above has been addressed
+// After it is, we should implement this: https://github.com/NiklasEi/bevy_asset_loader/blob/main/bevy_asset_loader/examples/progress_tracking.rs
+/// Enter either the loading or the gameplay screen depending on asset loading progress
 fn enter_loading_or_gameplay_screen(
     _: On<Pointer<Click>>,
     mut next_screen: ResMut<NextState<Screen>>,
@@ -67,14 +54,17 @@ fn enter_loading_or_gameplay_screen(
     next_screen.set(Screen::Gameplay);
 }
 
+/// Open settings
 fn open_settings_menu(_: On<Pointer<Click>>, mut next_menu: ResMut<NextState<Menu>>) {
     next_menu.set(Menu::Settings);
 }
 
+/// Open credits
 fn open_credits_menu(_: On<Pointer<Click>>, mut next_menu: ResMut<NextState<Menu>>) {
     next_menu.set(Menu::Credits);
 }
 
+/// Exit the app
 #[cfg(not(target_family = "wasm"))]
 fn exit_app(_: On<Pointer<Click>>, mut app_exit_msg: MessageWriter<AppExit>) {
     app_exit_msg.write(AppExit::Success);

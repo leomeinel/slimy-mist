@@ -31,8 +31,9 @@ pub(super) fn plugin(app: &mut App) {
     ));
 }
 
+/// The game's main menu
 #[derive(States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
-pub enum Menu {
+pub(crate) enum Menu {
     #[default]
     None,
     Main,

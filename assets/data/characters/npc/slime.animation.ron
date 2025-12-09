@@ -1,0 +1,9 @@
+(
+    atlas_columns: 5,
+    atlas_rows: 2,
+    idle_frames: 3,
+    idle_interval_ms: 1000,
+    move_frames: 5,
+    move_interval_ms: 150,
+    step_sound_frames: [5],
+)

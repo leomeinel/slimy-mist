@@ -1,0 +1,14 @@
+({
+    "male_step_sounds": Files (
+            paths: [
+                "audio/sound-effects/movement/player-step-hard0.ogg",
+                "audio/sound-effects/movement/player-step-hard1.ogg",
+                "audio/sound-effects/movement/player-step-hard2.ogg",
+                "audio/sound-effects/movement/player-step-hard3.ogg",
+            ],
+        ),
+    "male_image": Image (
+        path: "images/characters/player/male.webp",
+        sampler: Nearest,
+    ),
+})

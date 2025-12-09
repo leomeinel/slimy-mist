@@ -28,8 +28,10 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
+/// Toggle key
 const TOGGLE_KEY: KeyCode = KeyCode::Backquote;
 
+/// Toggle debug interface
 fn toggle_debug_ui(mut options: ResMut<UiDebugOptions>) {
     options.toggle();
 }

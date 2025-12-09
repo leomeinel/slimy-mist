@@ -28,10 +28,18 @@ pub(super) fn plugin(app: &mut App) {
 /// This can then be used to query for and operate on sounds in that category.
 #[derive(Component, Reflect, Default)]
 #[reflect(Component)]
-pub struct Music;
+pub(crate) struct Music;
+
+/// An organizational marker component that should be added to a spawned [`AudioPlayer`] if it's in the
+/// general "sound effect" category (e.g. footsteps, the sound of a magic spell, a door opening).
+///
+/// This can then be used to query for and operate on sounds in that category.
+#[derive(Component, Reflect, Default)]
+#[reflect(Component)]
+pub(crate) struct SoundEffect;
 
 /// A music audio instance.
-pub fn music(handle: Handle<AudioSource>) -> impl Bundle {
+pub(crate) fn music(handle: Handle<AudioSource>) -> impl Bundle {
     (
         AudioPlayer(handle),
         PlaybackSettings {
@@ -43,16 +51,8 @@ pub fn music(handle: Handle<AudioSource>) -> impl Bundle {
     )
 }
 
-/// An organizational marker component that should be added to a spawned [`AudioPlayer`] if it's in the
-/// general "sound effect" category (e.g. footsteps, the sound of a magic spell, a door opening).
-///
-/// This can then be used to query for and operate on sounds in that category.
-#[derive(Component, Reflect, Default)]
-#[reflect(Component)]
-pub struct SoundEffect;
-
 /// A sound effect audio instance.
-pub fn sound_effect(handle: Handle<AudioSource>) -> impl Bundle {
+pub(crate) fn sound_effect(handle: Handle<AudioSource>) -> impl Bundle {
     (AudioPlayer(handle), PlaybackSettings::DESPAWN, SoundEffect)
 }
 

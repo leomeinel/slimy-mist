@@ -1,5 +1,5 @@
 /*
- * File: overworld.rs
+ * File: arena.rs
  * Author: Leopold Johannes Meinel (leo@meinel.dev)
  * -----
  * Copyright (c) 2025 Leopold Johannes Meinel & contributors
@@ -14,26 +14,38 @@ use bevy_asset_loader::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    asset_tracking::AssetState,
     audio::music,
     characters::{
-        npc::{SlimeAssets, slime},
-        player::{PlayerAssets, player},
+        animations::Animations,
+        npc::{Slime, slime},
+        player::{Player, player},
     },
     screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {
+    // Initialize asset state
+    app.init_state::<ArenaAssetState>();
+
     // Add loading states via bevy_asset_loader
     app.add_loading_state(
-        LoadingState::new(AssetState::AssetLoading)
-            .continue_to_state(AssetState::Next)
-            .load_collection::<LevelAssets>(),
+        LoadingState::new(ArenaAssetState::AssetLoading)
+            .continue_to_state(ArenaAssetState::Next)
+            .load_collection::<ArenaAssets>(),
     );
 }
 
+/// Asset state that tracks asset loading
+#[derive(Clone, Eq, PartialEq, Debug, Hash, Default, States)]
+enum ArenaAssetState {
+    #[default]
+    AssetLoading,
+    Next,
+}
+
+/// Assets for the arena
 #[derive(AssetCollection, Resource)]
-pub struct LevelAssets {
+pub(crate) struct ArenaAssets {
     #[asset(path = "audio/music/bit-bit-loop.ogg")]
     music: Handle<AudioSource>,
 }
@@ -43,13 +55,14 @@ const GROUND_COLOR: Srgba = tailwind::GRAY_500;
 // rgb(17, 24, 39)
 const BORDER_COLOR: Srgba = tailwind::GRAY_900;
 
-pub(crate) fn spawn_level(
+/// Spawn arena with player, enemies and objects
+pub(crate) fn spawn_arena(
     mut commands: Commands,
-    level_assets: Res<LevelAssets>,
-    player_assets: Res<PlayerAssets>,
-    slime_assets: Res<SlimeAssets>,
-    mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    level_assets: Res<ArenaAssets>,
+    player_animations: Res<Animations<Player>>,
+    slime_animations: Res<Animations<Slime>>,
 ) {
     commands.spawn((
         Name::new("Level"),
@@ -59,8 +72,8 @@ pub(crate) fn spawn_level(
         Visibility::default(),
         DespawnOnExit(Screen::Gameplay),
         children![
-            player(&player_assets),
-            slime(&slime_assets),
+            player(&player_animations),
+            slime(&slime_animations),
             (
                 Name::new("Gameplay Music"),
                 music(level_assets.music.clone())
@@ -103,6 +116,7 @@ pub(crate) fn spawn_level(
     ));
 }
 
+/// Border for the arena
 fn border(
     transform: Transform,
     meshes: &mut ResMut<Assets<Mesh>>,

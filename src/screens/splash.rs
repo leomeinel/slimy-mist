@@ -14,18 +14,21 @@
 use bevy::{color::palettes::tailwind, input::common_conditions::input_just_pressed, prelude::*};
 use bevy_asset_loader::prelude::*;
 
-use crate::{AppSystems, asset_tracking::AssetState, screens::Screen, theme::prelude::*};
+use crate::{AppSystems, screens::Screen, theme::prelude::*};
 
 pub(super) fn plugin(app: &mut App) {
+    // Initialize asset state
+    app.init_state::<SplashAssetState>();
+
     // Add loading states via bevy_asset_loader
     app.add_loading_state(
-        LoadingState::new(AssetState::AssetLoading)
-            .continue_to_state(AssetState::Next)
+        LoadingState::new(SplashAssetState::AssetLoading)
+            .continue_to_state(SplashAssetState::Next)
             .load_collection::<SplashAssets>(),
     );
     // After loading assets, change state to splash screen
     app.add_systems(
-        OnEnter(AssetState::Next),
+        OnEnter(SplashAssetState::Next),
         |mut next_state: ResMut<NextState<Screen>>| next_state.set(Screen::Splash),
     );
 
@@ -40,7 +43,7 @@ pub(super) fn plugin(app: &mut App) {
     app.insert_resource(ClearColor(SPLASH_BACKGROUND_COLOR.into()));
     app.add_systems(
         OnEnter(Screen::Splash),
-        spawn_splash_screen.run_if(in_state(AssetState::Next)),
+        spawn_splash_screen.run_if(in_state(SplashAssetState::Next)),
     );
 
     // Animate splash screen
@@ -66,6 +69,15 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
+/// Asset state that tracks asset loading
+#[derive(Clone, Eq, PartialEq, Debug, Hash, Default, States)]
+enum SplashAssetState {
+    #[default]
+    AssetLoading,
+    Next,
+}
+
+/// Assets for splash screen
 #[derive(AssetCollection, Resource)]
 struct SplashAssets {
     #[asset(path = "images/ui/splash.webp")]
@@ -73,11 +85,48 @@ struct SplashAssets {
     splash: Handle<Image>,
 }
 
+/// Fading in and out of splash screen
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+struct ImageNodeFadeInOut {
+    /// Total duration in seconds.
+    total_duration: f32,
+    /// Fade duration in seconds.
+    fade_duration: f32,
+    /// Current progress in seconds, between 0 and [`Self::total_duration`].
+    t: f32,
+}
+impl ImageNodeFadeInOut {
+    fn alpha(&self) -> f32 {
+        // Normalize by duration.
+        let t = (self.t / self.total_duration).clamp(0.0, 1.0);
+        let fade = self.fade_duration / self.total_duration;
+
+        // Regular trapezoid-shaped graph, flat at the top with alpha = 1.0.
+        ((1.0 - (2.0 * t - 1.0).abs()) / fade).min(1.0)
+    }
+}
+
+/// Timer that tracks splash screen
+#[derive(Resource, Debug, Clone, PartialEq, Reflect)]
+#[reflect(Resource)]
+struct SplashTimer(Timer);
+impl Default for SplashTimer {
+    fn default() -> Self {
+        Self(Timer::from_seconds(SPLASH_DURATION_SECS, TimerMode::Once))
+    }
+}
+
 /// rgb(38, 38, 38)
 const SPLASH_BACKGROUND_COLOR: Srgba = tailwind::NEUTRAL_800;
+
+/// Default display duration of the splash screen
 const SPLASH_DURATION_SECS: f32 = 1.8;
+
+/// Fade duration of the splash screen
 const SPLASH_FADE_DURATION_SECS: f32 = 0.6;
 
+/// Spawn splash screen
 fn spawn_splash_screen(mut commands: Commands, splash_assets: Res<SplashAssets>) {
     commands.spawn((
         widgets::common::ui_root("Splash Screen"),
@@ -100,68 +149,43 @@ fn spawn_splash_screen(mut commands: Commands, splash_assets: Res<SplashAssets>)
     ));
 }
 
-#[derive(Component, Reflect)]
-#[reflect(Component)]
-struct ImageNodeFadeInOut {
-    /// Total duration in seconds.
-    total_duration: f32,
-    /// Fade duration in seconds.
-    fade_duration: f32,
-    /// Current progress in seconds, between 0 and [`Self::total_duration`].
-    t: f32,
-}
-
-impl ImageNodeFadeInOut {
-    fn alpha(&self) -> f32 {
-        // Normalize by duration.
-        let t = (self.t / self.total_duration).clamp(0.0, 1.0);
-        let fade = self.fade_duration / self.total_duration;
-
-        // Regular trapezoid-shaped graph, flat at the top with alpha = 1.0.
-        ((1.0 - (2.0 * t - 1.0).abs()) / fade).min(1.0)
-    }
-}
-
+/// Start ticking fade in/out
 fn tick_fade_in_out(mut query: Query<&mut ImageNodeFadeInOut>, time: Res<Time>) {
     for mut anim in &mut query {
         anim.t += time.delta_secs();
     }
 }
 
+/// Apply fade in/out
 fn apply_fade_in_out(mut query: Query<(&ImageNodeFadeInOut, &mut ImageNode)>) {
     for (anim, mut image) in &mut query {
         image.color.set_alpha(anim.alpha())
     }
 }
 
-#[derive(Resource, Debug, Clone, PartialEq, Reflect)]
-#[reflect(Resource)]
-struct SplashTimer(Timer);
-
-impl Default for SplashTimer {
-    fn default() -> Self {
-        Self(Timer::from_seconds(SPLASH_DURATION_SECS, TimerMode::Once))
-    }
-}
-
+/// Initialize [`SplashTimer`]
 fn insert_splash_timer(mut commands: Commands) {
     commands.init_resource::<SplashTimer>();
 }
 
+/// Remove [`SplashTimer`]
 fn remove_splash_timer(mut commands: Commands) {
     commands.remove_resource::<SplashTimer>();
 }
 
+/// Start ticking [`SplashTimer`]
 fn tick_splash_timer(time: Res<Time>, mut timer: ResMut<SplashTimer>) {
     timer.0.tick(time.delta());
 }
 
+/// Check status of [`SplashTimer`]
 fn check_splash_timer(timer: ResMut<SplashTimer>, mut next_screen: ResMut<NextState<Screen>>) {
     if timer.0.just_finished() {
         next_screen.set(Screen::Title);
     }
 }
 
+/// Enter title screen
 fn enter_title_screen(mut next_screen: ResMut<NextState<Screen>>) {
     next_screen.set(Screen::Title);
 }

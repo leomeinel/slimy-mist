@@ -9,15 +9,18 @@
  * Heavily inspired by: https://github.com/TheBevyFlock/bevy_new_2d
  */
 
-use crate::{asset_tracking::AssetState, audio::sound_effect};
+use crate::audio::sound_effect;
 use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
+    // Initialize asset state
+    app.init_state::<InteractionAssetState>();
+
     // Add loading states via bevy_asset_loader
     app.add_loading_state(
-        LoadingState::new(AssetState::AssetLoading)
-            .continue_to_state(AssetState::Next)
+        LoadingState::new(InteractionAssetState::AssetLoading)
+            .continue_to_state(InteractionAssetState::Next)
             .load_collection::<InteractionAssets>(),
     );
 
@@ -29,17 +32,35 @@ pub(super) fn plugin(app: &mut App) {
     app.add_observer(play_on_click_sound_effect);
 }
 
+/// Asset state that tracks asset loading
+#[derive(Clone, Eq, PartialEq, Debug, Hash, Default, States)]
+enum InteractionAssetState {
+    #[default]
+    AssetLoading,
+    Next,
+}
+
 /// Palette for widget interactions. Add this to an entity that supports
 /// [`Interaction`]s, such as a button, to change its [`BackgroundColor`] based
 /// on the current interaction state.
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
-pub struct InteractionPalette {
-    pub none: Color,
-    pub hovered: Color,
-    pub pressed: Color,
+pub(crate) struct InteractionPalette {
+    pub(crate) none: Color,
+    pub(crate) hovered: Color,
+    pub(crate) pressed: Color,
 }
 
+/// Assets for interaction
+#[derive(AssetCollection, Resource)]
+struct InteractionAssets {
+    #[asset(path = "audio/sound-effects/ui/hover.ogg")]
+    hover: Handle<AudioSource>,
+    #[asset(path = "audio/sound-effects/ui/click.ogg")]
+    click: Handle<AudioSource>,
+}
+
+/// Apply color from palette mapped to interaction
 fn apply_interaction_palette(
     mut query: Query<
         (&Interaction, &InteractionPalette, &mut BackgroundColor),
@@ -56,14 +77,7 @@ fn apply_interaction_palette(
     }
 }
 
-#[derive(AssetCollection, Resource)]
-struct InteractionAssets {
-    #[asset(path = "audio/sound-effects/ui/hover.ogg")]
-    hover: Handle<AudioSource>,
-    #[asset(path = "audio/sound-effects/ui/click.ogg")]
-    click: Handle<AudioSource>,
-}
-
+/// Play sound effect on hover
 fn play_on_hover_sound_effect(
     event: On<Pointer<Over>>,
     query: Query<(), With<Interaction>>,
@@ -79,6 +93,7 @@ fn play_on_hover_sound_effect(
     }
 }
 
+/// Play sound effect on click
 fn play_on_click_sound_effect(
     event: On<Pointer<Click>>,
     query: Query<(), With<Interaction>>,

@@ -1,5 +1,5 @@
 /*
- * File: worlds.rs
+ * File: levels.rs
  * Author: Leopold Johannes Meinel (leo@meinel.dev)
  * -----
  * Copyright (c) 2025 Leopold Johannes Meinel & contributors
@@ -9,11 +9,11 @@
 
 //! Game worlds
 
-pub(crate) mod overworld;
+pub(crate) mod arena;
 
 use bevy::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
     // Add child plugins
-    app.add_plugins(overworld::plugin);
+    app.add_plugins(arena::plugin);
 }

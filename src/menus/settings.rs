@@ -33,6 +33,12 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
+/// Global volume label marker
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+struct GlobalVolumeLabel;
+
+/// Spawn settings menu
 fn spawn_settings_menu(mut commands: Commands) {
     commands.spawn((
         widgets::common::ui_root("Settings Menu"),
@@ -40,13 +46,14 @@ fn spawn_settings_menu(mut commands: Commands) {
         DespawnOnExit(Menu::Settings),
         children![
             widgets::common::header("Settings"),
-            settings_grid(),
+            grid(),
             widgets::common::button("Back", go_back_on_click),
         ],
     ));
 }
 
-fn settings_grid() -> impl Bundle {
+/// Grid with custom settings that fit the settings screen
+fn grid() -> impl Bundle {
     (
         Name::new("Settings Grid"),
         Node {
@@ -69,6 +76,7 @@ fn settings_grid() -> impl Bundle {
     )
 }
 
+/// Widget to adjust global volume
 fn global_volume_widget() -> impl Bundle {
     (
         Name::new("Global Volume Widget"),
@@ -92,23 +100,24 @@ fn global_volume_widget() -> impl Bundle {
     )
 }
 
+/// Minimum global volume
 const MIN_VOLUME: f32 = 0.0;
+/// Maximum global volume
 const MAX_VOLUME: f32 = 3.0;
 
+/// Lower global volume
 fn lower_global_volume(_: On<Pointer<Click>>, mut global_volume: ResMut<GlobalVolume>) {
     let linear = (global_volume.volume.to_linear() - 0.1).max(MIN_VOLUME);
     global_volume.volume = Volume::Linear(linear);
 }
 
+/// Raise global volume
 fn raise_global_volume(_: On<Pointer<Click>>, mut global_volume: ResMut<GlobalVolume>) {
     let linear = (global_volume.volume.to_linear() + 0.1).min(MAX_VOLUME);
     global_volume.volume = Volume::Linear(linear);
 }
 
-#[derive(Component, Reflect)]
-#[reflect(Component)]
-struct GlobalVolumeLabel;
-
+/// Update global volume label that displays volume
 fn update_global_volume_label(
     mut label: Single<&mut Text, With<GlobalVolumeLabel>>,
     global_volume: Res<GlobalVolume>,
@@ -117,6 +126,7 @@ fn update_global_volume_label(
     label.0 = format!("{percent:3.0}%");
 }
 
+/// Go back on pointer click
 fn go_back_on_click(
     _: On<Pointer<Click>>,
     screen: Res<State<Screen>>,
@@ -129,6 +139,7 @@ fn go_back_on_click(
     });
 }
 
+/// Go back manually
 fn go_back(screen: Res<State<Screen>>, mut next_menu: ResMut<NextState<Menu>>) {
     next_menu.set(if screen.get() == &Screen::Title {
         Menu::Main

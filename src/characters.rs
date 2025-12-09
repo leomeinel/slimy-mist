@@ -9,20 +9,32 @@
 
 //! Characters
 
-pub(crate) mod animation;
+pub(crate) mod animations;
 pub(crate) mod npc;
 pub(crate) mod player;
 
 use bevy::prelude::*;
 
-use crate::characters::animation::MovementAnimation;
-
 pub(super) fn plugin(app: &mut App) {
     // Add child plugins
-    app.add_plugins((animation::plugin, npc::plugin, player::plugin));
+    app.add_plugins((animations::plugin, npc::plugin, player::plugin));
 }
 
+/// Applies to anything that stores character assets
 pub(crate) trait CharacterAssets {
-    type Animation: MovementAnimation;
     fn get_step_sounds(&self) -> &Vec<Handle<AudioSource>>;
+    fn get_image(&self) -> &Handle<Image>;
+}
+#[macro_export]
+macro_rules! impl_character_assets {
+    ($type: ty) => {
+        impl CharacterAssets for $type {
+            fn get_step_sounds(&self) -> &Vec<Handle<AudioSource>> {
+                &self.step_sounds
+            }
+            fn get_image(&self) -> &Handle<Image> {
+                &self.image
+            }
+        }
+    };
 }

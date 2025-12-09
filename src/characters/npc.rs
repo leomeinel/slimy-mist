@@ -58,7 +58,7 @@ impl_character_assets!(SlimeAssets);
 pub(crate) struct Npc;
 
 /// Slime marker
-#[derive(Component, Default)]
+#[derive(Component, Default, Reflect)]
 pub(crate) struct Slime;
 
 /// The slime enemy.

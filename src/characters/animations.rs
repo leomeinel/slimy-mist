@@ -22,7 +22,7 @@ pub(crate) mod player;
 
 use std::marker::PhantomData;
 
-use bevy::prelude::*;
+use bevy::{prelude::*, reflect::Reflectable};
 use bevy_prng::WyRand;
 use bevy_rand::{global::GlobalRng, traits::ForkableSeed as _};
 use bevy_rapier2d::prelude::*;
@@ -39,61 +39,28 @@ pub(super) fn plugin(app: &mut App) {
     app.add_plugins((npc::plugin, player::plugin));
 }
 
-/// Applies to anything that stores [`Animation`] data
-trait AnimationData {
-    fn get_atlas_columns(&self) -> &usize;
-    fn get_atlas_rows(&self) -> &usize;
-    fn get_idle_frames(&self) -> &usize;
-    fn get_idle_interval_ms(&self) -> &u32;
-    fn get_move_frames(&self) -> &usize;
-    fn get_move_interval_ms(&self) -> &u32;
-    fn get_step_sound_frames(&self) -> &Vec<usize>;
-}
-#[macro_export]
-macro_rules! impl_animation_data {
-    ($type: ty) => {
-        impl AnimationData for $type {
-            fn get_atlas_columns(&self) -> &usize {
-                &self.atlas_columns
-            }
-            fn get_atlas_rows(&self) -> &usize {
-                &self.atlas_rows
-            }
-            fn get_idle_frames(&self) -> &usize {
-                &self.idle_frames
-            }
-            fn get_idle_interval_ms(&self) -> &u32 {
-                &self.idle_interval_ms
-            }
-            fn get_move_frames(&self) -> &usize {
-                &self.move_frames
-            }
-            fn get_move_interval_ms(&self) -> &u32 {
-                &self.move_interval_ms
-            }
-            fn get_step_sound_frames(&self) -> &Vec<usize> {
-                &self.step_sound_frames
-            }
-        }
-    };
+/// Animation data deserialized from a ron file as a generic
+#[derive(serde::Deserialize, Asset, TypePath)]
+struct AnimationData<T>
+where
+    T: Reflectable,
+{
+    atlas_columns: usize,
+    atlas_rows: usize,
+    idle_frames: usize,
+    idle_interval_ms: u32,
+    move_frames: usize,
+    move_interval_ms: u32,
+    step_sound_frames: Vec<usize>,
+    #[serde(skip)]
+    _phantom: PhantomData<T>,
 }
 
-/// Applies to anything that can be used as a handle of [`AnimationData`]
-trait AnimationHandle {
-    type Data: Asset;
-    fn get_handle(&self) -> &Handle<Self::Data>;
-}
-#[macro_export]
-macro_rules! impl_animation_handle {
-    ($type: ty, $data: ty) => {
-        impl AnimationHandle for $type {
-            type Data = $data;
-            fn get_handle(&self) -> &Handle<Self::Data> {
-                &self.0
-            }
-        }
-    };
-}
+/// Handle for [`AnimationData`] as a generic
+#[derive(Resource)]
+struct AnimationHandle<T>(Handle<AnimationData<T>>)
+where
+    T: Reflectable;
 
 /// Animations with generics
 ///
@@ -116,29 +83,27 @@ fn setup_rng(mut global: Single<&mut WyRand, With<GlobalRng>>, mut commands: Com
 }
 
 /// Setup the [`Animations`] struct and add animations
-fn setup<T, A, B>(
+fn setup<T, A>(
     mut commands: Commands,
-    animation_data: Res<Assets<A::Data>>,
+    animation_data: Res<Assets<AnimationData<T>>>,
     mut atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     mut global_animations: ResMut<Assets<Animation>>,
-    animation_handle: Res<A>,
-    assets: Res<B>,
+    animation_handle: Res<AnimationHandle<T>>,
+    assets: Res<A>,
     images: Res<Assets<Image>>,
 ) where
-    T: Component + Default,
-    A: AnimationHandle + Resource,
-    <A as AnimationHandle>::Data: AnimationData,
-    B: CharacterAssets + Resource,
+    T: Component + Default + Reflectable,
+    A: CharacterAssets + Resource,
 {
     // Get animation from `AnimationData` with `AnimationHandle`
-    let Some(animation_data) = animation_data.get(animation_handle.get_handle().id()) else {
+    let Some(animation_data) = animation_data.get(animation_handle.0.id()) else {
         return;
     };
     // Set sprite sheet and generate sprite from it
     let sprite_sheet = Spritesheet::new(
         &assets.get_image().clone(),
-        *animation_data.get_atlas_columns(),
-        *animation_data.get_atlas_rows(),
+        animation_data.atlas_columns,
+        animation_data.atlas_rows,
     );
     let sprite = sprite_sheet
         .with_loaded_image(&images)
@@ -148,10 +113,8 @@ fn setup<T, A, B>(
     // Idle animation
     let idle_animation = sprite_sheet
         .create_animation()
-        .add_horizontal_strip(0, 0, *animation_data.get_idle_frames())
-        .set_clip_duration(AnimationDuration::PerFrame(
-            *animation_data.get_idle_interval_ms(),
-        ))
+        .add_horizontal_strip(0, 0, animation_data.idle_frames)
+        .set_clip_duration(AnimationDuration::PerFrame(animation_data.idle_interval_ms))
         .set_repetitions(AnimationRepeat::Loop)
         .build();
     let idle = global_animations.add(idle_animation);
@@ -159,10 +122,8 @@ fn setup<T, A, B>(
     // Run animation
     let run_animation = sprite_sheet
         .create_animation()
-        .add_horizontal_strip(0, 1, *animation_data.get_move_frames())
-        .set_clip_duration(AnimationDuration::PerFrame(
-            *animation_data.get_move_interval_ms(),
-        ))
+        .add_horizontal_strip(0, 1, animation_data.move_frames)
+        .set_clip_duration(AnimationDuration::PerFrame(animation_data.move_interval_ms))
         .set_repetitions(AnimationRepeat::Loop)
         .build();
     let run = global_animations.add(run_animation);
@@ -215,22 +176,20 @@ fn update<T>(
 }
 
 /// Update animation sounds
-fn update_sound<T, A, B>(
+fn update_sound<T, A>(
     mut rng: Single<&mut WyRand, With<Rng>>,
     mut query: Query<&mut SpritesheetAnimation, With<T>>,
     mut commands: Commands,
-    animation_data: Res<Assets<A::Data>>,
-    animation_handle: Res<A>,
+    animation_data: Res<Assets<AnimationData<T>>>,
+    animation_handle: Res<AnimationHandle<T>>,
     animations: Res<Animations<T>>,
-    assets: If<Res<B>>,
+    assets: If<Res<A>>,
 ) where
-    T: Component,
-    A: AnimationHandle + Resource,
-    <A as AnimationHandle>::Data: AnimationData,
-    B: CharacterAssets + Resource,
+    T: Component + Default + Reflectable,
+    A: CharacterAssets + Resource,
 {
     // Get animation from `AnimationData` with `AnimationHandle`
-    let Some(animation_data) = animation_data.get(animation_handle.get_handle().id()) else {
+    let Some(animation_data) = animation_data.get(animation_handle.0.id()) else {
         return;
     };
 
@@ -238,7 +197,7 @@ fn update_sound<T, A, B>(
         // Continue if animation is not run or we are not on the correct frame
         if animation.animation != animations.run
             || !animation_data
-                .get_step_sound_frames()
+                .step_sound_frames
                 .contains(&animation.progress.frame)
         {
             continue;

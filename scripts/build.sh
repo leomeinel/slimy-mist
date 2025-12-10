@@ -29,7 +29,7 @@ elif [[ "${1}" == "web" ]]; then
     rm -f "${tmpfile}"
 elif [[ "${1}" == "web-dev" ]]; then
     rustup target add wasm32-unknown-unknown
-    cargo build --no-default-features --target wasm32-unknown-unknown --profile web-dev
+    cargo build --target wasm32-unknown-unknown --profile web-dev
 else
     cargo build
 fi

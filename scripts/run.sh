@@ -34,7 +34,7 @@ run_web() {
 
 # Run specific build for given argument
 if [[ -z "${1}" ]]; then
-    WINIT_UNIX_BACKEND="${XDG_SESSION_TYPE}" cargo run --release
+    cargo run --no-default-features --release
 elif [[ "${1}" == "web" ]]; then
     "${SCRIPT_DIR}"/build.sh "${1}"
     run_web
@@ -42,5 +42,5 @@ elif [[ "${1}" == "web-dev" ]]; then
     "${SCRIPT_DIR}"/build.sh "${1}"
     run_web
 else
-    WINIT_UNIX_BACKEND="${XDG_SESSION_TYPE}" cargo run
+    cargo run
 fi

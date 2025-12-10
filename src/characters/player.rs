@@ -19,6 +19,7 @@ use bevy_rapier2d::prelude::*;
 use bevy_spritesheet_animation::prelude::*;
 
 use crate::{
+    Pause,
     characters::{
         CharacterAssets, CollisionData, CollisionHandle, animations::Animations, collider,
     },
@@ -51,7 +52,6 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(Startup, setup_player);
 
     // Handle bevy_enhanced_input with input context and observers
-    // FIXME: This currently can not be paused
     app.add_input_context::<Player>();
     app.add_observer(apply_movement);
     app.add_observer(stop_movement);
@@ -131,9 +131,16 @@ const WALK_SPEED: f32 = 0.8;
 /// On a fired movement, set translation to the given input
 fn apply_movement(
     event: On<Fire<Movement>>,
+    pause: Res<State<Pause>>,
     time: Res<Time>,
     mut controller: Single<&mut KinematicCharacterController, With<Player>>,
 ) {
+    // Return if game is paused
+    if pause.get().0 {
+        return;
+    }
+
+    // Apply movement
     controller.translation = Some(event.value * WALK_SPEED * time.delta_secs());
 }
 

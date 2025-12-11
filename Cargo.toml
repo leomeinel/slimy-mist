@@ -39,8 +39,7 @@ bevy_rand = { version = "0.12.1", features = ["wasm_js"] }
 default = ["dev_native"]
 dev = [
  # Improve compile times for dev builds by linking Bevy as a dynamic library.
- # NOTE: This is disabled because of frequent linker errors
- # "bevy/dynamic_linking",
+ "bevy/dynamic_linking",
  "bevy/bevy_dev_tools",
  "bevy/bevy_ui_debug",
  # Improve error messages coming from Bevy
@@ -90,6 +89,8 @@ nonstandard_macro_braces = "warn"
 # Enable a small amount of optimization in the dev profile.
 [profile.dev]
 opt-level = 1
+# FIXME: Remove workaround for https://github.com/rust-lang/rust/issues/81280 after it has been fixed
+incremental = false
 
 # Enable a large amount of optimization in the dev profile for dependencies.
 [profile.dev.package."*"]

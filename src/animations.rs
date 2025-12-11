@@ -25,11 +25,10 @@ use std::marker::PhantomData;
 use bevy::{prelude::*, reflect::Reflectable};
 use bevy_prng::WyRand;
 use bevy_rand::{global::GlobalRng, traits::ForkableSeed as _};
-use bevy_rapier2d::prelude::*;
 use bevy_spritesheet_animation::prelude::*;
 use rand::seq::IndexedRandom as _;
 
-use crate::{audio::sound_effect, characters::CharacterAssets};
+use crate::{AppSystems, audio::sound_effect, characters::CharacterAssets};
 
 pub(super) fn plugin(app: &mut App) {
     // Add rng for animations
@@ -40,6 +39,9 @@ pub(super) fn plugin(app: &mut App) {
 
     // Add plugin for sprite animation
     app.add_plugins(SpritesheetAnimationPlugin);
+
+    // Tick animation timer
+    app.add_systems(Update, tick_animation_timer.in_set(AppSystems::TickTimers));
 }
 
 /// Animation data deserialized from a ron file as a generic
@@ -72,17 +74,41 @@ where
 pub(crate) struct Animations<T> {
     pub(crate) sprite: Sprite,
     pub(crate) idle: Handle<Animation>,
-    pub(crate) walk: Handle<Animation>,
+    pub(crate) movement: Handle<Animation>,
     _phantom: PhantomData<T>,
 }
 
+/// Current state of animation
+#[derive(Default, Clone, Copy, PartialEq, Debug)]
+pub(crate) enum AnimationState {
+    #[default]
+    Idle,
+    Movement(Vec2),
+    Jump,
+    Fall,
+}
+
+/// Controller for animations
+#[derive(Component, Default)]
+pub(crate) struct AnimationController {
+    /// Used to determine next animation
+    pub(crate) state: AnimationState,
+    /// Used to determine if we should play sound again
+    pub(crate) sound_played: bool,
+}
+
+/// Timer that tracks animation
+#[derive(Component, Debug, Clone, PartialEq, Reflect)]
+#[reflect(Component)]
+pub(crate) struct AnimationTimer(pub(crate) Timer);
+
 /// Rng for animations
 #[derive(Component)]
-pub(crate) struct Rng;
+pub(crate) struct AnimationRng;
 
-/// Spawn [`Rng`] by forking [`GlobalRng`]
+/// Spawn [`AnimationRng`] by forking [`GlobalRng`]
 fn setup_rng(mut global: Single<&mut WyRand, With<GlobalRng>>, mut commands: Commands) {
-    commands.spawn((Rng, global.fork_seed()));
+    commands.spawn((AnimationRng, global.fork_seed()));
 }
 
 /// Setup the [`Animations`] struct and add animations
@@ -122,20 +148,20 @@ fn setup<T, A>(
         .build();
     let idle = global_animations.add(idle_animation);
 
-    // Walk animation
-    let walk_animation = sprite_sheet
+    // Movement animation
+    let movement_animation = sprite_sheet
         .create_animation()
         .add_horizontal_strip(0, 1, data.move_frames)
         .set_clip_duration(AnimationDuration::PerFrame(data.move_interval_ms))
         .set_repetitions(AnimationRepeat::Loop)
         .build();
-    let walk = global_animations.add(walk_animation);
+    let movement = global_animations.add(movement_animation);
 
     // Add to `Animations`
     commands.insert_resource(Animations::<T> {
         sprite,
         idle,
-        walk,
+        movement,
         ..default()
     });
 }
@@ -144,9 +170,10 @@ fn setup<T, A>(
 fn update<T>(
     mut query: Query<
         (
-            &KinematicCharacterController,
+            &AnimationController,
             &mut Sprite,
             &mut SpritesheetAnimation,
+            &AnimationTimer,
         ),
         With<T>,
     >,
@@ -154,34 +181,79 @@ fn update<T>(
 ) where
     T: Component,
 {
-    for (controller, mut sprite, mut animation) in &mut query {
-        let Some(intent) = controller.translation else {
-            continue;
-        };
-
-        // If not moving, switch to idle and continue
-        if intent == Vec2::ZERO && animation.animation != animations.idle {
-            animation.switch(animations.idle.clone());
+    for (controller, mut sprite, mut animation, timer) in &mut query {
+        // Continue if timer is not finished
+        if !timer.0.is_finished() {
             continue;
         }
 
-        // Sprite flipping
-        let dx = intent.x;
-        if dx != 0. {
-            sprite.flip_x = dx < 0.;
+        // Reset animation after timer has finished
+        if timer.0.just_finished() {
+            animation.reset();
         }
 
-        // Walk animation
-        if animation.animation != animations.walk {
-            animation.switch(animations.walk.clone());
+        // Set translation to desired translation because we even want to animate if walking against a wall
+        let desired_animation = &controller.state;
+
+        // Match to current `AnimationState`
+        match desired_animation {
+            AnimationState::Movement(translation) => {
+                // Set speed factor to vector length
+                animation.speed_factor = translation.length();
+
+                if animation.animation == animations.movement {
+                    // Sprite flipping
+                    let dx = translation.x;
+                    if dx != 0. {
+                        sprite.flip_x = dx < 0.;
+                    }
+                    continue;
+                }
+
+                // Switch to movement animation
+                animation.switch(animations.movement.clone())
+            }
+            _ => {
+                // Reset speed factor
+                animation.speed_factor = 1.;
+
+                // Match again, this avoids code duplication
+                match desired_animation {
+                    AnimationState::Idle => {
+                        if animation.animation == animations.idle {
+                            continue;
+                        }
+
+                        // Switch to idle animation
+                        animation.switch(animations.idle.clone());
+                    }
+                    AnimationState::Jump => {
+                        if animation.animation == animations.idle {
+                            continue;
+                        }
+
+                        // Switch to jump animation
+                        animation.switch(animations.idle.clone());
+                    }
+                    AnimationState::Fall => {
+                        if animation.animation == animations.idle {
+                            continue;
+                        }
+
+                        // Switch to fall animation
+                        animation.switch(animations.idle.clone());
+                    }
+                    _ => unreachable!(),
+                }
+            }
         }
     }
 }
 
 /// Update animation sounds
 fn update_sound<T, A>(
-    mut rng: Single<&mut WyRand, With<Rng>>,
-    mut query: Query<&mut SpritesheetAnimation, With<T>>,
+    mut rng: Single<&mut WyRand, With<AnimationRng>>,
+    mut query: Query<(&mut AnimationController, &mut SpritesheetAnimation), With<T>>,
     mut commands: Commands,
     data: Res<Assets<AnimationData<T>>>,
     handle: Res<AnimationHandle<T>>,
@@ -196,11 +268,18 @@ fn update_sound<T, A>(
         return;
     };
 
-    for animation in &mut query {
-        // Continue if animation is not walk or we are not on the correct frame
-        if animation.animation != animations.walk
+    for (mut controller, animation) in &mut query {
+        // Continue if animation is not movement or we are not on the correct frame
+        if animation.animation != animations.movement
             || !data.step_sound_frames.contains(&animation.progress.frame)
         {
+            // Reset sound_played
+            controller.sound_played = false;
+            continue;
+        }
+
+        // Continue if sound has already been played
+        if controller.sound_played {
             continue;
         }
 
@@ -211,5 +290,15 @@ fn update_sound<T, A>(
             .unwrap()
             .clone();
         commands.spawn(sound_effect(step_sound));
+
+        // Set sound_playeds
+        controller.sound_played = true;
+    }
+}
+
+/// Tick animation timer
+fn tick_animation_timer(mut query: Query<&mut AnimationTimer>, time: Res<Time>) {
+    for mut timer in &mut query {
+        timer.0.tick(time.delta());
     }
 }

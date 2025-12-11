@@ -11,13 +11,15 @@
 
 use bevy::{color::palettes::tailwind, prelude::*};
 use bevy_asset_loader::prelude::*;
+use bevy_prng::WyRand;
 use bevy_rapier2d::prelude::*;
+use rand::Rng;
 
 use crate::{
+    animations::{AnimationRng, Animations},
     audio::music,
     characters::{
         CollisionData, CollisionHandle,
-        animations::Animations,
         npc::{Slime, slime},
         player::{Player, player},
     },
@@ -63,6 +65,7 @@ const BORDER_HEIGHT: f32 = 20.;
 
 /// Spawn arena with player, enemies and objects
 pub(crate) fn spawn_arena(
+    mut animation_rng: Single<&mut WyRand, With<AnimationRng>>,
     mut commands: Commands,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -85,16 +88,44 @@ pub(crate) fn spawn_arena(
             player(
                 &player_animations,
                 &player_collision_data,
-                &player_collision_handle
-            ),
-            slime(
-                &slime_animations,
-                &slime_collision_data,
-                &slime_collision_handle
+                &player_collision_handle,
+                animation_rng.random_range(1.0f32..5.0f32),
             ),
             (
-                Name::new("Gameplay Music"),
-                music(level_assets.music.clone())
+                Transform::from_xyz(40., 0., 3.),
+                slime(
+                    &slime_animations,
+                    &slime_collision_data,
+                    &slime_collision_handle,
+                    animation_rng.random_range(2.0f32..10.0f32),
+                ),
+            ),
+            (
+                Transform::from_xyz(-40., 0., 3.),
+                slime(
+                    &slime_animations,
+                    &slime_collision_data,
+                    &slime_collision_handle,
+                    animation_rng.random_range(2.0f32..10.0f32),
+                ),
+            ),
+            (
+                Transform::from_xyz(0., 40., 3.),
+                slime(
+                    &slime_animations,
+                    &slime_collision_data,
+                    &slime_collision_handle,
+                    animation_rng.random_range(2.0f32..10.0f32),
+                ),
+            ),
+            (
+                Transform::from_xyz(0., -40., 3.),
+                slime(
+                    &slime_animations,
+                    &slime_collision_data,
+                    &slime_collision_handle,
+                    animation_rng.random_range(2.0f32..10.0f32),
+                ),
             ),
             border(
                 Transform {
@@ -129,6 +160,10 @@ pub(crate) fn spawn_arena(
                 },
                 &mut meshes,
                 &mut materials
+            ),
+            (
+                Name::new("Gameplay Music"),
+                music(level_assets.music.clone())
             ),
         ],
     ));

@@ -16,9 +16,8 @@ use bevy_rapier2d::prelude::*;
 use bevy_spritesheet_animation::prelude::*;
 
 use crate::{
-    characters::{
-        CharacterAssets, CollisionData, CollisionHandle, animations::Animations, collider,
-    },
+    animations::{AnimationController, AnimationTimer, Animations},
+    characters::{CharacterAssets, CollisionData, CollisionHandle, JumpTimer, collider},
     impl_character_assets,
 };
 
@@ -84,6 +83,7 @@ pub(crate) fn slime(
     animations: &Res<Animations<Slime>>,
     collision_data: &Res<Assets<CollisionData<Slime>>>,
     collision_handle: &Res<CollisionHandle<Slime>>,
+    animation_delay: f32,
 ) -> impl Bundle {
     (
         Name::new("Slime"),
@@ -91,10 +91,13 @@ pub(crate) fn slime(
         Slime,
         animations.sprite.clone(),
         SpritesheetAnimation::new(animations.idle.clone()),
-        RigidBody::Dynamic,
+        RigidBody::KinematicVelocityBased,
         GravityScale(0.),
         collider::<Slime>(collision_data, collision_handle),
         KinematicCharacterController::default(),
         LockedAxes::ROTATION_LOCKED,
+        JumpTimer::default(),
+        AnimationTimer(Timer::from_seconds(animation_delay, TimerMode::Once)),
+        AnimationController::default(),
     )
 }

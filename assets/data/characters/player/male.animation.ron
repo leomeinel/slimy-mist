@@ -2,8 +2,8 @@ AnimationData (
     atlas_columns: 6,
     atlas_rows: 2,
     idle_frames: 3,
-    idle_interval_ms: 1000,
+    idle_interval_ms: 1200,
     move_frames: 6,
-    move_interval_ms: 150,
+    move_interval_ms: 200,
     step_sound_frames: [2, 6],
 )

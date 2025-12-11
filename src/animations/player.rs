@@ -18,10 +18,8 @@ use bevy_common_assets::ron::RonAssetPlugin;
 
 use crate::{
     AppSystems, PausableSystems,
-    characters::{
-        animations::{self, AnimationData, AnimationHandle, Animations},
-        player::{Player, PlayerAssetState, PlayerAssets},
-    },
+    animations::{self, AnimationData, AnimationHandle, Animations, tick_animation_timer},
+    characters::player::{Player, PlayerAssetState, PlayerAssets},
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -44,7 +42,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         (
-            animations::update::<Player>,
+            animations::update::<Player>.after(tick_animation_timer),
             animations::update_sound::<Player, PlayerAssets>,
         )
             .chain()

@@ -9,7 +9,6 @@
 
 //! Characters
 
-pub(crate) mod animations;
 pub(crate) mod npc;
 pub(crate) mod player;
 
@@ -18,9 +17,14 @@ use std::marker::PhantomData;
 use bevy::{prelude::*, reflect::Reflectable};
 use bevy_rapier2d::prelude::Collider;
 
+use crate::AppSystems;
+
 pub(super) fn plugin(app: &mut App) {
     // Add child plugins
-    app.add_plugins((animations::plugin, npc::plugin, player::plugin));
+    app.add_plugins((npc::plugin, player::plugin));
+
+    // Tick jump timer
+    app.add_systems(Update, tick_jump_timer.in_set(AppSystems::TickTimers));
 }
 
 /// Applies to anything that stores character assets
@@ -61,6 +65,19 @@ pub(crate) struct CollisionHandle<T>(Handle<CollisionData<T>>)
 where
     T: Reflectable;
 
+/// Jumping duration in seconds
+const JUMP_DURATION_SECS: f32 = 0.4;
+
+/// Timer that tracks jumping
+#[derive(Component, Debug, Clone, PartialEq, Reflect)]
+#[reflect(Component)]
+struct JumpTimer(Timer);
+impl Default for JumpTimer {
+    fn default() -> Self {
+        Self(Timer::from_seconds(JUMP_DURATION_SECS, TimerMode::Once))
+    }
+}
+
 /// Collider for different shapes
 pub(crate) fn collider<T>(
     data: &Res<Assets<CollisionData<T>>>,
@@ -73,22 +90,19 @@ where
     let data = data.get(handle.0.id()).unwrap();
 
     let (width, height) = (data.width, data.height);
+    // Set correct collider for each shape
+    // NOTE: For capsules, we just assume that the values are correct, meaning that for x: `width < height` and for y: `width > height`
     match data.shape.as_str() {
         "ball" => Collider::ball(width / 2.),
-        "capsule_x" => Collider::capsule_x(capsule_height(height, width), height / 2.),
-        "capsule_y" => Collider::capsule_y(capsule_height(width, height), width / 2.),
+        "capsule_x" => Collider::capsule_x((height - width) / 2., height / 2.),
+        "capsule_y" => Collider::capsule_y((width - height) / 2., width / 2.),
         _ => Collider::cuboid(width / 2., height / 2.),
     }
 }
 
-/// Correct height parameter for [`Collider::capsule_x`]/[`Collider::capsule_y`]
-///
-/// We are returning 0. if the standing width is smaller than the standing height because that essentially makes the capsule a ball,
-/// which is a better collision than an incorrect capsule.
-fn capsule_height(standing_width: f32, standing_height: f32) -> f32 {
-    if standing_width < standing_height {
-        (standing_height - standing_width) / 2.
-    } else {
-        0.
+/// Tick jump timer
+fn tick_jump_timer(mut query: Query<&mut JumpTimer>, time: Res<Time>) {
+    for mut timer in &mut query {
+        timer.0.tick(time.delta());
     }
 }

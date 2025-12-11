@@ -16,10 +16,8 @@ use bevy_common_assets::ron::RonAssetPlugin;
 
 use crate::{
     AppSystems, PausableSystems,
-    characters::{
-        animations::{self, AnimationData, AnimationHandle, Animations},
-        npc::{NpcAssetState, Slime, SlimeAssets},
-    },
+    animations::{self, AnimationData, AnimationHandle, Animations, tick_animation_timer},
+    characters::npc::{NpcAssetState, Slime, SlimeAssets},
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -42,7 +40,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         (
-            animations::update::<Slime>,
+            animations::update::<Slime>.after(tick_animation_timer),
             animations::update_sound::<Slime, SlimeAssets>,
         )
             .chain()

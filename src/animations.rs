@@ -291,7 +291,7 @@ fn update_sound<T, A>(
             .clone();
         commands.spawn(sound_effect(step_sound));
 
-        // Set sound_playeds
+        // Set sound_played
         controller.sound_played = true;
     }
 }

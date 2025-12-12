@@ -271,6 +271,7 @@ fn set_jump(
     animation_controller.state = AnimationState::Jump;
 }
 
+/// Jump height
 const JUMP_HEIGHT: f32 = 24.;
 
 /// Apply jump

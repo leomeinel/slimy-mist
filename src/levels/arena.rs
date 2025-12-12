@@ -148,6 +148,7 @@ pub(crate) fn spawn_arena(
         commands.entity(level).with_children(|commands_p| {
             let slime = commands_p
                 .spawn((
+                    Visibility::Inherited,
                     Transform::from_translation(pos),
                     slime(&slime_collision_data, &slime_collision_handle),
                 ))
@@ -170,6 +171,7 @@ pub(crate) fn spawn_arena(
     commands.entity(level).with_children(|commands_p| {
         let player = commands_p
             .spawn((
+                Visibility::Inherited,
                 Transform::from_translation(PLAYER_POS),
                 player(&player_collision_data, &player_collision_handle),
             ))
@@ -205,7 +207,6 @@ fn border(
             BORDER_HEIGHT,
         ))),
         MeshMaterial2d(materials.add(Into::<Color>::into(BORDER_COLOR))),
-        Visibility::default(),
         DespawnOnExit(Screen::Gameplay),
     )
 }

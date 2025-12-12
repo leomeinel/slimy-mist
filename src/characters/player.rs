@@ -59,7 +59,7 @@ pub(super) fn plugin(app: &mut App) {
         Update,
         (
             apply_jump
-                .after(tick_jump_timer)
+                .before(PhysicsSet::SyncBackend)
                 .in_set(AppSystems::Update)
                 .in_set(PausableSystems),
             limit_jump.after(tick_jump_timer),
@@ -191,32 +191,39 @@ fn apply_walk(
         return;
     };
 
+    // Apply movement from input
+    movement.target = event.value * time.delta_secs();
+    character_controller.translation = Some(movement.target);
+
     // Return if we are jumping
     let state = animation_controller.state;
     if state == AnimationState::Jump || state == AnimationState::Fall {
         return;
     }
 
-    // Apply movement from input
-    movement.target = event.value * time.delta_secs();
-    character_controller.translation = Some(movement.target);
+    // Set animation state
     animation_controller.state = AnimationState::Walk;
 }
 
 /// On a completed walk, set translation to zero
 fn stop_walk(
     _: On<Complete<Walk>>,
-    controllers: Single<
-        (
-            &mut AnimationController,
-            &mut KinematicCharacterController,
-            &mut Movement,
-        ),
-        With<Player>,
-    >,
+    parent: Single<(Entity, &mut KinematicCharacterController, &mut Movement), With<Player>>,
+    mut child_query: Query<&mut AnimationController, Without<Player>>,
+    visual_map: Res<VisualMap>,
 ) {
-    let (mut animation_controller, mut character_controller, mut movement) =
-        controllers.into_inner();
+    let (entity, mut character_controller, mut movement) = parent.into_inner();
+
+    // Extract `animation_controller` from `child_query`
+    let Some(visual) = visual_map.0.get(&entity) else {
+        return;
+    };
+    let Ok(mut animation_controller) = child_query.get_mut(*visual) else {
+        return;
+    };
+
+    // Reset movement target
+    movement.target = Vec2::ZERO;
 
     // Return if we are jumping
     let state = animation_controller.state;
@@ -225,7 +232,6 @@ fn stop_walk(
     }
 
     // Stop movement
-    movement.target = Vec2::ZERO;
     character_controller.translation = Some(movement.target);
     animation_controller.state = AnimationState::Idle;
 }
@@ -269,46 +275,37 @@ const JUMP_HEIGHT: f32 = 24.;
 
 /// Apply jump
 fn apply_jump(
-    parent: Single<
-        (
-            Entity,
-            &mut KinematicCharacterController,
-            &mut Movement,
-            &JumpTimer,
-        ),
-        With<Player>,
-    >,
-    child_query: Query<&AnimationController, Without<Player>>,
+    parent: Single<(Entity, &mut Movement, &JumpTimer), With<Player>>,
+    mut child_query: Query<(&AnimationController, &mut Transform), Without<Player>>,
     visual_map: Res<VisualMap>,
 ) {
-    let (entity, mut character_controller, mut movement, timer) = parent.into_inner();
+    let (entity, mut movement, timer) = parent.into_inner();
 
     // Extract `animation_controller` from `child_query`
     let Some(visual) = visual_map.0.get(&entity) else {
         return;
     };
-    let Ok(animation_controller) = child_query.get(*visual) else {
+    let Ok((animation_controller, mut transform)) = child_query.get_mut(*visual) else {
         return;
     };
 
     let state = animation_controller.state;
 
-    // Return if we are already jumping
+    // Return if we are not jumping or falling
     if state != AnimationState::Jump && state != AnimationState::Fall {
         return;
     }
 
+    // Apply visual jump or fall
     let multiplier = if state == AnimationState::Jump {
         1.0f32
     } else {
         -1.0f32
     };
+    let target = JUMP_HEIGHT * multiplier * ease_out_quad(timer.0.fraction());
 
-    // Apply jump
-    let height = JUMP_HEIGHT * multiplier * ease_out_quad(timer.0.fraction());
-    movement.target.y = height - movement.jump_fall;
-    movement.jump_fall = height;
-    character_controller.translation = Some(movement.target);
+    transform.translation.y += target - movement.jump_height;
+    movement.jump_height = target;
 }
 
 /// Limit jump by setting fall after specific time and then switching to walk
@@ -320,6 +317,11 @@ fn limit_jump(
 ) {
     let (entity, mut movement, timer) = parent.into_inner();
 
+    // Return if timer has not finished
+    if !timer.0.just_finished() {
+        return;
+    }
+
     // Extract `animation_controller` from `child_query`
     let Some(visual) = visual_map.0.get(&entity) else {
         return;
@@ -328,13 +330,8 @@ fn limit_jump(
         return;
     };
 
-    // Return if timer has not finished
-    if !timer.0.just_finished() {
-        return;
-    }
-
-    // Reset jump_fall
-    movement.jump_fall = 0.;
+    // Reset jump height
+    movement.jump_height = 0.;
 
     // Set animation states
     match animation_controller.state {

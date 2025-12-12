@@ -72,7 +72,7 @@ where
 #[derive(Component, Default)]
 pub(crate) struct Movement {
     pub(crate) target: Vec2,
-    jump_fall: f32,
+    jump_height: f32,
 }
 
 /// Jumping duration in seconds

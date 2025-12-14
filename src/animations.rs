@@ -195,12 +195,8 @@ fn setup<T, A>(
     let jump = data
         .jump_frames
         .map(|frames| {
-            let interval_ms = if frames < 1 {
-                0
-            } else {
-                // Divide half of the jumping duration, which is equivalent to needed animation time, by number of associated frames
-                (JUMP_DURATION_SECS * 500. / frames as f32).abs() as u32
-            };
+            let interval_ms =
+                (JUMP_DURATION_SECS * 500. / frames.max(1) as f32).min(u32::MAX as f32) as u32;
             animation_handle(
                 &mut global_animations,
                 &sprite_sheet,
@@ -216,12 +212,8 @@ fn setup<T, A>(
     let fall = data
         .fall_frames
         .map(|frames| {
-            let interval_ms = if frames < 1 {
-                0
-            } else {
-                // Divide half of the jumping duration, which is equivalent to needed animation time, by number of associated frames
-                (JUMP_DURATION_SECS * 500. / frames as f32).abs() as u32
-            };
+            let interval_ms =
+                (JUMP_DURATION_SECS * 500. / frames.max(1) as f32).min(u32::MAX as f32) as u32;
             animation_handle(
                 &mut global_animations,
                 &sprite_sheet,

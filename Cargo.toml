@@ -2,7 +2,7 @@
 
 [package]
 name = "bevy-slime-dodge"
-version = "0.5.1"
+version = "0.5.2"
 edition = "2024"
 license = "Apache-2.0"
 

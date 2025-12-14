@@ -207,6 +207,5 @@ fn border(
             BORDER_HEIGHT,
         ))),
         MeshMaterial2d(materials.add(Into::<Color>::into(BORDER_COLOR))),
-        DespawnOnExit(Screen::Gameplay),
     )
 }

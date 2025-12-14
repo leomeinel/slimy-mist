@@ -317,13 +317,6 @@ fn update<T>(
             sprite.flip_x = dx < 0.;
         }
 
-        // Set speed factor to vector length
-        animation.speed_factor = if state == AnimationState::Walk {
-            movement.target.length()
-        } else {
-            1.
-        };
-
         // Match to current `AnimationState`
         match state {
             AnimationState::Walk if &animation.animation != animations.walk.as_ref().unwrap() => {

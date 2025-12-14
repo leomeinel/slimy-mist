@@ -409,25 +409,27 @@ fn update_sound<T, A>(
 /// Choose a random customized via parameters for current frame.
 ///
 /// Returns [`Some`] if current frame is a fall sound frame.
-/// Returns [`None`] if current frame is not a fall sound frame.
+/// Returns [`None`] if current frame is not a fall sound frame or on missing data.
 fn choose_sound(
     rng: &mut WyRand,
     current_frame: &usize,
     frames: &Option<Vec<usize>>,
     sounds: &Option<Vec<Handle<AudioSource>>>,
 ) -> Option<Handle<AudioSource>> {
-    let frames = frames.as_deref().unwrap_or_else(|| {
-        warn!("{}", MISSING_OPTIONAL_ANIMATION_DATA);
-        &[]
-    });
+    // Return `None` if frame data is missing or does not contain current frame
+    let Some(frames) = frames else {
+        warn_once!("{}", MISSING_OPTIONAL_ANIMATION_DATA);
+        return None;
+    };
     if !frames.contains(current_frame) {
         return None;
     }
 
-    let sounds = sounds.as_deref().unwrap_or_else(|| {
-        warn!("{}", MISSING_OPTIONAL_ASSET_DATA);
-        &[]
-    });
+    // Return none if asset data is missing
+    let Some(sounds) = sounds else {
+        warn_once!("{}", MISSING_OPTIONAL_ASSET_DATA);
+        return None;
+    };
 
     sounds.choose(rng).cloned()
 }

@@ -120,7 +120,7 @@ where
     let (Some(shape), Some(width), Some(height)) = (data.shape.clone(), data.width, data.height)
     else {
         // Return default collider if data is not complete
-        warn!("{}", FALLBACK_COLLISION_DATA);
+        warn_once!("{}", FALLBACK_COLLISION_DATA);
         return Collider::ball(12.);
     };
 

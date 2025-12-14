@@ -368,9 +368,9 @@ fn update_sound<T, A>(
         // Set translation to target translation because we even want to animate if walking against a wall
         let state = controller.state;
 
-        // Set sound played false if animation has changed
+        // Continue if sound has already been played
         if controller.sound_frame == animation.progress.frame {
-            return;
+            continue;
         }
 
         // Match to current `AnimationState`

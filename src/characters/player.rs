@@ -115,9 +115,9 @@ struct Jump;
 
 /// Deserialize ron file for [`CollisionData`]
 fn setup_player(mut commands: Commands, assets: Res<AssetServer>) {
-    let animation_handle =
+    let handle =
         CollisionHandle::<Player>(assets.load("data/characters/player/male.collision.ron"));
-    commands.insert_resource(animation_handle);
+    commands.insert_resource(handle);
 }
 
 /// Walking speed of the player

@@ -49,7 +49,7 @@ pub(super) fn plugin(app: &mut App) {
 
 /// Deserialize ron file for [`AnimationData`]
 fn setup_player(mut commands: Commands, assets: Res<AssetServer>) {
-    let animation_handle =
+    let handle =
         AnimationHandle::<Player>(assets.load("data/characters/player/male.animation.ron"));
-    commands.insert_resource(animation_handle);
+    commands.insert_resource(handle);
 }

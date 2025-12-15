@@ -79,9 +79,8 @@ pub(crate) struct Slime;
 
 /// Deserialize ron file for [`CollisionData`]
 fn setup_slime(mut commands: Commands, assets: Res<AssetServer>) {
-    let animation_handle =
-        CollisionHandle::<Slime>(assets.load("data/characters/npc/slime.collision.ron"));
-    commands.insert_resource(animation_handle);
+    let handle = CollisionHandle::<Slime>(assets.load("data/characters/npc/slime.collision.ron"));
+    commands.insert_resource(handle);
 }
 
 /// Slime enemy parent

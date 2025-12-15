@@ -72,8 +72,8 @@ pub(crate) struct OverworldAssets {
     #[asset(key = "overworld.music", collection(typed), optional)]
     music: Option<Vec<Handle<AudioSource>>>,
 
-    #[asset(key = "overworld.tiles")]
-    pub(crate) tiles: Handle<Image>,
+    #[asset(key = "overworld.tile_set")]
+    pub(crate) tile_set: Handle<Image>,
 }
 impl_level_assets!(OverworldAssets);
 

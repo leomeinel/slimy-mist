@@ -4,7 +4,7 @@
             "audio/music/bit-bit-loop.ogg",
         ],
     ),
-    "overworld.tiles": Image (
+    "overworld.tile_set": Image (
         path: "images/levels/overworld.webp",
         sampler: Nearest,
     ),

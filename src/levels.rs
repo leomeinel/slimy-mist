@@ -43,7 +43,7 @@ pub(crate) const DEFAULT_Z: f32 = 10.;
 /// Applies to anything that stores level assets
 pub(crate) trait LevelAssets {
     fn get_music(&self) -> &Option<Vec<Handle<AudioSource>>>;
-    fn get_tiles(&self) -> &Handle<Image>;
+    fn get_tile_set(&self) -> &Handle<Image>;
 }
 #[macro_export]
 macro_rules! impl_level_assets {
@@ -52,8 +52,8 @@ macro_rules! impl_level_assets {
             fn get_music(&self) -> &Option<Vec<Handle<AudioSource>>> {
                 &self.music
             }
-            fn get_tiles(&self) -> &Handle<Image> {
-                &self.tiles
+            fn get_tile_set(&self) -> &Handle<Image> {
+                &self.tile_set
             }
         }
     };

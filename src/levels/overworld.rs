@@ -9,13 +9,12 @@
 
 //! Overworld-specific behavior.
 
-use std::{f32::consts::FRAC_1_SQRT_2, ops::Range};
+use std::ops::Range;
 
 use bevy::{color::palettes::tailwind, platform::collections::HashSet, prelude::*};
 use bevy_asset_loader::prelude::*;
 use bevy_common_assets::ron::RonAssetPlugin;
 use bevy_prng::WyRand;
-use bevy_rapier2d::prelude::*;
 use rand::{Rng, seq::IndexedRandom};
 
 use crate::{
@@ -95,44 +94,6 @@ const GROUND_WIDTH_HEIGHT: f32 = 640.;
 
 /// Level position
 const LEVEL_POS: Vec3 = Vec3::new(0., 0., LEVEL_Z);
-
-/// rgb(17, 24, 39)
-const BORDER_COLOR: Srgba = tailwind::GRAY_900;
-/// Border height
-const BORDER_HEIGHT: f32 = 20.;
-/// 90 degree angle using only const functions
-const QUAT_Z_90: Quat = Quat::from_xyzw(0., 0., FRAC_1_SQRT_2, FRAC_1_SQRT_2);
-/// Border transforms
-const BORDER_TRANSFORMS: [Transform; 4] = [
-    Transform {
-        translation: Vec3::new(GROUND_WIDTH_HEIGHT / 2. + BORDER_HEIGHT / 2., 0., DEFAULT_Z),
-        rotation: QUAT_Z_90,
-        scale: Vec3::ONE,
-    },
-    Transform {
-        translation: Vec3::new(
-            -GROUND_WIDTH_HEIGHT / 2. - BORDER_HEIGHT / 2.,
-            0.,
-            DEFAULT_Z,
-        ),
-        rotation: QUAT_Z_90,
-        scale: Vec3::ONE,
-    },
-    Transform {
-        translation: Vec3::new(0., GROUND_WIDTH_HEIGHT / 2. + BORDER_HEIGHT / 2., DEFAULT_Z),
-        rotation: Quat::IDENTITY,
-        scale: Vec3::ONE,
-    },
-    Transform {
-        translation: Vec3::new(
-            0.,
-            -GROUND_WIDTH_HEIGHT / 2. - BORDER_HEIGHT / 2.,
-            DEFAULT_Z,
-        ),
-        rotation: Quat::IDENTITY,
-        scale: Vec3::ONE,
-    },
-];
 
 /// Slime positions
 const SLIME_POSITIONS: [Vec3; 4] = [
@@ -221,16 +182,6 @@ pub(crate) fn spawn_overworld(
         });
     }
 
-    for transform in BORDER_TRANSFORMS {
-        commands.entity(level).with_children(|commands| {
-            commands.spawn((
-                DynamicZ(DEFAULT_Z),
-                transform,
-                border(&mut meshes, &mut materials),
-            ));
-        });
-    }
-
     for pos in SLIME_POSITIONS {
         commands.entity(level).with_children(|commands_p| {
             let slime = commands_p
@@ -308,23 +259,4 @@ pub(crate) fn spawn_overworld(
                 ));
             });
     });
-}
-
-/// Border for the overworld
-fn border(
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<ColorMaterial>>,
-) -> impl Bundle {
-    (
-        RigidBody::Fixed,
-        Collider::cuboid(
-            (GROUND_WIDTH_HEIGHT + BORDER_HEIGHT * 2.) / 2.,
-            BORDER_HEIGHT / 2.,
-        ),
-        Mesh2d(meshes.add(Rectangle::new(
-            GROUND_WIDTH_HEIGHT + BORDER_HEIGHT * 2.,
-            BORDER_HEIGHT,
-        ))),
-        MeshMaterial2d(materials.add(Color::from(BORDER_COLOR))),
-    )
 }

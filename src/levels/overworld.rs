@@ -11,7 +11,7 @@
 
 use std::ops::Range;
 
-use bevy::{color::palettes::tailwind, platform::collections::HashSet, prelude::*};
+use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
 use bevy_common_assets::ron::RonAssetPlugin;
 use bevy_prng::WyRand;
@@ -27,19 +27,19 @@ use crate::{
     },
     impl_level_assets,
     levels::{
-        DEFAULT_Z, DynamicZ, LEVEL_Z, LevelAssets, LevelRng, SHADOW_COLOR, SHADOW_Z, TileData,
-        TileHandle,
+        ChunkController, DEFAULT_Z, DynamicZ, LEVEL_Z, LevelAssets, LevelRng, SHADOW_COLOR,
+        SHADOW_Z, TileData, TileHandle,
     },
-    logging::warn::{
-        CHARACTER_FALLBACK_COLLISION_DATA, LEVEL_MISSING_OPTIONAL_ASSET_DATA,
-        LEVEL_MISSING_OPTIONAL_TILE_DATA,
-    },
+    logging::warn::{CHARACTER_FALLBACK_COLLISION_DATA, LEVEL_MISSING_OPTIONAL_ASSET_DATA},
     screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {
     // Initialize asset state
     app.init_state::<OverWorldAssetState>();
+
+    // Add `ChunkController`
+    app.insert_resource(ChunkController::<Overworld>::default());
 
     // Add plugin to load ron file
     app.add_plugins((RonAssetPlugin::<TileData<Overworld>>::new(&["tiles.ron"]),));
@@ -87,11 +87,6 @@ fn setup_overworld(mut commands: Commands, assets: Res<AssetServer>) {
     commands.insert_resource(handle);
 }
 
-/// rgb(107, 114, 128)
-const GROUND_COLOR: Srgba = tailwind::GRAY_500;
-/// Width and height of the ground
-const GROUND_WIDTH_HEIGHT: f32 = 640.;
-
 /// Level position
 const LEVEL_POS: Vec3 = Vec3::new(0., 0., LEVEL_Z);
 
@@ -125,24 +120,7 @@ pub(crate) fn spawn_overworld(
     slime_animations: Res<Animations<Slime>>,
     slime_data: Res<Assets<CollisionData<Slime>>>,
     slime_handle: Res<CollisionHandle<Slime>>,
-    tile_data: Res<Assets<TileData<Overworld>>>,
-    tile_handle: Res<TileHandle<Overworld>>,
 ) {
-    // Get data from `TileData` with `TileHandle`
-    let tile_data = tile_data.get(tile_handle.0.id()).unwrap();
-    let (atlas_columns, atlas_rows) = (tile_data.atlas_columns, tile_data.atlas_rows);
-    let tiles = tile_data.get_tiles().unwrap_or_else(|| {
-        warn_once!("{}", LEVEL_MISSING_OPTIONAL_TILE_DATA);
-        // Return tuple of default `HashSet`s if data is missing
-        (
-            HashSet::default(),
-            HashSet::default(),
-            HashSet::default(),
-            HashSet::default(),
-            HashSet::default(),
-            HashSet::default(),
-        )
-    });
     // Get data from `CollisionData` with `CollisionHandle`
     let slime_data = slime_data.get(slime_handle.0.id()).unwrap();
     let slime_width = slime_data.width.unwrap_or_else(|| {
@@ -159,11 +137,9 @@ pub(crate) fn spawn_overworld(
         .spawn((
             Name::new("Level"),
             Overworld,
-            Mesh2d(meshes.add(Rectangle::new(GROUND_WIDTH_HEIGHT, GROUND_WIDTH_HEIGHT))),
-            MeshMaterial2d(materials.add(Into::<Color>::into(GROUND_COLOR))),
             Transform::from_translation(LEVEL_POS),
-            Visibility::default(),
             DespawnOnExit(Screen::Gameplay),
+            Visibility::default(),
         ))
         .id();
 

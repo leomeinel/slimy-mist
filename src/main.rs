@@ -29,6 +29,7 @@ mod theme;
 mod utils;
 
 use bevy::{asset::AssetMetaCheck, color::palettes::tailwind, prelude::*, window::WindowResized};
+use bevy_ecs_tilemap::TilemapPlugin;
 use bevy_light_2d::prelude::*;
 use bevy_prng::WyRand;
 use bevy_rand::plugin::EntropyPlugin;
@@ -70,6 +71,7 @@ impl Plugin for AppPlugin {
             EntropyPlugin::<WyRand>::default(),
             Light2dPlugin,
             RapierPhysicsPlugin::<()>::default(),
+            TilemapPlugin,
         ));
 
         // Add other plugins.

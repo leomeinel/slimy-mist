@@ -13,11 +13,30 @@
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
-use crate::{Pause, levels::overworld::spawn_overworld, menus::Menu, screens::Screen};
+use crate::{
+    Pause,
+    levels::{
+        despawn_chunks,
+        overworld::{Overworld, OverworldAssets, spawn_overworld},
+        spawn_chunks,
+    },
+    menus::Menu,
+    screens::Screen,
+};
 
 pub(super) fn plugin(app: &mut App) {
-    // Open gameplay screen
+    // Spawn overworld
     app.add_systems(OnEnter(Screen::Gameplay), spawn_overworld);
+
+    // Start spawning/despawning chunks
+    app.add_systems(
+        Update,
+        (
+            spawn_chunks::<Overworld, OverworldAssets>,
+            despawn_chunks::<Overworld>,
+        )
+            .run_if(in_state(Screen::Gameplay)),
+    );
 
     // Open pause on pressing P or Escape and pause game
     app.add_systems(

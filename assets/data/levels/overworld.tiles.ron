@@ -1,6 +1,6 @@
 TileData (
-    atlas_columns: 8,
-    atlas_rows: 6,
+    tile_width: 16.,
+    tile_height: 16.,
     full_dirt_tiles: Some([
         (0, 0),
         (0, 1),

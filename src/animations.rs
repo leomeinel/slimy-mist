@@ -152,9 +152,9 @@ fn setup_rng(mut global: Single<&mut WyRand, With<GlobalRng>>, mut commands: Com
 /// Setup the [`Animations`] struct and add animations
 fn setup<T, A>(
     mut commands: Commands,
-    data: Res<Assets<AnimationData<T>>>,
     mut atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     mut global_animations: ResMut<Assets<Animation>>,
+    data: Res<Assets<AnimationData<T>>>,
     handle: Res<AnimationHandle<T>>,
     assets: Res<A>,
     images: Res<Assets<Image>>,

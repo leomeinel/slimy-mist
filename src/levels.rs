@@ -20,7 +20,9 @@ use bevy_ecs_tilemap::prelude::*;
 use bevy_prng::WyRand;
 use bevy_rand::{global::GlobalRng, traits::ForkableSeed as _};
 
-use crate::{CanvasCamera, RES_HEIGHT, logging::warn::LEVEL_MISSING_OPTIONAL_TILE_DATA};
+use crate::{
+    CanvasCamera, RES_HEIGHT, logging::warn::LEVEL_MISSING_OPTIONAL_TILE_DATA, screens::Screen,
+};
 
 pub(super) fn plugin(app: &mut App) {
     // Add rng for levels
@@ -229,8 +231,6 @@ pub(crate) fn despawn_chunks<T>(
         let chunk_pos = chunk.translation.xy();
         let distance = camera.translation.xy().distance(chunk_pos);
 
-        // NOTE: If we want to get rid of tiles on the title screen, we should add a condition defined in `controller` here.
-        //       I do however think that this also has some appeal.
         if distance > DESPAWN_RANGE {
             let x = (chunk_pos.x / (CHUNK_SIZE.x as f32 * tile_size.x)).floor() as i32;
             let y = (chunk_pos.y / (CHUNK_SIZE.y as f32 * tile_size.y)).floor() as i32;
@@ -238,6 +238,13 @@ pub(crate) fn despawn_chunks<T>(
             commands.entity(entity).despawn();
         }
     }
+}
+
+pub(crate) fn delete_chunks<T>(mut controller: ResMut<ChunkController<T>>)
+where
+    T: Component + Default + Reflectable,
+{
+    controller.chunks.clear();
 }
 
 /// Spawn a single chunk
@@ -251,7 +258,7 @@ fn spawn_chunk<A>(
     A: LevelAssets + Resource,
 {
     // Create empty entity and storage dedicated to this chunk
-    let container_entity = commands.spawn_empty().id();
+    let container_entity = commands.spawn(DespawnOnExit(Screen::Gameplay)).id();
     let mut storage = TileStorage::empty(CHUNK_SIZE.into());
 
     // Spawn a `TileBundle` mapped to the container entity for each x/y in `CHUNK_SIZE`,

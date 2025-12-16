@@ -16,7 +16,7 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use crate::{
     Pause,
     levels::{
-        despawn_chunks,
+        delete_chunks, despawn_chunks,
         overworld::{Overworld, OverworldAssets, spawn_overworld},
         spawn_chunks,
     },
@@ -54,8 +54,11 @@ pub(super) fn plugin(app: &mut App) {
             ),
         ),
     );
-    // Exit pause menu on pressing Escape and unpause game
-    app.add_systems(OnExit(Screen::Gameplay), (close_menu, unpause));
+    // Exit pause menu and unpause game when exiting `Gameplay` screen
+    app.add_systems(
+        OnExit(Screen::Gameplay),
+        (close_menu, unpause, delete_chunks::<Overworld>),
+    );
 
     // Unpause if in no menu and in gameplay screen
     app.add_systems(

@@ -7,4 +7,5 @@
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  */
 
+pub(crate) mod error;
 pub(crate) mod warn;

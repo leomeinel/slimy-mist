@@ -11,27 +11,22 @@
 
 pub(crate) mod chunks;
 pub(crate) mod overworld;
-pub(crate) mod procedural_spawning;
 
-use bevy::{color::palettes::tailwind, prelude::*};
+use bevy::{prelude::*, reflect::Reflectable};
+use bevy_asset_loader::asset_collection::AssetCollection;
 use bevy_prng::WyRand;
 use bevy_rand::{global::GlobalRng, traits::ForkableSeed as _};
-
-use crate::RES_HEIGHT;
 
 pub(super) fn plugin(app: &mut App) {
     // Add rng for levels
     app.add_systems(Startup, setup_rng);
 
     // Add child plugins
-    app.add_plugins(overworld::plugin);
+    app.add_plugins((overworld::plugin, chunks::plugin));
 
     // Sort entities with `DynamicZ` by Y
     app.add_systems(PostUpdate, sort_by_y);
 }
-
-/// Color for cast shadows
-pub(crate) const SHADOW_COLOR: Srgba = tailwind::GRAY_700;
 
 /// Z-level for the level
 pub(crate) const LEVEL_Z: f32 = 1.;
@@ -40,11 +35,14 @@ pub(crate) const SHADOW_Z: f32 = 9.;
 /// Z-level for any foreground object
 pub(crate) const DEFAULT_Z: f32 = 10.;
 
-/// Despawn range of chunks and npcs
-pub(crate) const DESPAWN_RANGE: f32 = RES_HEIGHT * 4.;
+/// Render distance in chunks
+pub(crate) const RENDER_DISTANCE: i32 = 3;
 
 /// Applies to anything that stores level assets
-pub(crate) trait LevelAssets {
+pub(crate) trait LevelAssets
+where
+    Self: AssetCollection + Resource + Default + Reflectable,
+{
     fn get_music(&self) -> &Option<Vec<Handle<AudioSource>>>;
     fn get_tile_set(&self) -> &Handle<Image>;
 }
@@ -62,7 +60,15 @@ macro_rules! impl_level_assets {
     };
 }
 
+/// Applies to anything that is a level
+pub(crate) trait Level
+where
+    Self: Component + Default + Reflectable,
+{
+}
+
 /// Sorts entities by their y position.
+///
 /// Takes in a base value usually the sprite default Z with possibly an height offset.
 /// this value could be tweaked to implement virtual Z for jumping
 #[derive(Component, Default, Reflect)]

@@ -15,8 +15,14 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
 use crate::{
     Pause,
+    characters::{
+        npc::Slime,
+        player::Player,
+        setup_shadow,
+        spawn::{clear_spawn_points, despawn_characters, spawn_characters},
+    },
     levels::{
-        chunks::{delete_chunks, despawn_chunks, spawn_chunks},
+        chunks::{clear_chunks, despawn_chunks, spawn_chunks},
         overworld::{Overworld, OverworldAssets, spawn_overworld},
     },
     menus::Menu,
@@ -25,14 +31,19 @@ use crate::{
 
 pub(super) fn plugin(app: &mut App) {
     // Spawn overworld
-    app.add_systems(OnEnter(Screen::Gameplay), spawn_overworld);
+    app.add_systems(
+        OnEnter(Screen::Gameplay),
+        spawn_overworld.after(setup_shadow::<Player>),
+    );
 
-    // Start spawning/despawning chunks
+    // Start spawning/despawning chunks and characters
     app.add_systems(
         Update,
         (
             spawn_chunks::<Overworld, OverworldAssets>,
             despawn_chunks::<Overworld>,
+            spawn_characters::<Slime, Overworld>,
+            despawn_characters::<Slime, Overworld>,
         )
             .run_if(in_state(Screen::Gameplay)),
     );
@@ -53,10 +64,16 @@ pub(super) fn plugin(app: &mut App) {
             ),
         ),
     );
-    // Exit pause menu and unpause game when exiting `Gameplay` screen
+    // Exit pause menu that was used to exit, unpause game and clear chunks
+    // and spawn points when exiting `Gameplay` screen
     app.add_systems(
         OnExit(Screen::Gameplay),
-        (close_menu, unpause, delete_chunks::<Overworld>),
+        (
+            close_menu,
+            unpause,
+            clear_chunks::<Overworld>,
+            clear_spawn_points::<Slime>,
+        ),
     );
 
     // Unpause if in no menu and in gameplay screen

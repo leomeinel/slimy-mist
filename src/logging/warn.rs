@@ -7,19 +7,14 @@
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  */
 
-//! This stores warning messages as consts
+//! This stores warning messages
 
-/// Warning message if optional collision data is missing
-pub(crate) const CHARACTER_FALLBACK_COLLISION_DATA: &str =
-    "Missing some collision data for character. Using fallback ball collider.";
-/// Warning message if optional animation data is missing
-pub(crate) const CHARACTER_MISSING_OPTIONAL_ANIMATION_DATA: &str =
-    "Missing some animation data for character.";
-/// Warning message if optional asset data is missing
-pub(crate) const CHARACTER_MISSING_OPTIONAL_ASSET_DATA: &str =
-    "Missing some assets data for character.";
-
-/// Warning message if optional asset data is missing
-pub(crate) const LEVEL_MISSING_OPTIONAL_ASSET_DATA: &str = "Missing some assets data for level.";
-/// Warning message if optional tile data is missing
-pub(crate) const LEVEL_MISSING_OPTIONAL_TILE_DATA: &str = "Missing some tile data for level.";
+/// Warning on incomplete collision data
+pub(crate) const WARN_INCOMPLETE_COLLISION_DATA_FALLBACK: &str =
+    "The loaded collision data is incomplete. Using fallback ball collider.";
+/// Warning on incomplete animation data
+pub(crate) const WARN_INCOMPLETE_ANIMATION_DATA: &str = "The loaded animation data is incomplete.";
+/// Warning on incomplete asset data
+pub(crate) const WARN_INCOMPLETE_ASSET_DATA: &str = "The loaded asset data is incomplete.";
+/// Warning on incomplete tile data
+pub(crate) const WARN_INCOMPLETE_TILE_DATA: &str = "Missing some tile data for level.";

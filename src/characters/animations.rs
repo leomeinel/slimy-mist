@@ -17,10 +17,7 @@
 //! - [Sprite animation](https://github.com/bevyengine/bevy/blob/latest/examples/2d/sprite_animation.rs)
 //! - [Timers](https://github.com/bevyengine/bevy/blob/latest/examples/time/timers.rs)
 
-pub(crate) mod npc;
-pub(crate) mod player;
-
-use std::marker::PhantomData;
+use std::{marker::PhantomData, ops::Range};
 
 use bevy::{prelude::*, reflect::Reflectable};
 use bevy_prng::WyRand;
@@ -31,18 +28,19 @@ use rand::seq::IndexedRandom as _;
 use crate::{
     AppSystems,
     audio::sound_effect,
-    characters::{CharacterAssets, JUMP_DURATION_SECS, Movement, VisualMap},
-    logging::warn::{
-        CHARACTER_MISSING_OPTIONAL_ANIMATION_DATA, CHARACTER_MISSING_OPTIONAL_ASSET_DATA,
+    characters::{Character, CharacterAssets, JUMP_DURATION_SECS, Movement, VisualMap},
+    logging::{
+        error::{
+            ERR_INVALID_REQUIRED_ANIMATION_DATA, ERR_LOADING_ANIMATION_DATA,
+            ERR_SPRITE_IMAGE_NOT_LOADED, ERR_UNINITIALIZED_REQUIRED_ANIMATION,
+        },
+        warn::{WARN_INCOMPLETE_ANIMATION_DATA, WARN_INCOMPLETE_ASSET_DATA},
     },
 };
 
 pub(super) fn plugin(app: &mut App) {
     // Add rng for animations
     app.add_systems(Startup, setup_rng);
-
-    // Add child plugins
-    app.add_plugins((npc::plugin, player::plugin));
 
     // Add plugin for sprite animation
     app.add_plugins(SpritesheetAnimationPlugin);
@@ -51,9 +49,12 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(Update, tick_animation_timer.in_set(AppSystems::TickTimers));
 }
 
+/// Player animation delay
+pub(crate) const ANIMATION_DELAY_RANGE: Range<f32> = 1.0..5.0;
+
 /// Animation data deserialized from a ron file as a generic
 #[derive(serde::Deserialize, Asset, TypePath, Default)]
-struct AnimationData<T>
+pub(crate) struct AnimationData<T>
 where
     T: Reflectable,
 {
@@ -91,7 +92,7 @@ where
 
 /// Handle for [`AnimationData`] as a generic
 #[derive(Resource)]
-struct AnimationHandle<T>(Handle<AnimationData<T>>)
+pub(crate) struct AnimationHandle<T>(pub(crate) Handle<AnimationData<T>>)
 where
     T: Reflectable;
 
@@ -150,7 +151,7 @@ fn setup_rng(mut global: Single<&mut WyRand, With<GlobalRng>>, mut commands: Com
 }
 
 /// Setup the [`Animations`] struct and add animations
-fn setup<T, A>(
+pub(crate) fn setup_animations<T, A>(
     mut commands: Commands,
     mut atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     mut global_animations: ResMut<Assets<Animation>>,
@@ -159,17 +160,17 @@ fn setup<T, A>(
     assets: Res<A>,
     images: Res<Assets<Image>>,
 ) where
-    T: Component + Default + Reflectable,
-    A: CharacterAssets + Resource,
+    T: Character,
+    A: CharacterAssets,
 {
     // Get animation from `AnimationData` with `AnimationHandle`
-    let data = data.get(handle.0.id()).unwrap();
+    let data = data.get(handle.0.id()).expect(ERR_LOADING_ANIMATION_DATA);
 
     // Set sprite sheet and generate sprite from it
     let sprite_sheet = Spritesheet::new(assets.get_image(), data.atlas_columns, data.atlas_rows);
     let sprite = sprite_sheet
         .with_loaded_image(&images)
-        .unwrap()
+        .expect(ERR_SPRITE_IMAGE_NOT_LOADED)
         .sprite(&mut atlas_layouts);
 
     // Idle animation: This is the only required animation
@@ -181,7 +182,7 @@ fn setup<T, A>(
         data.idle_interval_ms,
         AnimationRepeat::Loop,
     )
-    .unwrap();
+    .expect(ERR_INVALID_REQUIRED_ANIMATION_DATA);
 
     // Walk animation
     let walk = animation_handle(
@@ -241,7 +242,7 @@ fn setup<T, A>(
 /// Animation handle customized via parameters
 ///
 /// Returns [`Some`] for valid parameters
-/// Returns [`None`] for invalid parameters
+/// Returns [`None`] for invalid `row`, `frames` or `interval` parameter
 fn animation_handle(
     global_animations: &mut ResMut<Assets<Animation>>,
     sprite_sheet: &Spritesheet,
@@ -251,6 +252,7 @@ fn animation_handle(
     repetitions: AnimationRepeat,
 ) -> Option<Handle<Animation>> {
     let (Some(row), Some(frames), Some(interval)) = (row, frames, interval) else {
+        warn_once!(WARN_INCOMPLETE_ANIMATION_DATA);
         return None;
     };
 
@@ -270,8 +272,15 @@ fn animation_handle(
     )
 }
 
+/// Tick animation timer
+pub(crate) fn tick_animation_timer(mut query: Query<&mut AnimationTimer>, time: Res<Time>) {
+    for mut timer in &mut query {
+        timer.0.tick(time.delta());
+    }
+}
+
 /// Update animations
-fn update<T>(
+pub(crate) fn update_animations<T>(
     parent_query: Query<(Entity, &mut Movement), With<T>>,
     mut child_query: Query<
         (
@@ -285,7 +294,7 @@ fn update<T>(
     animations: Res<Animations<T>>,
     visual_map: Res<VisualMap>,
 ) where
-    T: Component,
+    T: Character,
 {
     for (entity, movement) in &parent_query {
         // Extract `animation_controller` from `child_query`
@@ -313,17 +322,53 @@ fn update<T>(
 
         // Match to current `AnimationState`
         match state {
-            AnimationState::Walk if &animation.animation != animations.walk.as_ref().unwrap() => {
-                animation.switch(animations.walk.as_ref().unwrap().clone());
+            AnimationState::Walk
+                if &animation.animation
+                    != animations
+                        .walk
+                        .as_ref()
+                        .expect(ERR_UNINITIALIZED_REQUIRED_ANIMATION) =>
+            {
+                animation.switch(
+                    animations
+                        .walk
+                        .as_ref()
+                        .expect(ERR_UNINITIALIZED_REQUIRED_ANIMATION)
+                        .clone(),
+                );
             }
             AnimationState::Idle if animation.animation != animations.idle => {
                 animation.switch(animations.idle.clone());
             }
-            AnimationState::Jump if &animation.animation != animations.jump.as_ref().unwrap() => {
-                animation.switch(animations.jump.as_ref().unwrap().clone());
+            AnimationState::Jump
+                if &animation.animation
+                    != animations
+                        .jump
+                        .as_ref()
+                        .expect(ERR_UNINITIALIZED_REQUIRED_ANIMATION) =>
+            {
+                animation.switch(
+                    animations
+                        .jump
+                        .as_ref()
+                        .expect(ERR_UNINITIALIZED_REQUIRED_ANIMATION)
+                        .clone(),
+                );
             }
-            AnimationState::Fall if &animation.animation != animations.fall.as_ref().unwrap() => {
-                animation.switch(animations.fall.as_ref().unwrap().clone());
+            AnimationState::Fall
+                if &animation.animation
+                    != animations
+                        .fall
+                        .as_ref()
+                        .expect(ERR_UNINITIALIZED_REQUIRED_ANIMATION) =>
+            {
+                animation.switch(
+                    animations
+                        .fall
+                        .as_ref()
+                        .expect(ERR_UNINITIALIZED_REQUIRED_ANIMATION)
+                        .clone(),
+                );
             }
             _ => continue,
         }
@@ -334,7 +379,7 @@ fn update<T>(
 }
 
 /// Update animation sounds
-fn update_sound<T, A>(
+pub(crate) fn update_animation_sounds<T, A>(
     mut rng: Single<&mut WyRand, With<AnimationRng>>,
     parent_query: Query<Entity, With<T>>,
     mut child_query: Query<(&mut AnimationController, &mut SpritesheetAnimation), Without<T>>,
@@ -342,13 +387,13 @@ fn update_sound<T, A>(
     data: Res<Assets<AnimationData<T>>>,
     handle: Res<AnimationHandle<T>>,
     visual_map: Res<VisualMap>,
-    assets: If<Res<A>>,
+    assets: Res<A>,
 ) where
-    T: Component + Default + Reflectable,
-    A: CharacterAssets + Resource,
+    T: Character,
+    A: CharacterAssets,
 {
     // Get animation from `AnimationData` with `AnimationHandle`
-    let data = data.get(handle.0.id()).unwrap();
+    let data = data.get(handle.0.id()).expect(ERR_LOADING_ANIMATION_DATA);
 
     for entity in &parent_query {
         // Extract `animation_controller` from `child_query`
@@ -412,7 +457,7 @@ fn choose_sound(
 ) -> Option<Handle<AudioSource>> {
     // Return `None` if frame data is missing or does not contain current frame
     let Some(frames) = frames else {
-        warn_once!("{}", CHARACTER_MISSING_OPTIONAL_ANIMATION_DATA);
+        warn_once!("{}", WARN_INCOMPLETE_ANIMATION_DATA);
         return None;
     };
     if !frames.contains(current_frame) {
@@ -421,16 +466,9 @@ fn choose_sound(
 
     // Return none if asset data is missing
     let Some(sounds) = sounds else {
-        warn_once!("{}", CHARACTER_MISSING_OPTIONAL_ASSET_DATA);
+        warn_once!("{}", WARN_INCOMPLETE_ASSET_DATA);
         return None;
     };
 
     sounds.choose(rng).cloned()
-}
-
-/// Tick animation timer
-fn tick_animation_timer(mut query: Query<&mut AnimationTimer>, time: Res<Time>) {
-    for mut timer in &mut query {
-        timer.0.tick(time.delta());
-    }
 }

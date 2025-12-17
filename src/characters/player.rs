@@ -6,7 +6,10 @@
  * SPDX ID: Apache-2.0
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  * -----
- * Heavily inspired by: https://github.com/TheBevyFlock/bevy_new_2d
+ * Heavily inspired by:
+ * - https://github.com/TheBevyFlock/bevy_new_2d
+ * - https://github.com/NiklasEi/bevy_common_assets/tree/main
+ * - https://github.com/merwaaan/bevy_spritesheet_animation
  */
 
 //! Player-specific behavior.
@@ -16,16 +19,18 @@ use bevy_asset_loader::prelude::*;
 use bevy_common_assets::ron::RonAssetPlugin;
 use bevy_enhanced_input::prelude::*;
 use bevy_rapier2d::prelude::*;
-use bevy_spritesheet_animation::prelude::*;
 
 use crate::{
-    AppSystems, Pause,
-    animations::{AnimationController, AnimationState, AnimationTimer, Animations},
+    AppSystems, PausableSystems, Pause,
     characters::{
-        CharacterAssets, CollisionData, CollisionHandle, JumpTimer, Movement, VisualMap,
-        tick_jump_timer,
+        Character, CharacterAssets, CollisionData, CollisionHandle, JumpTimer, Movement, VisualMap,
+        animations::{
+            self, AnimationController, AnimationData, AnimationHandle, AnimationState, Animations,
+        },
+        character_collider, setup_shadow, tick_jump_timer,
     },
     impl_character_assets,
+    levels::{DEFAULT_Z, DynamicZ},
     utils::maths::ease_out_quad,
 };
 
@@ -33,9 +38,17 @@ pub(super) fn plugin(app: &mut App) {
     // Initialize asset state
     app.init_state::<PlayerAssetState>();
 
+    // Insert Animation resource
+    app.insert_resource(Animations::<Player>::default());
+
+    // Add plugin to load ron file
+    app.add_plugins((RonAssetPlugin::<AnimationData<Player>>::new(&[
+        "animation.ron",
+    ]),));
+
     // Add plugin to load ron file
     app.add_plugins((RonAssetPlugin::<CollisionData<Player>>::new(&[
-        "animation.ron",
+        "collision.ron",
     ]),));
 
     // Add enhanced input plugin
@@ -53,6 +66,15 @@ pub(super) fn plugin(app: &mut App) {
 
     // Setup player
     app.add_systems(Startup, setup_player);
+    // FIXME: This depends on `setup_slime`, currently we are using a hack to make sure that required handles are loaded.
+    //        That hack can not be trusted because it does not actually check if the correct handle is inserted.
+    app.add_systems(OnEnter(PlayerAssetState::Next), setup_shadow::<Player>);
+
+    // Animation setup
+    app.add_systems(
+        OnEnter(PlayerAssetState::Next),
+        animations::setup_animations::<Player, PlayerAssets>.after(setup_player),
+    );
 
     // Jump or stop jump depending on timer
     app.add_systems(
@@ -64,6 +86,19 @@ pub(super) fn plugin(app: &mut App) {
             limit_jump.after(tick_jump_timer),
         )
             .chain(),
+    );
+
+    // Animation updates
+    app.add_systems(
+        Update,
+        (
+            animations::update_animations::<Player>.after(animations::tick_animation_timer),
+            animations::update_animation_sounds::<Player, PlayerAssets>
+                .run_if(in_state(PlayerAssetState::Next)),
+        )
+            .chain()
+            .in_set(AppSystems::Update)
+            .in_set(PausableSystems),
     );
 
     // Handle bevy_enhanced_input with input context and observers
@@ -82,7 +117,7 @@ pub(crate) enum PlayerAssetState {
 }
 
 /// Assets that are serialized from a ron file
-#[derive(AssetCollection, Resource)]
+#[derive(AssetCollection, Resource, Reflect, Default)]
 pub(crate) struct PlayerAssets {
     #[asset(key = "male.walk_sounds", collection(typed), optional)]
     pub(crate) walk_sounds: Option<Vec<Handle<AudioSource>>>,
@@ -98,10 +133,56 @@ pub(crate) struct PlayerAssets {
 }
 impl_character_assets!(PlayerAssets);
 
+/// Walking speed of the player
+const WALK_SPEED: f32 = 80.;
+
 /// Player marker
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
 #[reflect(Component)]
 pub(crate) struct Player;
+impl Character for Player {
+    fn container_bundle(
+        &self,
+        data: &(Option<String>, Option<f32>, Option<f32>),
+        pos: Vec3,
+    ) -> impl Bundle {
+        (
+            Name::new("Player"),
+            Self,
+            Transform::from_translation(pos),
+            character_collider::<Self>(data),
+            Visibility::Inherited,
+            DynamicZ(DEFAULT_Z),
+            RigidBody::KinematicVelocityBased,
+            GravityScale(0.),
+            KinematicCharacterController {
+                filter_flags: QueryFilterFlags::EXCLUDE_KINEMATIC,
+                ..default()
+            },
+            LockedAxes::ROTATION_LOCKED,
+            Movement::default(),
+            actions!(
+                Self[
+                    (
+                        Action::<Walk>::new(),
+                        DeadZone::default(),
+                        SmoothNudge::default(),
+                        Scale::splat(WALK_SPEED),
+                        Bindings::spawn((
+                            Cardinal::arrows(),
+                            Cardinal::wasd_keys(),
+                            Axial::left_stick(),
+                        ))
+                    ),
+                    (
+                        Action::<Jump>::new(),
+                        bindings![KeyCode::Space, GamepadButton::South],
+                    ),
+                ]
+            ),
+        )
+    }
+}
 
 /// Walk marker
 #[derive(Debug, InputAction)]
@@ -118,57 +199,10 @@ fn setup_player(mut commands: Commands, assets: Res<AssetServer>) {
     let handle =
         CollisionHandle::<Player>(assets.load("data/characters/player/male.collision.ron"));
     commands.insert_resource(handle);
-}
 
-/// Walking speed of the player
-const WALK_SPEED: f32 = 80.;
-
-/// The player character.
-pub(crate) fn player() -> impl Bundle {
-    (
-        Name::new("Player"),
-        Player,
-        RigidBody::KinematicVelocityBased,
-        GravityScale(0.),
-        KinematicCharacterController {
-            filter_flags: QueryFilterFlags::EXCLUDE_KINEMATIC,
-            ..default()
-        },
-        LockedAxes::ROTATION_LOCKED,
-        Movement::default(),
-        actions!(
-            Player[
-                (
-                    Action::<Walk>::new(),
-                    DeadZone::default(),
-                    SmoothNudge::default(),
-                    Scale::splat(WALK_SPEED),
-                    Bindings::spawn((
-                        Cardinal::arrows(),
-                        Cardinal::wasd_keys(),
-                        Axial::left_stick(),
-                    ))
-                ),
-                (
-                    Action::<Jump>::new(),
-                    bindings![KeyCode::Space, GamepadButton::South],
-                ),
-            ]
-        ),
-    )
-}
-
-/// Player child with visual components
-pub(crate) fn player_visual(
-    animations: &Res<Animations<Player>>,
-    animation_delay: f32,
-) -> impl Bundle {
-    (
-        animations.sprite.clone(),
-        SpritesheetAnimation::new(animations.idle.clone()),
-        AnimationController::default(),
-        AnimationTimer(Timer::from_seconds(animation_delay, TimerMode::Once)),
-    )
+    let handle =
+        AnimationHandle::<Player>(assets.load("data/characters/player/male.animation.ron"));
+    commands.insert_resource(handle);
 }
 
 /// On a fired walk, set translation to the given input

@@ -9,22 +9,43 @@
 
 //! Characters
 
+pub(crate) mod animations;
 pub(crate) mod npc;
 pub(crate) mod player;
+pub(crate) mod spawn;
 
 use std::marker::PhantomData;
 
-use bevy::{platform::collections::HashMap, prelude::*, reflect::Reflectable};
+use bevy::{
+    color::palettes::tailwind, platform::collections::HashMap, prelude::*, reflect::Reflectable,
+};
+use bevy_asset_loader::asset_collection::AssetCollection;
+use bevy_prng::WyRand;
+use bevy_rand::{global::GlobalRng, traits::ForkableSeed as _};
 use bevy_rapier2d::prelude::*;
+use bevy_spritesheet_animation::prelude::SpritesheetAnimation;
 
-use crate::{AppSystems, logging::warn::CHARACTER_FALLBACK_COLLISION_DATA};
+use crate::{
+    AppSystems,
+    characters::animations::{AnimationController, AnimationTimer, Animations},
+    levels::{DEFAULT_Z, DynamicZ, SHADOW_Z},
+    logging::{error::ERR_LOADING_COLLISION_DATA, warn::WARN_INCOMPLETE_COLLISION_DATA_FALLBACK},
+};
 
 pub(super) fn plugin(app: &mut App) {
+    // Add rng for characters
+    app.add_systems(Startup, setup_rng);
+
     // Insert `VisualMap`
     app.insert_resource(VisualMap::default());
 
     // Add child plugins
-    app.add_plugins((npc::plugin, player::plugin));
+    app.add_plugins((
+        animations::plugin,
+        npc::plugin,
+        player::plugin,
+        spawn::plugin,
+    ));
 
     // Tick jump timer
     app.add_systems(Update, tick_jump_timer.in_set(AppSystems::TickTimers));
@@ -34,7 +55,10 @@ pub(super) fn plugin(app: &mut App) {
 pub(crate) const JUMP_DURATION_SECS: f32 = 1.;
 
 /// Applies to anything that stores character assets
-pub(crate) trait CharacterAssets {
+pub(crate) trait CharacterAssets
+where
+    Self: AssetCollection + Resource + Default + Reflectable,
+{
     fn get_walk_sounds(&self) -> &Option<Vec<Handle<AudioSource>>>;
     fn get_jump_sounds(&self) -> &Option<Vec<Handle<AudioSource>>>;
     fn get_fall_sounds(&self) -> &Option<Vec<Handle<AudioSource>>>;
@@ -60,6 +84,72 @@ macro_rules! impl_character_assets {
     };
 }
 
+/// Applies to any character [`Component`]
+pub(crate) trait Character
+where
+    Self: Component + Default + Reflectable,
+{
+    fn container_bundle(
+        &self,
+        data: &(Option<String>, Option<f32>, Option<f32>),
+        pos: Vec3,
+    ) -> impl Bundle;
+
+    fn visual_bundle(
+        &self,
+        animations: &Res<Animations<Self>>,
+        animation_delay: f32,
+    ) -> impl Bundle {
+        (
+            DynamicZ(DEFAULT_Z),
+            animations.sprite.clone(),
+            SpritesheetAnimation::new(animations.idle.clone()),
+            AnimationController::default(),
+            AnimationTimer(Timer::from_seconds(animation_delay, TimerMode::Once)),
+        )
+    }
+
+    fn shadow_bundle(&self, shadow: &Res<Shadow<Self>>, width: f32) -> impl Bundle {
+        (
+            DynamicZ(SHADOW_Z),
+            Transform::from_xyz(0., -width / 2., SHADOW_Z),
+            Mesh2d(shadow.mesh.clone()),
+            MeshMaterial2d(shadow.material.clone()),
+        )
+    }
+
+    fn spawn(
+        commands: &mut Commands,
+        visual_map: &mut ResMut<VisualMap>,
+        data: &(Option<String>, Option<f32>, Option<f32>),
+        pos: Vec3,
+        animations: &Res<Animations<Self>>,
+        shadow: &Res<Shadow<Self>>,
+        animation_delay: f32,
+    ) -> Entity {
+        let character = Self::default();
+
+        let container = commands
+            .spawn((character.container_bundle(data, pos),))
+            .id();
+
+        let visual = commands
+            .spawn(character.visual_bundle(animations, animation_delay))
+            .id();
+        commands.entity(container).add_child(visual);
+        visual_map.0.insert(container, visual);
+
+        let width = data.1.unwrap_or_else(|| {
+            warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA_FALLBACK);
+            9.
+        });
+        let shadow = commands.spawn(character.shadow_bundle(shadow, width)).id();
+        commands.entity(container).add_child(shadow);
+
+        container
+    }
+}
+
 /// Animation data deserialized from a ron file as a generic
 #[derive(serde::Deserialize, Asset, TypePath, Default)]
 pub(crate) struct CollisionData<T>
@@ -67,11 +157,11 @@ where
     T: Reflectable,
 {
     #[serde(default)]
-    shape: Option<String>,
+    pub(crate) shape: Option<String>,
     #[serde(default)]
     pub(crate) width: Option<f32>,
     #[serde(default)]
-    height: Option<f32>,
+    pub(crate) height: Option<f32>,
     #[serde(skip)]
     _phantom: PhantomData<T>,
 }
@@ -106,15 +196,60 @@ impl Default for JumpTimer {
 #[derive(Resource, Default)]
 pub(crate) struct VisualMap(pub(crate) HashMap<Entity, Entity>);
 
-/// Collider for different shapes
-pub(crate) fn collider<T>(data: &CollisionData<T>) -> Collider
-where
-    T: Component + Default + Reflectable,
+/// Shadow data for characters
+#[derive(Resource, Default, Debug)]
+pub(crate) struct Shadow<T> {
+    mesh: Handle<Mesh>,
+    material: Handle<ColorMaterial>,
+    _phantom: PhantomData<T>,
+}
+
+/// Rng for animations
+#[derive(Component)]
+pub(crate) struct CharacterRng;
+
+/// Spawn [`CharacterRng`] by forking [`GlobalRng`]
+fn setup_rng(mut global: Single<&mut WyRand, With<GlobalRng>>, mut commands: Commands) {
+    commands.spawn((CharacterRng, global.fork_seed()));
+}
+
+/// Color for cast shadows
+const SHADOW_COLOR: Srgba = tailwind::GRAY_700;
+
+/// Setup [`Shadow`]
+pub(crate) fn setup_shadow<T>(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    data: Res<Assets<CollisionData<T>>>,
+    handle: Res<CollisionHandle<T>>,
+) where
+    T: Character,
 {
-    let (Some(shape), Some(width), Some(height)) = (data.shape.clone(), data.width, data.height)
-    else {
+    // Get animation from `AnimationData` with `CollisionHandle`
+    let data = data.get(handle.0.id()).expect(ERR_LOADING_COLLISION_DATA);
+    let width = data.width.unwrap_or_else(|| {
+        warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA_FALLBACK);
+        9.
+    });
+
+    let resource = Shadow::<T> {
+        mesh: meshes.add(Circle::new(-width / 4.)),
+        material: materials.add(Color::from(SHADOW_COLOR.with_alpha(0.25))),
+        ..default()
+    };
+
+    commands.insert_resource(resource);
+}
+
+/// Collider for different shapes
+pub(crate) fn character_collider<T>(data: &(Option<String>, Option<f32>, Option<f32>)) -> Collider
+where
+    T: Character,
+{
+    let (Some(shape), Some(width), Some(height)) = data else {
         // Return default collider if data is not complete
-        warn_once!("{}", CHARACTER_FALLBACK_COLLISION_DATA);
+        warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA_FALLBACK);
         return Collider::ball(12.);
     };
 

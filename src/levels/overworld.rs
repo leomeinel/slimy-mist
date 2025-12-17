@@ -25,13 +25,13 @@ use crate::{
     impl_level_assets,
     levels::{DEFAULT_Z, LEVEL_Z, Level, LevelAssets, LevelRng},
     logging::{error::ERR_LOADING_COLLISION_DATA, warn::WARN_INCOMPLETE_ASSET_DATA},
-    procgen::ProcGenController,
+    procgen::{Despawnable, ProcGenController},
     screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {
-    // Add `ChunkController` and `SpawnController`
-    app.insert_resource(ProcGenController::<Overworld>::default());
+    // Add controllers for procedural generation
+    app.insert_resource(ProcGenController::<OverworldProcGen>::default());
     app.insert_resource(ProcGenController::<Slime>::default());
 }
 
@@ -50,6 +50,11 @@ impl_level_assets!(OverworldAssets);
 #[derive(Component, Default, Reflect)]
 pub(crate) struct Overworld;
 impl Level for Overworld {}
+
+/// Marker component for overworld procedural generation
+#[derive(Component, Default, Reflect)]
+pub(crate) struct OverworldProcGen;
+impl Despawnable for OverworldProcGen {}
 
 /// Level position
 const LEVEL_POS: Vec3 = Vec3::new(0., 0., LEVEL_Z);

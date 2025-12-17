@@ -16,7 +16,7 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use crate::{
     Pause,
     characters::{npc::Slime, player::Player, setup_shadow},
-    levels::overworld::{Overworld, OverworldAssets, spawn_overworld},
+    levels::overworld::{Overworld, OverworldAssets, OverworldProcGen, spawn_overworld},
     menus::Menu,
     procgen::{
         chunks::spawn_chunks, clear_procgen_controller, despawn_procgen, spawn::spawn_characters,
@@ -35,10 +35,10 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         (
-            spawn_chunks::<Overworld, OverworldAssets>,
-            despawn_procgen::<Overworld, Overworld>,
-            spawn_characters::<Slime, Overworld>,
-            despawn_procgen::<Slime, Overworld>,
+            spawn_chunks::<OverworldProcGen, OverworldAssets>,
+            despawn_procgen::<OverworldProcGen, OverworldProcGen>,
+            spawn_characters::<Slime, OverworldProcGen, Overworld>,
+            despawn_procgen::<Slime, OverworldProcGen>,
         )
             .run_if(in_state(Screen::Gameplay)),
     );
@@ -66,7 +66,7 @@ pub(super) fn plugin(app: &mut App) {
         (
             close_menu,
             unpause,
-            clear_procgen_controller::<Overworld>,
+            clear_procgen_controller::<OverworldProcGen>,
             clear_procgen_controller::<Slime>,
         ),
     );

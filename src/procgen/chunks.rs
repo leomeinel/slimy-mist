@@ -12,18 +12,14 @@ use bevy_ecs_tilemap::prelude::*;
 
 use crate::{
     CanvasCamera,
-    levels::{LEVEL_Z, Level, LevelAssets, RENDER_DISTANCE},
+    levels::{LEVEL_Z, LevelAssets, RENDER_DISTANCE},
     logging::{error::ERR_LOADING_TILE_DATA, warn::WARN_INCOMPLETE_TILE_DATA},
-    procgen::{ProcGenController, ProcGenTimer, TileData, TileHandle},
+    procgen::{Despawnable, ProcGenController, ProcGenTimer, TileData, TileHandle},
     screens::Screen,
 };
 
 /// Size of a single chunk
 pub(crate) const CHUNK_SIZE: UVec2 = UVec2 { x: 16, y: 16 };
-
-/// Chunk marker
-#[derive(Component)]
-pub(crate) struct Chunk;
 
 /// Chunk size for [`TilemapRenderSettings`]
 const RENDER_CHUNK_SIZE: UVec2 = UVec2 {
@@ -33,7 +29,7 @@ const RENDER_CHUNK_SIZE: UVec2 = UVec2 {
 
 /// Spawn chunks around the [`CanvasCamera`]
 pub(crate) fn spawn_chunks<T, A>(
-    camera: Single<&Transform, (With<CanvasCamera>, Without<Chunk>)>,
+    camera: Single<&Transform, With<CanvasCamera>>,
     mut commands: Commands,
     mut controller: ResMut<ProcGenController<T>>,
     data: Res<Assets<TileData<T>>>,
@@ -41,8 +37,8 @@ pub(crate) fn spawn_chunks<T, A>(
     assets: Res<A>,
     timer: Res<ProcGenTimer>,
 ) where
-    T: Level,
-    A: LevelAssets,
+    T: Despawnable, // Despawnable of the level
+    A: LevelAssets, // Level assets
 {
     // Return if timer has not finished
     if !timer.0.just_finished() {
@@ -74,7 +70,7 @@ pub(crate) fn spawn_chunks<T, A>(
             controller.positions.insert(IVec2::new(x, y));
 
             // Spawn chunk
-            spawn_chunk::<A>(
+            spawn_chunk::<T, A>(
                 &mut commands,
                 &assets,
                 IVec2::new(x, y),
@@ -86,14 +82,15 @@ pub(crate) fn spawn_chunks<T, A>(
 }
 
 /// Spawn a single chunk
-fn spawn_chunk<A>(
+fn spawn_chunk<T, A>(
     commands: &mut Commands,
     assets: &Res<A>,
     chunk_pos: IVec2,
     tile_size: Vec2,
     texture_index: TileTextureIndex,
 ) where
-    A: LevelAssets,
+    T: Despawnable, // Despawnable of the level
+    A: LevelAssets, // Level assets
 {
     // Create empty entity and storage dedicated to this chunk
     let container = commands.spawn(DespawnOnExit(Screen::Gameplay)).id();
@@ -106,7 +103,7 @@ fn spawn_chunk<A>(
             let tile_pos = TilePos { x, y };
             let entity = commands
                 .spawn((
-                    Chunk,
+                    T::default(),
                     TileBundle {
                         position: tile_pos,
                         texture_index,

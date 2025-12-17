@@ -26,7 +26,7 @@ use crate::{
         npc::{Slime, SlimeAssets},
         player::{Player, PlayerAssets},
     },
-    levels::overworld::{Overworld, OverworldAssets},
+    levels::overworld::{OverworldAssets, OverworldProcGen},
     menus::credits::CreditsAssets,
     procgen::{TileData, TileHandle},
     screens::{Screen, splash::SplashAssets},
@@ -42,7 +42,7 @@ pub(super) fn plugin(app: &mut App) {
     // Add ron asset plugins
     app.add_plugins((
         // levels
-        RonAssetPlugin::<TileData<Overworld>>::new(&["tiles.ron"]),
+        RonAssetPlugin::<TileData<OverworldProcGen>>::new(&["tiles.ron"]),
         // characters
         RonAssetPlugin::<AnimationData<Player>>::new(&["animation.ron"]),
         RonAssetPlugin::<CollisionData<Player>>::new(&["collision.ron"]),
@@ -93,7 +93,7 @@ fn spawn_loading_screen(mut commands: Commands) {
 
 /// Deserialize ron file for [`TileData`]
 fn setup_overworld(mut commands: Commands, assets: Res<AssetServer>) {
-    let handle = TileHandle::<Overworld>(assets.load("data/levels/overworld.tiles.ron"));
+    let handle = TileHandle::<OverworldProcGen>(assets.load("data/levels/overworld.tiles.ron"));
     commands.insert_resource(handle);
 }
 

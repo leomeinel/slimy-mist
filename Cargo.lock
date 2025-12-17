@@ -529,6 +529,7 @@ dependencies = [
  "bevy_sprite",
  "bevy_state",
  "bevy_utils",
+ "iyes_progress",
  "path-slash",
  "serde",
 ]
@@ -3229,6 +3230,20 @@ name = "itoa"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4a5f13b858c8d314ee3e8f639011f7ccefe71f97f96e50151fb991f267928e2c"
+
+[[package]]
+name = "iyes_progress"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6c7c87908d0cd670e3f4c716ca68b3bc3b56ea2c3ea581068bb0b0d6c632293f"
+dependencies = [
+ "bevy_app",
+ "bevy_ecs",
+ "bevy_platform",
+ "bevy_state",
+ "derive_more",
+ "parking_lot",
+]
 
 [[package]]
 name = "jni"

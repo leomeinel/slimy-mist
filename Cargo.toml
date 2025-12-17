@@ -11,6 +11,7 @@ bevy = { version = "0.17.3", features = ["wayland", "webp", "x11"] }
 bevy_asset_loader = { version = "0.24.0", features = [
  "2d",
  "standard_dynamic_assets",
+ "progress_tracking",
 ] }
 bevy_common_assets = { version = "0.14.0", features = ["ron"] }
 bevy_ecs_tilemap = "0.17.0"

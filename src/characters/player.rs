@@ -16,64 +16,36 @@
 
 use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
-use bevy_common_assets::ron::RonAssetPlugin;
 use bevy_enhanced_input::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
     AppSystems, PausableSystems, Pause,
     characters::{
-        Character, CharacterAssets, CollisionData, CollisionHandle, JumpTimer, Movement, VisualMap,
-        animations::{
-            self, AnimationController, AnimationData, AnimationHandle, AnimationState, Animations,
-        },
+        Character, CharacterAssets, JumpTimer, Movement, VisualMap,
+        animations::{self, AnimationController, AnimationState, Animations},
         character_collider, setup_shadow, tick_jump_timer,
     },
     impl_character_assets,
     levels::{DEFAULT_Z, DynamicZ},
+    screens::Screen,
     utils::maths::ease_out_quad,
 };
 
 pub(super) fn plugin(app: &mut App) {
-    // Initialize asset state
-    app.init_state::<PlayerAssetState>();
-
     // Insert Animation resource
     app.insert_resource(Animations::<Player>::default());
-
-    // Add plugin to load ron file
-    app.add_plugins((RonAssetPlugin::<AnimationData<Player>>::new(&[
-        "animation.ron",
-    ]),));
-
-    // Add plugin to load ron file
-    app.add_plugins((RonAssetPlugin::<CollisionData<Player>>::new(&[
-        "collision.ron",
-    ]),));
 
     // Add enhanced input plugin
     app.add_plugins(EnhancedInputPlugin);
 
-    // Add loading states via bevy_asset_loader
-    app.add_loading_state(
-        LoadingState::new(PlayerAssetState::AssetLoading)
-            .continue_to_state(PlayerAssetState::Next)
-            .with_dynamic_assets_file::<StandardDynamicAssetCollection>(
-                "data/characters/player/male.assets.ron",
-            )
-            .load_collection::<PlayerAssets>(),
-    );
-
     // Setup player
-    app.add_systems(Startup, setup_player);
-    // FIXME: This depends on `setup_slime`, currently we are using a hack to make sure that required handles are loaded.
-    //        That hack can not be trusted because it does not actually check if the correct handle is inserted.
-    app.add_systems(OnEnter(PlayerAssetState::Next), setup_shadow::<Player>);
+    app.add_systems(OnEnter(Screen::Gameplay), setup_shadow::<Player>);
 
     // Animation setup
     app.add_systems(
-        OnEnter(PlayerAssetState::Next),
-        animations::setup_animations::<Player, PlayerAssets>.after(setup_player),
+        OnEnter(Screen::Gameplay),
+        animations::setup_animations::<Player, PlayerAssets>,
     );
 
     // Jump or stop jump depending on timer
@@ -94,7 +66,7 @@ pub(super) fn plugin(app: &mut App) {
         (
             animations::update_animations::<Player>.after(animations::tick_animation_timer),
             animations::update_animation_sounds::<Player, PlayerAssets>
-                .run_if(in_state(PlayerAssetState::Next)),
+                .run_if(in_state(Screen::Gameplay)),
         )
             .chain()
             .in_set(AppSystems::Update)
@@ -106,14 +78,6 @@ pub(super) fn plugin(app: &mut App) {
     app.add_observer(apply_walk);
     app.add_observer(stop_walk);
     app.add_observer(set_jump);
-}
-
-/// Asset state that tracks asset loading
-#[derive(Clone, Eq, PartialEq, Debug, Hash, Default, States)]
-pub(crate) enum PlayerAssetState {
-    #[default]
-    AssetLoading,
-    Next,
 }
 
 /// Assets that are serialized from a ron file
@@ -193,17 +157,6 @@ struct Walk;
 #[derive(Debug, InputAction)]
 #[action_output(bool)]
 struct Jump;
-
-/// Deserialize ron file for [`CollisionData`]
-fn setup_player(mut commands: Commands, assets: Res<AssetServer>) {
-    let handle =
-        CollisionHandle::<Player>(assets.load("data/characters/player/male.collision.ron"));
-    commands.insert_resource(handle);
-
-    let handle =
-        AnimationHandle::<Player>(assets.load("data/characters/player/male.animation.ron"));
-    commands.insert_resource(handle);
-}
 
 /// On a fired walk, set translation to the given input
 fn apply_walk(

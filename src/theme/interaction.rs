@@ -14,30 +14,12 @@ use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
-    // Initialize asset state
-    app.init_state::<InteractionAssetState>();
-
-    // Add loading states via bevy_asset_loader
-    app.add_loading_state(
-        LoadingState::new(InteractionAssetState::AssetLoading)
-            .continue_to_state(InteractionAssetState::Next)
-            .load_collection::<InteractionAssets>(),
-    );
-
     // Visualize ui interactions with color palette
     app.add_systems(Update, apply_interaction_palette);
 
     // Play sound effects
     app.add_observer(play_on_hover_sound_effect);
     app.add_observer(play_on_click_sound_effect);
-}
-
-/// Asset state that tracks asset loading
-#[derive(Clone, Eq, PartialEq, Debug, Hash, Default, States)]
-enum InteractionAssetState {
-    #[default]
-    AssetLoading,
-    Next,
 }
 
 /// Palette for widget interactions. Add this to an entity that supports
@@ -53,7 +35,7 @@ pub(crate) struct InteractionPalette {
 
 /// Assets for interaction
 #[derive(AssetCollection, Resource)]
-struct InteractionAssets {
+pub(crate) struct InteractionAssets {
     #[asset(path = "audio/sound-effects/ui/hover.ogg")]
     hover: Handle<AudioSource>,
     #[asset(path = "audio/sound-effects/ui/click.ogg")]

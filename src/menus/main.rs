@@ -28,7 +28,7 @@ fn spawn_main_menu(mut commands: Commands) {
         DespawnOnExit(Menu::Main),
         #[cfg(not(target_family = "wasm"))]
         children![
-            widgets::common::button("Play", enter_loading_or_gameplay_screen),
+            widgets::common::button("Play", enter_gameplay_screen),
             widgets::common::button("Settings", open_settings_menu),
             widgets::common::button("Credits", open_credits_menu),
             widgets::common::button("Exit", exit_app),
@@ -43,14 +43,8 @@ fn spawn_main_menu(mut commands: Commands) {
     ));
 }
 
-// FIXME: Previous solution is currently unsupoorted, after it is add loading and gameplay states here.
-// See: https://github.com/NiklasEi/bevy_asset_loader/pull/259
-// After it is, we should implement this: https://github.com/NiklasEi/bevy_asset_loader/blob/main/bevy_asset_loader/examples/progress_tracking.rs
-/// Enter either the loading or the gameplay screen depending on asset loading progress
-fn enter_loading_or_gameplay_screen(
-    _: On<Pointer<Click>>,
-    mut next_screen: ResMut<NextState<Screen>>,
-) {
+/// Enter the gameplay screen
+fn enter_gameplay_screen(_: On<Pointer<Click>>, mut next_screen: ResMut<NextState<Screen>>) {
     next_screen.set(Screen::Gameplay);
 }
 

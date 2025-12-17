@@ -17,18 +17,9 @@ use bevy_asset_loader::prelude::*;
 use crate::{AppSystems, screens::Screen, theme::prelude::*};
 
 pub(super) fn plugin(app: &mut App) {
-    // Initialize asset state
-    app.init_state::<SplashAssetState>();
-
-    // Add loading states via bevy_asset_loader
-    app.add_loading_state(
-        LoadingState::new(SplashAssetState::AssetLoading)
-            .continue_to_state(SplashAssetState::Next)
-            .load_collection::<SplashAssets>(),
-    );
     // After loading assets, change state to splash screen
     app.add_systems(
-        OnEnter(SplashAssetState::Next),
+        OnEnter(Screen::LoadingExit),
         |mut next_state: ResMut<NextState<Screen>>| next_state.set(Screen::Splash),
     );
 
@@ -43,7 +34,7 @@ pub(super) fn plugin(app: &mut App) {
     app.insert_resource(ClearColor(SPLASH_BACKGROUND_COLOR.into()));
     app.add_systems(
         OnEnter(Screen::Splash),
-        spawn_splash_screen.run_if(in_state(SplashAssetState::Next)),
+        spawn_splash_screen.run_if(in_state(Screen::LoadingExit)),
     );
 
     // Animate splash screen
@@ -69,17 +60,9 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
-/// Asset state that tracks asset loading
-#[derive(Clone, Eq, PartialEq, Debug, Hash, Default, States)]
-enum SplashAssetState {
-    #[default]
-    AssetLoading,
-    Next,
-}
-
 /// Assets for splash screen
 #[derive(AssetCollection, Resource)]
-struct SplashAssets {
+pub(crate) struct SplashAssets {
     #[asset(path = "images/ui/splash.webp")]
     #[asset(image(sampler(filter = linear)))]
     splash: Handle<Image>,

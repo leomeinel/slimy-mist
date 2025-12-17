@@ -17,16 +17,6 @@ use bevy_asset_loader::prelude::*;
 use crate::{audio::music, menus::Menu, theme::prelude::*};
 
 pub(super) fn plugin(app: &mut App) {
-    // Initialize asset state
-    app.init_state::<CreditsAssetState>();
-
-    // Add loading states via bevy_asset_loader
-    app.add_loading_state(
-        LoadingState::new(CreditsAssetState::AssetLoading)
-            .continue_to_state(CreditsAssetState::Next)
-            .load_collection::<CreditsAssets>(),
-    );
-
     // Open credits menu
     app.add_systems(OnEnter(Menu::Credits), spawn_credits_menu);
 
@@ -39,17 +29,9 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Menu::Credits), start_credits_music);
 }
 
-/// Asset state that tracks asset loading
-#[derive(Clone, Eq, PartialEq, Debug, Hash, Default, States)]
-enum CreditsAssetState {
-    #[default]
-    AssetLoading,
-    Next,
-}
-
 /// Assets for credits
 #[derive(AssetCollection, Resource)]
-struct CreditsAssets {
+pub(crate) struct CreditsAssets {
     #[asset(path = "audio/music/screen-saver.ogg")]
     music: Handle<AudioSource>,
 }

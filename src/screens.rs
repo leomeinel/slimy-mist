@@ -25,7 +25,7 @@ pub(super) fn plugin(app: &mut App) {
     // Add child plugins
     app.add_plugins((
         gameplay::plugin,
-        /*loading::plugin,*/
+        loading::plugin,
         splash::plugin,
         title::plugin,
     ));
@@ -36,6 +36,7 @@ pub(super) fn plugin(app: &mut App) {
 pub(crate) enum Screen {
     #[default]
     Loading,
+    LoadingExit,
     Splash,
     Title,
     Gameplay,

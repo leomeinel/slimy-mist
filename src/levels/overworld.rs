@@ -11,7 +11,6 @@
 
 use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
-use bevy_common_assets::ron::RonAssetPlugin;
 use bevy_prng::WyRand;
 use rand::{Rng as _, seq::IndexedRandom};
 
@@ -26,44 +25,14 @@ use crate::{
     impl_level_assets,
     levels::{DEFAULT_Z, LEVEL_Z, Level, LevelAssets, LevelRng},
     logging::{error::ERR_LOADING_COLLISION_DATA, warn::WARN_INCOMPLETE_ASSET_DATA},
-    procgen::{
-        level::{ChunkController, TileData, TileHandle},
-        spawn::SpawnController,
-    },
+    procgen::{level::ChunkController, spawn::SpawnController},
     screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {
-    // Initialize asset state
-    app.init_state::<OverWorldAssetState>();
-
     // Add `ChunkController` and `SpawnController`
     app.insert_resource(ChunkController::<Overworld>::default());
     app.insert_resource(SpawnController::<Slime>::default());
-
-    // Add plugin to load ron file
-    app.add_plugins((RonAssetPlugin::<TileData<Overworld>>::new(&["tiles.ron"]),));
-
-    // Setup overworld
-    app.add_systems(Startup, setup_overworld);
-
-    // Add loading states via bevy_asset_loader
-    app.add_loading_state(
-        LoadingState::new(OverWorldAssetState::AssetLoading)
-            .continue_to_state(OverWorldAssetState::Next)
-            .with_dynamic_assets_file::<StandardDynamicAssetCollection>(
-                "data/levels/overworld.assets.ron",
-            )
-            .load_collection::<OverworldAssets>(),
-    );
-}
-
-/// Asset state that tracks asset loading
-#[derive(Clone, Eq, PartialEq, Debug, Hash, Default, States)]
-enum OverWorldAssetState {
-    #[default]
-    AssetLoading,
-    Next,
 }
 
 /// Assets for the overworld
@@ -81,12 +50,6 @@ impl_level_assets!(OverworldAssets);
 #[derive(Component, Default, Reflect)]
 pub(crate) struct Overworld;
 impl Level for Overworld {}
-
-/// Deserialize ron file for [`TileData`]
-fn setup_overworld(mut commands: Commands, assets: Res<AssetServer>) {
-    let handle = TileHandle::<Overworld>(assets.load("data/levels/overworld.tiles.ron"));
-    commands.insert_resource(handle);
-}
 
 /// Level position
 const LEVEL_POS: Vec3 = Vec3::new(0., 0., LEVEL_Z);

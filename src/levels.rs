@@ -66,6 +66,7 @@ where
 {
 }
 
+// FIXME: Jumping currently also triggers this. Maybe somehow decouple from visual or find better solution.
 /// Sorts entities by their y position.
 ///
 /// Takes in a base value usually the sprite default Z with possibly an height offset.

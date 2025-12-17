@@ -36,7 +36,7 @@ fn spawn_main_menu(mut commands: Commands) {
         // Do not add exit button for wasm
         #[cfg(target_family = "wasm")]
         children![
-            widgets::common::button("Play", enter_loading_or_gameplay_screen),
+            widgets::common::button("Play", enter_gameplay_screen),
             widgets::common::button("Settings", open_settings_menu),
             widgets::common::button("Credits", open_credits_menu),
         ],

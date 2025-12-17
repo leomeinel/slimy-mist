@@ -19,8 +19,6 @@ use bevy::{
     color::palettes::tailwind, platform::collections::HashMap, prelude::*, reflect::Reflectable,
 };
 use bevy_asset_loader::asset_collection::AssetCollection;
-use bevy_prng::WyRand;
-use bevy_rand::{global::GlobalRng, traits::ForkableSeed as _};
 use bevy_rapier2d::prelude::*;
 use bevy_spritesheet_animation::prelude::SpritesheetAnimation;
 
@@ -32,9 +30,6 @@ use crate::{
 };
 
 pub(super) fn plugin(app: &mut App) {
-    // Add rng for characters
-    app.add_systems(Startup, setup_rng);
-
     // Insert `VisualMap`
     app.insert_resource(VisualMap::default());
 
@@ -196,15 +191,6 @@ pub(crate) struct Shadow<T> {
     mesh: Handle<Mesh>,
     material: Handle<ColorMaterial>,
     _phantom: PhantomData<T>,
-}
-
-/// Rng for animations
-#[derive(Component)]
-pub(crate) struct CharacterRng;
-
-/// Spawn [`CharacterRng`] by forking [`GlobalRng`]
-fn setup_rng(mut global: Single<&mut WyRand, With<GlobalRng>>, mut commands: Commands) {
-    commands.spawn((CharacterRng, global.fork_seed()));
 }
 
 /// Color for cast shadows

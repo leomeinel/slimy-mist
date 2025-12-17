@@ -16,14 +16,13 @@ use rand::{Rng as _, seq::IndexedRandom as _};
 use crate::{
     AppSystems, CanvasCamera,
     characters::{
-        Character, CharacterRng, CollisionData, CollisionHandle, Shadow, VisualMap,
+        Character, CollisionData, CollisionHandle, Shadow, VisualMap,
         animations::{ANIMATION_DELAY_RANGE, AnimationRng, Animations},
     },
-    levels::{
-        DEFAULT_Z, Level, RENDER_DISTANCE,
-        chunks::{CHUNK_SIZE, ChunkController, TileData, TileHandle},
-    },
+    levels::{DEFAULT_Z, Level, RENDER_DISTANCE},
     logging::error::{ERR_LOADING_COLLISION_DATA, ERR_LOADING_TILE_DATA},
+    procgen::ChunkRng,
+    procgen::level::{CHUNK_SIZE, ChunkController, TileData, TileHandle},
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -55,8 +54,8 @@ impl Default for SpawnTimer {
 // TODO: Think about using generics to avoid code duplication
 /// Spawn chunks around the [`CanvasCamera`]
 pub(crate) fn spawn_characters<T, A>(
-    mut animation_rng: Single<&mut WyRand, (With<AnimationRng>, Without<CharacterRng>)>,
-    mut rng: Single<&mut WyRand, (With<CharacterRng>, Without<AnimationRng>)>,
+    mut animation_rng: Single<&mut WyRand, (With<AnimationRng>, Without<ChunkRng>)>,
+    mut rng: Single<&mut WyRand, (With<ChunkRng>, Without<AnimationRng>)>,
     level: Single<Entity, With<A>>,
     mut commands: Commands,
     mut controller: ResMut<SpawnController<T>>,
@@ -103,6 +102,7 @@ pub(crate) fn spawn_characters<T, A>(
 
         // Spawn character
         spawn_character::<T>(
+            &mut animation_rng,
             &mut rng,
             &mut commands,
             &mut visual_map,
@@ -112,7 +112,6 @@ pub(crate) fn spawn_characters<T, A>(
             &shadow,
             target_pos,
             &tile_size,
-            animation_rng.random_range(ANIMATION_DELAY_RANGE),
         );
     }
 }
@@ -176,6 +175,7 @@ const CHARACTERS_PER_CHUNK: usize = 4;
 
 /// Spawn characters in a chunk
 fn spawn_character<T>(
+    animation_rng: &mut WyRand,
     rng: &mut WyRand,
     commands: &mut Commands,
     visual_map: &mut ResMut<VisualMap>,
@@ -185,7 +185,6 @@ fn spawn_character<T>(
     shadow: &Res<Shadow<T>>,
     chunk_pos: &Vec2,
     tile_size: &Vec2,
-    animation_delay: f32,
 ) where
     T: Character,
 {
@@ -198,6 +197,8 @@ fn spawn_character<T>(
         .collect();
 
     for (x, y) in target_origins {
+        let delay = animation_rng.random_range(ANIMATION_DELAY_RANGE);
+
         // Multiply by tile size because chunk_pos only stores pixel origins of tiles
         let spawn_pos = Vec3::new(
             chunk_pos.x + *x as f32 * tile_size.x,
@@ -207,13 +208,7 @@ fn spawn_character<T>(
 
         // Spawn character in chosen tile
         let entity = T::spawn(
-            commands,
-            visual_map,
-            data,
-            spawn_pos,
-            animations,
-            shadow,
-            animation_delay,
+            commands, visual_map, data, spawn_pos, animations, shadow, delay,
         );
         commands.entity(container).add_child(entity);
     }

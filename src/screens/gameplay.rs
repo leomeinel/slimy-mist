@@ -15,17 +15,13 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
 use crate::{
     Pause,
-    characters::{
-        npc::Slime,
-        player::Player,
-        setup_shadow,
+    characters::{npc::Slime, player::Player, setup_shadow},
+    levels::overworld::{Overworld, OverworldAssets, spawn_overworld},
+    menus::Menu,
+    procgen::{
+        level::{clear_chunks, despawn_chunks, spawn_chunks},
         spawn::{clear_spawn_points, despawn_characters, spawn_characters},
     },
-    levels::{
-        chunks::{clear_chunks, despawn_chunks, spawn_chunks},
-        overworld::{Overworld, OverworldAssets, spawn_overworld},
-    },
-    menus::Menu,
     screens::Screen,
 };
 

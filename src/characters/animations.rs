@@ -50,7 +50,7 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 /// Player animation delay
-pub(crate) const ANIMATION_DELAY_RANGE: Range<f32> = 1.0..5.0;
+pub(crate) const ANIMATION_DELAY_RANGE: Range<f32> = 0.0..10.0;
 
 /// Animation data deserialized from a ron file as a generic
 #[derive(serde::Deserialize, Asset, TypePath, Default)]

@@ -23,6 +23,7 @@ mod dev_tools;
 mod levels;
 mod logging;
 mod menus;
+mod procgen;
 mod screens;
 mod theme;
 mod utils;
@@ -77,6 +78,7 @@ impl Plugin for AppPlugin {
         app.add_plugins((
             audio::plugin,
             characters::plugin,
+            procgen::plugin,
             #[cfg(feature = "dev")]
             dev_tools::plugin,
             levels::plugin,

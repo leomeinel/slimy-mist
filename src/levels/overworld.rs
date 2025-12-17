@@ -22,14 +22,14 @@ use crate::{
         animations::{ANIMATION_DELAY_RANGE, AnimationRng, Animations},
         npc::Slime,
         player::Player,
-        spawn::SpawnController,
     },
     impl_level_assets,
-    levels::{
-        DEFAULT_Z, LEVEL_Z, Level, LevelAssets, LevelRng,
-        chunks::{ChunkController, TileData, TileHandle},
-    },
+    levels::{DEFAULT_Z, LEVEL_Z, Level, LevelAssets, LevelRng},
     logging::{error::ERR_LOADING_COLLISION_DATA, warn::WARN_INCOMPLETE_ASSET_DATA},
+    procgen::{
+        level::{ChunkController, TileData, TileHandle},
+        spawn::SpawnController,
+    },
     screens::Screen,
 };
 

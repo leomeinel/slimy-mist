@@ -9,7 +9,6 @@
 
 //! Game worlds
 
-pub(crate) mod chunks;
 pub(crate) mod overworld;
 
 use bevy::{prelude::*, reflect::Reflectable};
@@ -22,7 +21,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(Startup, setup_rng);
 
     // Add child plugins
-    app.add_plugins((overworld::plugin, chunks::plugin));
+    app.add_plugins(overworld::plugin);
 
     // Sort entities with `DynamicZ` by Y
     app.add_systems(PostUpdate, sort_by_y);

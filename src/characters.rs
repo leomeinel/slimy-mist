@@ -12,7 +12,6 @@
 pub(crate) mod animations;
 pub(crate) mod npc;
 pub(crate) mod player;
-pub(crate) mod spawn;
 
 use std::marker::PhantomData;
 
@@ -40,12 +39,7 @@ pub(super) fn plugin(app: &mut App) {
     app.insert_resource(VisualMap::default());
 
     // Add child plugins
-    app.add_plugins((
-        animations::plugin,
-        npc::plugin,
-        player::plugin,
-        spawn::plugin,
-    ));
+    app.add_plugins((animations::plugin, npc::plugin, player::plugin));
 
     // Tick jump timer
     app.add_systems(Update, tick_jump_timer.in_set(AppSystems::TickTimers));

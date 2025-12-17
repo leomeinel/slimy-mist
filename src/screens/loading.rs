@@ -70,8 +70,10 @@ pub(super) fn plugin(app: &mut App) {
             .load_collection::<SlimeAssets>(),
     );
 
+    // Spawn loading screen
     app.add_systems(OnEnter(Screen::Loading), spawn_loading_screen);
 
+    // After initial `LoadingState<Screen::Loading>`, run other requirements before switching to `Screen::LoadingExit`
     app.add_systems(
         Update,
         (setup_overworld, setup_player, setup_slime)
@@ -80,6 +82,7 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
+/// Display loading screen
 fn spawn_loading_screen(mut commands: Commands) {
     commands.spawn((
         widgets::common::ui_root("Loading Screen"),

@@ -171,7 +171,7 @@ fn setup_rng(mut global: Single<&mut WyRand, With<GlobalRng>>, mut commands: Com
     commands.spawn((ProcGenRng, global.fork_seed()));
 }
 
-/// Tick chunk timer
+/// Tick timer for procedural generation
 fn tick_procgen_timer(mut timer: ResMut<ProcGenTimer>, time: Res<Time>) {
     timer.0.tick(time.delta());
 }

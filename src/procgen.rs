@@ -130,6 +130,9 @@ where
 #[derive(Component)]
 pub(crate) struct ProcGenRng;
 
+// FIXME: It seems like no level chunk is ever despawned. Investigate!
+//        Also characters are still spawning when we are already despawning.
+//        That is only the case for already generated chunks and I think makes sense if they are not removed.
 /// Despawn procedurally generated entities outside of [`RENDER_DISTANCE`] and remove entries in controller
 ///
 /// ## Traits
@@ -161,7 +164,9 @@ pub(crate) fn despawn_procgen<T, A>(
     for (entity, transform) in query.iter() {
         let pos = transform.translation.xy();
         let distance = camera.translation.xy().distance(pos);
-        let despawn_range = RENDER_DISTANCE as f32 * CHUNK_SIZE.x as f32 * tile_size.x;
+        // Despawn range is calculated from the render distance in pixels + the pixel size of one chunk.
+        let despawn_range = RENDER_DISTANCE as f32 * CHUNK_SIZE.x as f32 * tile_size.x
+            + (CHUNK_SIZE.x as f32 * tile_size.x);
 
         if distance > despawn_range {
             let pos = &IVec2::new(

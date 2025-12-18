@@ -73,7 +73,7 @@ pub(crate) fn spawn_characters<T, A, B>(
             (chunk_pos.x as f32 * CHUNK_SIZE.x as f32 * tile_size.x).floor(),
             (chunk_pos.y as f32 * CHUNK_SIZE.y as f32 * tile_size.y).floor(),
         );
-        // Continue if a character has already been stored in chunk or store pixel origin of tile
+        // Continue if a character has already been stored in chunk or store chunk origin
         if controller.positions.contains(chunk_pos) {
             continue;
         }

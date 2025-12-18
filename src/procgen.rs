@@ -26,7 +26,7 @@ pub(super) fn plugin(app: &mut App) {
     app.insert_resource(ProcGenTimer::default());
     app.add_systems(Update, tick_procgen_timer.in_set(AppSystems::TickTimers));
 
-    // Add rng for chunks
+    // Add rng for procedural generation
     app.add_systems(Startup, setup_rng);
 }
 
@@ -37,7 +37,7 @@ where
 {
 }
 
-/// Spawn controller that stores positions of spawned entities
+/// Controller that stores positions of spawned entities
 ///
 /// ## Traits
 ///
@@ -51,7 +51,7 @@ where
     _phantom: PhantomData<T>,
 }
 
-/// Timer that tracks chunk generation
+/// Timer that tracks procedural generation
 #[derive(Resource, Debug, Clone, PartialEq, Reflect)]
 #[reflect(Resource)]
 pub(crate) struct ProcGenTimer(Timer);
@@ -157,7 +157,7 @@ pub(crate) fn despawn_procgen<T, A>(
     let data = data.get(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
     let tile_size = Vec2::new(data.tile_height, data.tile_width);
 
-    // Despawn chunks outside of `RENDER_DISTANCE`
+    // Despawn entities outside of `RENDER_DISTANCE`
     for (entity, transform) in query.iter() {
         let pos = transform.translation.xy();
         let distance = camera.translation.xy().distance(pos);

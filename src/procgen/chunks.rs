@@ -14,7 +14,7 @@ use crate::{
     CanvasCamera,
     levels::{LEVEL_Z, LevelAssets, RENDER_DISTANCE},
     logging::{error::ERR_LOADING_TILE_DATA, warn::WARN_INCOMPLETE_TILE_DATA},
-    procgen::{Despawnable, ProcGenController, ProcGenTimer, TileData, TileHandle},
+    procgen::{ProcGenController, ProcGenTimer, ProcGenerated, TileData, TileHandle},
     screens::Screen,
 };
 
@@ -37,8 +37,8 @@ pub(crate) fn spawn_chunks<T, A>(
     assets: Res<A>,
     timer: Res<ProcGenTimer>,
 ) where
-    T: Despawnable, // Despawnable of the level
-    A: LevelAssets, // Level assets
+    T: ProcGenerated, // Procedurally generated level
+    A: LevelAssets,   // Level assets
 {
     // Return if timer has not finished
     if !timer.0.just_finished() {
@@ -89,8 +89,8 @@ fn spawn_chunk<T, A>(
     tile_size: Vec2,
     texture_index: TileTextureIndex,
 ) where
-    T: Despawnable, // Despawnable of the level
-    A: LevelAssets, // Level assets
+    T: ProcGenerated, // Procedurally generated level
+    A: LevelAssets,   // Level assets
 {
     // Create empty entity and storage dedicated to this chunk
     let container = commands.spawn(DespawnOnExit(Screen::Gameplay)).id();

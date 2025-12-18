@@ -19,7 +19,7 @@ use crate::{
     levels::{DEFAULT_Z, Level},
     logging::error::{ERR_LOADING_COLLISION_DATA, ERR_LOADING_TILE_DATA},
     procgen::{
-        Despawnable, ProcGenController, ProcGenRng, ProcGenTimer, TileData, TileHandle,
+        ProcGenController, ProcGenRng, ProcGenTimer, ProcGenerated, TileData, TileHandle,
         chunks::CHUNK_SIZE,
     },
 };
@@ -41,9 +41,9 @@ pub(crate) fn spawn_characters<T, A, B>(
     tile_handle: Res<TileHandle<A>>,
     timer: Res<ProcGenTimer>,
 ) where
-    T: Character + Despawnable, // Despawnable of the character that is also the character marker
-    A: Despawnable,             // Despawnable of the level
-    B: Level,                   // Container level
+    T: Character + ProcGenerated, // Procedurally generated character
+    A: ProcGenerated,             // Procedurally generated level
+    B: Level,                     // Container level
 {
     // Return if timer has not finished
     if !timer.0.just_finished() {
@@ -107,7 +107,7 @@ fn spawn_character<T>(
     chunk_pos: &Vec2,
     tile_size: &Vec2,
 ) where
-    T: Character + Despawnable, // Despawnable of the character that is also the character marker
+    T: Character + ProcGenerated, // Procedurally generated character
 {
     // Choose a number of target chunk tile origins to determine spawn positions
     let target_origins: Vec<(u32, u32)> = (0..CHUNK_SIZE.x)

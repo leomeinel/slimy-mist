@@ -25,7 +25,7 @@ use crate::{
     impl_level_assets,
     levels::{DEFAULT_Z, LEVEL_Z, Level, LevelAssets, LevelRng},
     logging::{error::ERR_LOADING_COLLISION_DATA, warn::WARN_INCOMPLETE_ASSET_DATA},
-    procgen::{Despawnable, ProcGenController},
+    procgen::{ProcGenController, ProcGenerated},
     screens::Screen,
 };
 
@@ -54,7 +54,7 @@ impl Level for Overworld {}
 /// Marker component for overworld procedural generation
 #[derive(Component, Default, Reflect)]
 pub(crate) struct OverworldProcGen;
-impl Despawnable for OverworldProcGen {}
+impl ProcGenerated for OverworldProcGen {}
 
 /// Level position
 const LEVEL_POS: Vec3 = Vec3::new(0., 0., LEVEL_Z);

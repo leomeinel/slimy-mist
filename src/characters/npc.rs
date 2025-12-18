@@ -27,7 +27,7 @@ use crate::{
     },
     impl_character_assets,
     levels::{DEFAULT_Z, DynamicZ},
-    procgen::Despawnable,
+    procgen::ProcGenerated,
     screens::Screen,
 };
 
@@ -108,4 +108,4 @@ impl Character for Slime {
         )
     }
 }
-impl Despawnable for Slime {}
+impl ProcGenerated for Slime {}

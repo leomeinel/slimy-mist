@@ -22,13 +22,13 @@ use bevy_rapier2d::prelude::*;
 use crate::{
     AppSystems, PausableSystems, Pause,
     characters::{
-        Character, CharacterAssets, JumpTimer, Movement, VisualMap,
+        Character, CharacterAssets, CollisionData, CollisionHandle, JumpTimer, Movement, VisualMap,
         animations::{self, AnimationController, AnimationState, Animations},
         character_collider, setup_shadow, tick_jump_timer,
     },
     impl_character_assets,
-    levels::{DEFAULT_Z, Y_SORT_FACTOR, YSort},
-    logging::warn::WARN_INCOMPLETE_COLLISION_DATA_FALLBACK,
+    levels::{DEFAULT_Z, YSort, YSortOffset},
+    logging::{error::ERR_LOADING_TILE_DATA, warn::WARN_INCOMPLETE_COLLISION_DATA_FALLBACK},
     screens::Screen,
     utils::maths::ease_out_quad,
 };
@@ -115,14 +115,13 @@ impl Character for Player {
             warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA_FALLBACK);
             24.
         });
-        // Add shadow offset to Z-level of player
-        let z_level = DEFAULT_Z + Y_SORT_FACTOR * width / 4.;
 
         (
             Name::new("Player"),
             Self,
-            Transform::from_translation(pos.extend(z_level)),
-            YSort(z_level),
+            Transform::from_translation(pos.extend(DEFAULT_Z)),
+            YSort(DEFAULT_Z),
+            YSortOffset(width / 4.),
             character_collider::<Self>(data),
             Visibility::Inherited,
             RigidBody::KinematicVelocityBased,
@@ -277,6 +276,9 @@ const JUMP_HEIGHT: f32 = 12.;
 fn apply_jump(
     parent: Single<(Entity, &mut Movement, &JumpTimer), With<Player>>,
     mut child_query: Query<(&AnimationController, &mut Transform), Without<Player>>,
+    mut commands: Commands,
+    data: Res<Assets<CollisionData<Player>>>,
+    handle: Res<CollisionHandle<Player>>,
     visual_map: Res<VisualMap>,
 ) {
     let (entity, mut movement, timer) = parent.into_inner();
@@ -306,6 +308,21 @@ fn apply_jump(
 
     transform.translation.y += target - movement.jump_height;
     movement.jump_height = target;
+
+    // Apply `YSortOffset` for jump
+    let y_sort_offset = if target < 0. {
+        JUMP_HEIGHT + target
+    } else {
+        target
+    };
+    let data = data.get(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
+    let width = data.width.unwrap_or_else(|| {
+        warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA_FALLBACK);
+        24.
+    });
+    commands
+        .entity(entity)
+        .insert(YSortOffset(width / 4. + y_sort_offset));
 }
 
 /// Limit jump by setting fall after specific time and then switching to walk
@@ -313,6 +330,8 @@ fn limit_jump(
     parent: Single<(Entity, &mut Movement, &JumpTimer), With<Player>>,
     mut child_query: Query<&mut AnimationController, Without<Player>>,
     mut commands: Commands,
+    data: Res<Assets<CollisionData<Player>>>,
+    handle: Res<CollisionHandle<Player>>,
     visual_map: Res<VisualMap>,
 ) {
     let (entity, mut movement, timer) = parent.into_inner();
@@ -339,7 +358,15 @@ fn limit_jump(
             commands.entity(entity).insert(JumpTimer::default());
             animation_controller.state = AnimationState::Fall;
         }
-        AnimationState::Fall => animation_controller.state = AnimationState::Idle,
+        AnimationState::Fall => {
+            let data = data.get(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
+            let width = data.width.unwrap_or_else(|| {
+                warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA_FALLBACK);
+                24.
+            });
+            commands.entity(entity).insert(YSortOffset(width / 4.));
+            animation_controller.state = AnimationState::Idle
+        }
         _ => (),
     }
 }

@@ -68,14 +68,17 @@ where
 {
 }
 
-// FIXME: Jumping currently also triggers this. Maybe somehow decouple from visual or find better solution.
 /// Sorts entities by their y position.
-///
-/// Takes in a base value usually the sprite default Z with possibly an height offset.
-/// this value could be tweaked to implement virtual Z for jumping
 #[derive(Component, Default, Reflect)]
 #[reflect(Component)]
 pub(crate) struct YSort(pub(crate) f32);
+
+/// Applies an offset to the [`YSort`].
+///
+/// The offset is expected to be in px.
+#[derive(Component, Default, Reflect)]
+#[reflect(Component)]
+pub(crate) struct YSortOffset(pub(crate) f32);
 
 /// Rng for levels
 #[derive(Component)]
@@ -89,8 +92,10 @@ fn setup_rng(mut global: Single<&mut WyRand, With<GlobalRng>>, mut commands: Com
 /// Applies the y-sorting to the entities Z position.
 ///
 /// Heavily inspired by: <https://github.com/fishfolk/punchy>
-fn y_sort(mut query: Query<(&mut Transform, &YSort)>) {
-    for (mut transform, sort) in query.iter_mut() {
-        transform.translation.z = sort.0 - transform.translation.y * Y_SORT_FACTOR;
+fn y_sort(mut query: Query<(&mut Transform, &YSort, Option<&YSortOffset>)>) {
+    for (mut transform, sort, sort_offset) in query.iter_mut() {
+        transform.translation.z = (sort.0
+            + sort_offset.map_or(0., |offset| offset.0) * Y_SORT_FACTOR)
+            - transform.translation.y * Y_SORT_FACTOR;
     }
 }

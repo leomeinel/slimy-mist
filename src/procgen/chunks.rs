@@ -12,19 +12,12 @@ use bevy_ecs_tilemap::prelude::*;
 
 use crate::{
     CanvasCamera,
-    levels::{LEVEL_Z, LevelAssets, RENDER_DISTANCE},
+    levels::{LEVEL_Z, Level, LevelAssets},
     logging::{error::ERR_LOADING_TILE_DATA, warn::WARN_INCOMPLETE_TILE_DATA},
-    procgen::{ProcGenController, ProcGenTimer, ProcGenerated, TileData, TileHandle},
-    screens::Screen,
-};
-
-/// Size of a single chunk
-pub(crate) const CHUNK_SIZE: UVec2 = UVec2 { x: 16, y: 16 };
-
-/// Chunk size for [`TilemapRenderSettings`]
-const RENDER_CHUNK_SIZE: UVec2 = UVec2 {
-    x: CHUNK_SIZE.x * 2,
-    y: CHUNK_SIZE.y * 2,
+    procgen::{
+        CHUNK_SIZE, PROCGEN_DISTANCE, ProcGenController, ProcGenTimer, ProcGenerated, TileData,
+        TileHandle,
+    },
 };
 
 /// Spawn chunks around the [`CanvasCamera`]
@@ -33,8 +26,10 @@ const RENDER_CHUNK_SIZE: UVec2 = UVec2 {
 ///
 /// - `T` must implement [`ProcGenerated`]' and is used as the procedurally generated level associated with a [`ProcGenController<T>`].
 /// - `A` must implement [`LevelAssets`] and is used as a level's assets.
-pub(crate) fn spawn_chunks<T, A>(
+/// - `B` must implement [`Level`].
+pub(crate) fn spawn_chunks<T, A, B>(
     camera: Single<&Transform, With<CanvasCamera>>,
+    level: Single<Entity, With<B>>,
     mut commands: Commands,
     mut controller: ResMut<ProcGenController<T>>,
     data: Res<Assets<TileData<T>>>,
@@ -44,6 +39,7 @@ pub(crate) fn spawn_chunks<T, A>(
 ) where
     T: ProcGenerated,
     A: LevelAssets,
+    B: Level,
 {
     // Return if timer has not finished
     if !timer.0.just_finished() {
@@ -52,7 +48,7 @@ pub(crate) fn spawn_chunks<T, A>(
 
     // Get data from `TileData` with `TileHandle`
     let data = data.get(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
-    let tile_size = IVec2::new(data.tile_height as i32, data.tile_width as i32);
+    let tile_size = Vec2::new(data.tile_height, data.tile_width);
     // FIXME: Use this for conditional spawning/arranging
     let Some(_tiles) = data.get_tiles() else {
         // Return and do not spawn chunks if tiles are not configured correctly
@@ -61,25 +57,34 @@ pub(crate) fn spawn_chunks<T, A>(
     };
 
     // Get target translation for new chunk from camera translation
-    let camera_pos = &camera.translation.xy().as_ivec2();
-    let chunk_size = IVec2::new(CHUNK_SIZE.x as i32, CHUNK_SIZE.y as i32);
-    let chunk_pos = camera_pos / (chunk_size * tile_size);
+    let camera_pos = camera.translation.xy();
+    let chunk_size_px = Vec2::new(CHUNK_SIZE.x as f32, CHUNK_SIZE.y as f32) * tile_size;
+    let chunk_pos = (camera_pos / chunk_size_px).floor().as_ivec2();
 
     // Spawn chunk behind and in front of chunk position if it does not contain a chunk already
-    for y in (chunk_pos.y - RENDER_DISTANCE)..(chunk_pos.y + RENDER_DISTANCE) {
-        for x in (chunk_pos.x - RENDER_DISTANCE)..(chunk_pos.x + RENDER_DISTANCE) {
-            // Continue if a character has already been stored in chunk or store pixel origin of tile
-            if controller.positions.contains(&IVec2::new(x, y)) {
+    // NOTE: We are using inclusive range because we might have a movement offset of 1 chunk.
+    // NOTE: We are spawning in a square. Since that has only minimal performance overhead.
+    //       I deem this a cleaner solution and if spawning in a circle, distance calculations
+    //       would be more expensive.
+    for y in (chunk_pos.y - PROCGEN_DISTANCE)..=(chunk_pos.y + PROCGEN_DISTANCE) {
+        for x in (chunk_pos.x - PROCGEN_DISTANCE)..=(chunk_pos.x + PROCGEN_DISTANCE) {
+            // Continue if a chunk has already been stored
+            if controller
+                .positions
+                .values()
+                .any(|&v| v == IVec2::new(x, y))
+            {
                 continue;
             }
-            controller.positions.insert(IVec2::new(x, y));
 
             // Spawn chunk
             spawn_chunk::<T, A>(
                 &mut commands,
+                &mut controller,
+                level.entity(),
                 &assets,
                 IVec2::new(x, y),
-                tile_size.as_vec2(),
+                tile_size,
                 TileTextureIndex(8),
             );
         }
@@ -94,6 +99,8 @@ pub(crate) fn spawn_chunks<T, A>(
 /// - `A` must implement [`LevelAssets`] and is used as a level's assets.
 fn spawn_chunk<T, A>(
     commands: &mut Commands,
+    controller: &mut ResMut<ProcGenController<T>>,
+    level: Entity,
     assets: &Res<A>,
     chunk_pos: IVec2,
     tile_size: Vec2,
@@ -102,8 +109,9 @@ fn spawn_chunk<T, A>(
     T: ProcGenerated,
     A: LevelAssets,
 {
-    // Create empty entity and storage dedicated to this chunk
-    let container = commands.spawn(DespawnOnExit(Screen::Gameplay)).id();
+    // Create empty container and store in controller
+    let container = commands.spawn(T::default()).id();
+    controller.positions.insert(container, chunk_pos);
     let mut storage = TileStorage::empty(CHUNK_SIZE.into());
 
     // Spawn a `TileBundle` mapped to the container entity for each x/y in `CHUNK_SIZE`,
@@ -112,15 +120,12 @@ fn spawn_chunk<T, A>(
         for y in 0..CHUNK_SIZE.y {
             let tile_pos = TilePos { x, y };
             let entity = commands
-                .spawn((
-                    T::default(),
-                    TileBundle {
-                        position: tile_pos,
-                        texture_index,
-                        tilemap_id: TilemapId(container),
-                        ..default()
-                    },
-                ))
+                .spawn((TileBundle {
+                    position: tile_pos,
+                    texture_index,
+                    tilemap_id: TilemapId(container),
+                    ..default()
+                },))
                 .id();
             commands.entity(container).add_child(entity);
             storage.set(&tile_pos, entity);
@@ -143,9 +148,11 @@ fn spawn_chunk<T, A>(
         tile_size: tile_size.into(),
         transform,
         render_settings: TilemapRenderSettings {
-            render_chunk_size: RENDER_CHUNK_SIZE,
+            render_chunk_size: CHUNK_SIZE,
             y_sort: false,
         },
         ..default()
     });
+    // Add entity to level so that level handles despawning
+    commands.entity(level).add_child(container);
 }

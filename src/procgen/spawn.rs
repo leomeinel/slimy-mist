@@ -19,8 +19,8 @@ use crate::{
     levels::{DEFAULT_Z, Level},
     logging::error::{ERR_LOADING_COLLISION_DATA, ERR_LOADING_TILE_DATA},
     procgen::{
-        ProcGenController, ProcGenRng, ProcGenTimer, ProcGenerated, TileData, TileHandle,
-        chunks::CHUNK_SIZE,
+        CHUNK_SIZE, ProcGenController, ProcGenRng, ProcGenTimer, ProcGenerated, TileData,
+        TileHandle,
     },
 };
 
@@ -68,28 +68,24 @@ pub(crate) fn spawn_characters<T, A, B>(
     let data = (data.shape.clone(), data.width, data.height);
 
     // FIXME: Use noise for spawning positions
-    for chunk_pos in &chunk_controller.positions {
-        let target_pos = &Vec2::new(
-            (chunk_pos.x as f32 * CHUNK_SIZE.x as f32 * tile_size.x).floor(),
-            (chunk_pos.y as f32 * CHUNK_SIZE.y as f32 * tile_size.y).floor(),
-        );
-        // Continue if a character has already been stored in chunk or store chunk origin
-        if controller.positions.contains(chunk_pos) {
+    for (_, chunk_pos) in &chunk_controller.positions {
+        // Continue if chunk has already been stored
+        if controller.positions.values().any(|&v| v == *chunk_pos) {
             continue;
         }
-        controller.positions.insert(*chunk_pos);
 
         // Spawn character
         spawn_character::<T>(
             &mut animation_rng,
             &mut rng,
             &mut commands,
+            &mut controller,
             &mut visual_map,
             level.entity(),
             &animations,
             &data,
             &shadow,
-            target_pos,
+            chunk_pos,
             &tile_size,
         );
     }
@@ -109,12 +105,13 @@ fn spawn_character<T>(
     animation_rng: &mut WyRand,
     rng: &mut WyRand,
     commands: &mut Commands,
+    controller: &mut ResMut<ProcGenController<T>>,
     visual_map: &mut ResMut<VisualMap>,
-    container: Entity,
+    level: Entity,
     animations: &Res<Animations<T>>,
     data: &(Option<String>, Option<f32>, Option<f32>),
     shadow: &Res<Shadow<T>>,
-    chunk_pos: &Vec2,
+    chunk_pos: &IVec2,
     tile_size: &Vec2,
 ) where
     T: Character + ProcGenerated,
@@ -130,17 +127,19 @@ fn spawn_character<T>(
     for (x, y) in target_origins {
         let delay = animation_rng.random_range(ANIMATION_DELAY_RANGE);
 
-        // Multiply by tile size because chunk_pos only stores pixel origins of tiles
-        let spawn_pos = Vec3::new(
-            chunk_pos.x + *x as f32 * tile_size.x,
-            chunk_pos.y + *y as f32 * tile_size.y,
+        // Set target position in pixels
+        let target_pos = Vec3::new(
+            chunk_pos.x as f32 * CHUNK_SIZE.x as f32 * tile_size.x + *x as f32 * tile_size.x,
+            chunk_pos.y as f32 * CHUNK_SIZE.y as f32 * tile_size.y + *y as f32 * tile_size.y,
             DEFAULT_Z,
         );
 
-        // Spawn character in chosen tile
+        // Spawn entity in chosen tile and store in controller
         let entity = T::spawn(
-            commands, visual_map, data, spawn_pos, animations, shadow, delay,
+            commands, visual_map, data, target_pos, animations, shadow, delay,
         );
-        commands.entity(container).add_child(entity);
+        controller.positions.insert(entity, *chunk_pos);
+        // Add entity to level so that level handles despawning
+        commands.entity(level).add_child(entity);
     }
 }

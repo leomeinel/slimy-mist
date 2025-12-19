@@ -35,7 +35,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         (
-            spawn_chunks::<OverworldProcGen, OverworldAssets>,
+            spawn_chunks::<OverworldProcGen, OverworldAssets, Overworld>,
             despawn_procgen::<OverworldProcGen, OverworldProcGen>,
             spawn_characters::<Slime, OverworldProcGen, Overworld>,
             despawn_procgen::<Slime, OverworldProcGen>,

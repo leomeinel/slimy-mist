@@ -34,9 +34,6 @@ pub(crate) const SHADOW_Z: f32 = 9.;
 /// Z-level for any foreground object
 pub(crate) const DEFAULT_Z: f32 = 10.;
 
-/// Render distance in chunks
-pub(crate) const RENDER_DISTANCE: i32 = 3;
-
 /// Applies to anything that stores level assets
 pub(crate) trait LevelAssets
 where

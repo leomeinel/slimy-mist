@@ -17,7 +17,6 @@ bevy_common_assets = { version = "0.14.0", features = ["ron"] }
 bevy_ecs_tilemap = "0.17.0"
 bevy_enhanced_input = "0.20.0"
 bevy_light_2d = "0.8.0"
-bevy_northstar = "0.5.0"
 bevy_prng = { version = "0.12.1", features = ["rand_chacha", "wyrand"] }
 bevy_rand = "0.12.1"
 bevy_rapier2d = "0.32.0"
@@ -32,6 +31,7 @@ tracing = { version = "0.1.44", features = [
  "max_level_debug",
  "release_max_level_warn",
 ] }
+vleue_navigator = "0.14.0"
 
 [dev-dependencies]
 bevy_rapier2d = { version = "0.32.0", features = ["debug-render-2d"] }

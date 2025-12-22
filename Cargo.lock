@@ -352,6 +352,7 @@ dependencies = [
  "bevy_rapier2d",
  "bevy_spritesheet_animation",
  "iyes_progress",
+ "polyanya",
  "rand",
  "serde",
  "tracing",

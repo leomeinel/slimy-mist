@@ -16,7 +16,7 @@ use crate::{
     logging::{error::ERR_LOADING_TILE_DATA, warn::WARN_INCOMPLETE_TILE_DATA},
     procgen::{
         CHUNK_SIZE, PROCGEN_DISTANCE, ProcGenController, ProcGenTimer, ProcGenerated, TileData,
-        TileHandle,
+        TileHandle, navigation::chunk_mesh,
     },
 };
 
@@ -132,10 +132,9 @@ fn spawn_chunk<T, A>(
         }
     }
 
-    let transform = Transform::from_xyz(
+    let world_pos = Vec2::new(
         chunk_pos.x as f32 * CHUNK_SIZE.x as f32 * tile_size.x,
         chunk_pos.y as f32 * CHUNK_SIZE.y as f32 * tile_size.y,
-        LEVEL_Z,
     );
     let handle = assets.get_tile_set().clone();
 
@@ -146,13 +145,15 @@ fn spawn_chunk<T, A>(
         storage,
         texture: TilemapTexture::Single(handle),
         tile_size: tile_size.into(),
-        transform,
+        transform: Transform::from_translation(world_pos.extend(LEVEL_Z)),
         render_settings: TilemapRenderSettings {
             render_chunk_size: CHUNK_SIZE,
             y_sort: false,
         },
         ..default()
     });
-    // Add entity to level so that level handles despawning
-    commands.entity(level).add_child(container);
+
+    // Add chunk container and nav mesh to level so that level handles despawning
+    let nav_mesh = commands.spawn(chunk_mesh(world_pos, tile_size.x)).id();
+    commands.entity(level).add_children(&[container, nav_mesh]);
 }

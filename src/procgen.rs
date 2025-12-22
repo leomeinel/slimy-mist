@@ -8,6 +8,7 @@
  */
 
 pub(crate) mod chunks;
+pub(crate) mod navigation;
 pub(crate) mod spawn;
 
 use std::marker::PhantomData;
@@ -26,6 +27,9 @@ pub(super) fn plugin(app: &mut App) {
     // Setup timer
     app.insert_resource(ProcGenTimer::default());
     app.add_systems(Update, tick_procgen_timer.in_set(AppSystems::TickTimers));
+
+    // Child plugins
+    app.add_plugins(navigation::plugin);
 
     // Add rng for procedural generation
     app.add_systems(Startup, setup_rng);

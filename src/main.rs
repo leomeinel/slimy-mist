@@ -26,7 +26,6 @@ mod menus;
 mod procgen;
 mod screens;
 mod theme;
-mod utils;
 
 use bevy::{asset::AssetMetaCheck, color::palettes::tailwind, prelude::*, window::WindowResized};
 use bevy_ecs_tilemap::TilemapPlugin;
@@ -105,6 +104,7 @@ impl Plugin for AppPlugin {
         // Spawn the main camera.
         app.add_systems(Startup, spawn_camera);
 
+        // Update the main camera
         app.add_systems(Update, (fit_canvas, update_camera));
     }
 }

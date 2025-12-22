@@ -34,13 +34,14 @@ pub(super) fn plugin(app: &mut App) {
     // Start spawning/despawning chunks and characters
     app.add_systems(
         Update,
-        (
-            spawn_chunks::<OverworldProcGen, OverworldAssets, Overworld>,
+        ((
             despawn_procgen::<OverworldProcGen, OverworldProcGen>,
-            spawn_characters::<Slime, OverworldProcGen, Overworld>,
             despawn_procgen::<Slime, OverworldProcGen>,
+            spawn_chunks::<OverworldProcGen, OverworldAssets, Overworld>,
+            spawn_characters::<Slime, OverworldProcGen, Overworld>,
         )
-            .run_if(in_state(Screen::Gameplay)),
+            .chain())
+        .run_if(in_state(Screen::Gameplay)),
     );
 
     // Open pause on pressing P or Escape and pause game

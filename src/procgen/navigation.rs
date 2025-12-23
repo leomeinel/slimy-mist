@@ -23,6 +23,8 @@ pub(super) fn plugin(app: &mut App) {
     ));
 }
 
+/// Simplification used in [`NavMeshSettings`]
+const OBSTACLE_SIMPLIFICATION: f32 = 0.05;
 /// Update interval for [`NavMeshUpdateMode::Debounced`] that is applied to [`chunk_mesh`]
 const DEBOUNCED_UPDATE_INTERVAL: f32 = 0.5;
 
@@ -30,7 +32,7 @@ const DEBOUNCED_UPDATE_INTERVAL: f32 = 0.5;
 pub(crate) fn chunk_mesh(world_pos: Vec2, scale_factor: f32) -> impl Bundle {
     (
         NavMeshSettings {
-            simplify: 0.05,
+            simplify: OBSTACLE_SIMPLIFICATION,
             fixed: Triangulation::from_outer_edges(&[
                 Vec2::new(0., 0.),
                 Vec2::new(CHUNK_SIZE.x as f32, 0.),

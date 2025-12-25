@@ -247,7 +247,7 @@ fn set_jump(
         return;
     }
 
-    let entity = parent.into_inner();
+    let entity = parent.entity();
 
     // Extract `animation_controller` from `child_query`
     let Some(visual) = visual_map.0.get(&entity) else {

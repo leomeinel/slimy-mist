@@ -55,6 +55,10 @@ pub(crate) fn spawn_characters<T, A, B>(
     if !timer.0.just_finished() {
         return;
     }
+    // Return if `chunk_controller` has not changed
+    if !chunk_controller.is_changed() {
+        return;
+    }
 
     // Get data from `TileData` with `TileHandle`
     let data = tile_data

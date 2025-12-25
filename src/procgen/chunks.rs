@@ -28,7 +28,7 @@ use crate::{
 /// - `A` must implement [`LevelAssets`] and is used as a level's assets.
 /// - `B` must implement [`Level`].
 pub(crate) fn spawn_chunks<T, A, B>(
-    camera: Single<&Transform, With<CanvasCamera>>,
+    camera: Single<(&Transform, Ref<Transform>), With<CanvasCamera>>,
     level: Single<Entity, With<B>>,
     mut commands: Commands,
     mut controller: ResMut<ProcGenController<T>>,
@@ -43,6 +43,13 @@ pub(crate) fn spawn_chunks<T, A, B>(
 {
     // Return if timer has not finished
     if !timer.0.just_finished() {
+        return;
+    }
+
+    let (camera, ref_camera) = camera.into_inner();
+
+    // Return if camera transform has not changed
+    if !ref_camera.is_changed() {
         return;
     }
 

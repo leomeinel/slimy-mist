@@ -239,14 +239,7 @@ pub(crate) fn setup_shadow<T>(
 }
 
 /// Collider for different shapes
-///
-/// ## Traits
-///
-/// - `T` must implement [`Character`].
-pub(crate) fn character_collider<T>(data: &(Option<String>, Option<f32>, Option<f32>)) -> Collider
-where
-    T: Character,
-{
+pub(crate) fn character_collider(data: &(Option<String>, Option<f32>, Option<f32>)) -> Collider {
     let (Some(shape), Some(width), Some(height)) = data else {
         // Return default collider if data is not complete
         warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA_FALLBACK);

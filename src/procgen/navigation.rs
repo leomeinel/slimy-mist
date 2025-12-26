@@ -153,13 +153,13 @@ pub(crate) fn update_nav_grid_agent_pos<T, A>(
     }
 }
 
-/// Add path to [`Character`] that follows another [`Character`]
+/// Add pathfinding to [`Character`] that tracks another [`Character`]
 ///
 /// ## Traits
 ///
-/// - `T` must implement '[`Character`]' and is used as the origin entities that a path is given to.
+/// - `T` must implement '[`Character`]' and is used as the origin entity that a path is given to.
 /// - `A` must implement '[`Character`]' and is used as the target entity.
-pub(crate) fn follow_character<T, A>(
+pub(crate) fn pathfind_to_character<T, A>(
     target: Single<&AgentPos, (With<A>, Without<T>)>,
     origins: Query<(Entity, Option<&mut Pathfind>), (With<T>, With<AgentPos>, Without<A>)>,
     mut commands: Commands,

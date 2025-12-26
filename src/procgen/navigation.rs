@@ -58,16 +58,18 @@ pub(crate) fn spawn_nav_grid<T>(
 
 /// Rebuild the nav grid
 ///
-/// Currently this sets every cell to [Nav::Passable], but this can in the future also include obstacle detection.
+/// Currently this sets every cell to [`Nav::Passable`], but this can in the future also include obstacle detection.
 pub(crate) fn rebuild_nav_grid(
     mut grid: Single<&mut Grid<OrdinalNeighborhood>>,
     mut procgen_state: ResMut<NextState<ProcGenState>>,
+    mut grid_pos: Local<UVec2>,
+    mut rebuild: Local<bool>,
 ) {
-    let mut rebuild = false;
+    let range_limit = *grid_pos + CHUNK_SIZE;
 
     // Set every cell to passable
-    for x in 0..GRID_SIZE.x {
-        for y in 0..GRID_SIZE.y {
+    for x in grid_pos.x..range_limit.x {
+        for y in grid_pos.y..range_limit.y {
             let pos = UVec3::new(x, y, 0);
             // Continue if pos is already passable to avoid rebuilds
             if matches!(grid.nav(pos), Some(Nav::Passable(1))) {
@@ -76,12 +78,28 @@ pub(crate) fn rebuild_nav_grid(
 
             // Set `pos` to passable and set rebuild to true
             grid.set_nav(pos, Nav::Passable(1));
-            rebuild = true;
+            *rebuild = true;
         }
     }
+    grid_pos.x = range_limit.x;
+
+    // Return if range limit x has not exceeded `GRID_SIZE`
+    if range_limit.x < GRID_SIZE.x {
+        return;
+    }
+    // Reset x, advance y and return if range limit y has not exceeded `GRID_SIZE`
+    if range_limit.y < GRID_SIZE.y {
+        grid_pos.x = 0;
+        grid_pos.y += CHUNK_SIZE.y;
+        return;
+    }
+
+    // Reset local variables
+    *grid_pos = UVec2::ZERO;
+    *rebuild = false;
 
     // Rebuild grid if rebuild is true
-    if rebuild {
+    if *rebuild {
         grid.build();
     }
 

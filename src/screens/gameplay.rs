@@ -22,7 +22,9 @@ use crate::{
         ProcGenState,
         chunks::spawn_chunks,
         clear_procgen_controller, despawn_procgen,
-        navigation::{rebuild_nav_grid, spawn_nav_grid, update_nav_grid_agent_pos},
+        navigation::{
+            follow_character, rebuild_nav_grid, spawn_nav_grid, update_nav_grid_agent_pos,
+        },
         spawn::spawn_characters,
     },
     screens::Screen,
@@ -66,6 +68,7 @@ pub(super) fn plugin(app: &mut App) {
         (
             update_nav_grid_agent_pos::<Player, OverworldProcGen>,
             update_nav_grid_agent_pos::<Slime, OverworldProcGen>,
+            follow_character::<Slime, Player>,
         )
             .chain()
             .run_if(in_state(Screen::Gameplay)),

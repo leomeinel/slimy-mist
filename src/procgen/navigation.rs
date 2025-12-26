@@ -114,7 +114,7 @@ pub(crate) fn rebuild_nav_grid(
 /// - `A` must implement [`ProcGenerated`] and is used as a level's procedurally generated item.
 pub(crate) fn update_nav_grid_agent_pos<T, A>(
     grid: Single<Entity, With<Grid<OrdinalNeighborhood>>>,
-    characters: Query<(Entity, &Transform), With<T>>,
+    characters: Query<(Entity, &Transform, Option<&mut AgentPos>), With<T>>,
     mut commands: Commands,
     controller: Res<ProcGenController<A>>,
     data: Res<Assets<TileData<A>>>,
@@ -135,7 +135,7 @@ pub(crate) fn update_nav_grid_agent_pos<T, A>(
         .expect(ERR_INVALID_MINIMUM_CHUNK_POS);
 
     // FIXME: Find a reliable way to avoid looping through all characters
-    for (entity, transform) in characters {
+    for (entity, transform, mut agent_pos) in characters {
         // Insert agent pos
         let pos = UVec2::new(
             (transform.translation.x / tile_size.x - min_chunk_pos.x as f32 * CHUNK_SIZE.x as f32)
@@ -143,8 +143,35 @@ pub(crate) fn update_nav_grid_agent_pos<T, A>(
             (transform.translation.y / tile_size.y - min_chunk_pos.y as f32 * CHUNK_SIZE.x as f32)
                 .floor() as u32,
         );
-        commands
-            .entity(entity)
-            .insert((AgentPos(pos.extend(0)), AgentOfGrid(grid.entity())));
+        let Some(agent_pos) = agent_pos.as_mut() else {
+            commands
+                .entity(entity)
+                .insert((AgentPos(pos.extend(0)), AgentOfGrid(grid.entity())));
+            continue;
+        };
+        agent_pos.0 = pos.extend(0);
+    }
+}
+
+/// Add path to [`Character`] that follows another [`Character`]
+///
+/// ## Traits
+///
+/// - `T` must implement '[`Character`]' and is used as the origin entities that a path is given to.
+/// - `A` must implement '[`Character`]' and is used as the target entity.
+pub(crate) fn follow_character<T, A>(
+    target: Single<&AgentPos, (With<A>, Without<T>)>,
+    origins: Query<(Entity, Option<&mut Pathfind>), (With<T>, With<AgentPos>, Without<A>)>,
+    mut commands: Commands,
+) where
+    T: Character,
+    A: Character,
+{
+    for (entity, mut path_find) in origins {
+        let Some(path_find) = path_find.as_mut() else {
+            commands.entity(entity).insert(Pathfind::new(target.0));
+            continue;
+        };
+        path_find.goal = target.0;
     }
 }

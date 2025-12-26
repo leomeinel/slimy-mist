@@ -57,7 +57,6 @@ pub(super) fn plugin(app: &mut App) {
         (
             toggle_debug_ui,
             toggle_debug_colliders.run_if(in_state(Screen::Gameplay)),
-            toggle_debug_path::<Slime>,
         )
             .run_if(state_changed::<Debugging>),
     );
@@ -67,7 +66,10 @@ pub(super) fn plugin(app: &mut App) {
     );
     app.add_systems(
         OnEnter(ProcGenState::RebuildNavGrid),
-        spawn_debug_nav_grid::<OverworldProcGen>
+        (
+            spawn_debug_nav_grid::<OverworldProcGen>,
+            spawn_debug_path::<Slime>,
+        )
             .run_if(in_state(Debugging(true)).and(in_state(Screen::Gameplay))),
     );
 }
@@ -163,30 +165,27 @@ fn spawn_debug_nav_grid<T>(
     commands.entity(nav_grid.entity()).add_child(debug);
 }
 
-/// Toggle debug path for [`Character`]
+/// Spawn debug path for [`Character`]
 ///
 /// ## Traits
 ///
 /// - `T` must implement '[`Character`]'.
-fn toggle_debug_path<T>(
+fn spawn_debug_path<T>(
     mut debug_rng: Single<&mut WyRand, With<DebugRng>>,
-    characters: Query<Entity, (With<T>, With<AgentPos>)>,
+    characters: Query<Entity, (With<T>, With<AgentPos>, Without<DebugPath>)>,
     mut commands: Commands,
 ) where
     T: Character,
 {
     for entity in characters {
-        let color = Color::linear_rgb(
+        let color = Color::srgb(
             debug_rng.random_range(0.0..=1.),
             debug_rng.random_range(0.0..=1.),
             debug_rng.random_range(0.0..=1.),
         );
+
         // Insert debug path with random color
-        commands.entity(entity).insert((
-            DebugPath::new(color),
-            // FIXME: Remove arbitrary path
-            Pathfind::new_2d(40, 40),
-        ));
+        commands.entity(entity).insert(DebugPath::new(color));
     }
 }
 

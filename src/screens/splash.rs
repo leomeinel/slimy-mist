@@ -18,10 +18,7 @@ use crate::{AppSystems, screens::Screen, theme::prelude::*};
 
 pub(super) fn plugin(app: &mut App) {
     // After loading assets, change state to splash screen
-    app.add_systems(
-        OnEnter(Screen::LoadingExit),
-        |mut next_state: ResMut<NextState<Screen>>| next_state.set(Screen::Splash),
-    );
+    app.add_systems(OnEnter(Screen::LoadingExit), enter_splash_screen);
 
     // Exit splash screen early on pressing Escape
     app.add_systems(
@@ -171,4 +168,9 @@ fn check_splash_timer(timer: ResMut<SplashTimer>, mut next_screen: ResMut<NextSt
 /// Enter title screen
 fn enter_title_screen(mut next_screen: ResMut<NextState<Screen>>) {
     next_screen.set(Screen::Title);
+}
+
+/// Enter splash screen
+fn enter_splash_screen(mut next_screen: ResMut<NextState<Screen>>) {
+    next_screen.set(Screen::Splash);
 }

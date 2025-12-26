@@ -9,14 +9,16 @@
 
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
+use bevy_prng::WyRand;
+use rand::Rng as _;
 
 use crate::{
     CanvasCamera,
     levels::{LEVEL_Z, Level, LevelAssets},
     logging::{error::ERR_LOADING_TILE_DATA, warn::WARN_INCOMPLETE_TILE_DATA},
     procgen::{
-        CHUNK_SIZE, PROCGEN_DISTANCE, ProcGenController, ProcGenTimer, ProcGenerated, TileData,
-        TileHandle,
+        CHUNK_SIZE, PROCGEN_DISTANCE, ProcGenController, ProcGenRng, ProcGenSpawned, ProcGenTimer,
+        ProcGenerated, TileData, TileHandle,
     },
 };
 
@@ -30,6 +32,7 @@ use crate::{
 pub(crate) fn spawn_chunks<T, A, B>(
     camera: Single<(&Transform, Ref<Transform>), With<CanvasCamera>>,
     level: Single<Entity, With<B>>,
+    mut rng: Single<&mut WyRand, With<ProcGenRng>>,
     mut commands: Commands,
     mut controller: ResMut<ProcGenController<T>>,
     data: Res<Assets<TileData<T>>>,
@@ -84,6 +87,10 @@ pub(crate) fn spawn_chunks<T, A, B>(
                 continue;
             }
 
+            // FIXME: Currently this just chooses from a range of random numbers.
+            //        Make this choose in a way that makes sense with noise
+            let rand_index = rng.random_range(0_u32..15_u32);
+
             // Spawn chunk
             spawn_chunk::<T, A>(
                 &mut commands,
@@ -92,7 +99,7 @@ pub(crate) fn spawn_chunks<T, A, B>(
                 &assets,
                 IVec2::new(x, y),
                 tile_size,
-                TileTextureIndex(8),
+                TileTextureIndex(rand_index),
             );
         }
     }
@@ -162,4 +169,5 @@ fn spawn_chunk<T, A>(
 
     // Add chunk container to level so that level handles despawning
     commands.entity(level).add_child(container);
+    commands.trigger(ProcGenSpawned::<T>::default());
 }

@@ -28,7 +28,7 @@ use crate::{
 ///
 /// ## Traits
 ///
-/// - `T` must implement '[`Character`] + [`ProcGenerated`]' and is used as the procedurally generated character associated with a [`ProcGenController<T>`].
+/// - `T` must implement [`Character`] and [`ProcGenerated`] and is used as the procedurally generated character associated with a [`ProcGenController<T>`].
 /// - `A` must implement [`ProcGenerated`] and is used as a level's procedurally generated item.
 /// - `B` must implement [`Level`].
 pub(crate) fn spawn_characters<T, A, B>(
@@ -95,7 +95,7 @@ const CHARACTERS_PER_CHUNK: usize = 4;
 ///
 /// ## Traits
 ///
-/// - `T` must implement '[`Character`] + [`ProcGenerated`]' and is used as the procedurally generated character.
+/// - `T` must implement [`Character`] + [`ProcGenerated`] and is used as the procedurally generated character.
 fn spawn_character<T>(
     animation_rng: &mut WyRand,
     rng: &mut WyRand,

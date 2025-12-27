@@ -169,7 +169,7 @@ fn spawn_debug_nav_grid<T>(
 ///
 /// ## Traits
 ///
-/// - `T` must implement '[`Character`]'.
+/// - `T` must implement [`Character`].
 fn spawn_debug_path<T>(
     mut debug_rng: Single<&mut WyRand, With<DebugRng>>,
     characters: Query<Entity, (With<T>, With<AgentPos>, Without<DebugPath>)>,

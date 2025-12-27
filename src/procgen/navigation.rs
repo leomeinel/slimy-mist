@@ -110,7 +110,7 @@ pub(crate) fn rebuild_nav_grid(
 ///
 /// ## Traits
 ///
-/// - `T` must implement '[`Character`]'.
+/// - `T` must implement [`Character`].
 /// - `A` must implement [`ProcGenerated`] and is used as a level's procedurally generated item.
 pub(crate) fn update_nav_grid_agent_pos<T, A>(
     grid: Single<Entity, With<Grid<OrdinalNeighborhood>>>,
@@ -157,8 +157,8 @@ pub(crate) fn update_nav_grid_agent_pos<T, A>(
 ///
 /// ## Traits
 ///
-/// - `T` must implement '[`Character`]' and is used as the origin entity that a path is given to.
-/// - `A` must implement '[`Character`]' and is used as the target entity.
+/// - `T` must implement [`Character`] and is used as the origin entity that a path is given to.
+/// - `A` must implement [`Character`] and is used as the target entity.
 pub(crate) fn pathfind_to_character<T, A>(
     target: Single<&AgentPos, (With<A>, Without<T>)>,
     origins: Query<(Entity, Option<&mut Pathfind>), (With<T>, With<AgentPos>, Without<A>)>,

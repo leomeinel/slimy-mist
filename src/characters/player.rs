@@ -22,8 +22,7 @@ use bevy_rapier2d::prelude::*;
 use crate::{
     AppSystems, PausableSystems, Pause,
     characters::{
-        Character, CharacterAssets, CollisionData, CollisionHandle, JumpTimer, Movement,
-        MovementSpeed, VisualMap,
+        Character, CharacterAssets, JumpTimer, Movement, MovementSpeed, VisualMap,
         animations::{self, AnimationController, AnimationState, Animations},
         character_collider,
         nav::{NavController, NavState},
@@ -31,10 +30,7 @@ use crate::{
     },
     impl_character_assets,
     levels::{DEFAULT_Z, YSort, YSortOffset},
-    logging::{
-        error::{ERR_INVALID_VISUAL_MAP, ERR_LOADING_TILE_DATA},
-        warn::WARN_INCOMPLETE_COLLISION_DATA_FALLBACK,
-    },
+    logging::error::ERR_INVALID_VISUAL_MAP,
     screens::Screen,
 };
 
@@ -107,13 +103,9 @@ pub(crate) struct Player;
 impl Character for Player {
     fn container_bundle(
         &self,
-        data: &(Option<String>, Option<f32>, Option<f32>),
+        collision_set: &(Option<String>, Option<f32>, Option<f32>),
         pos: Vec2,
     ) -> impl Bundle {
-        let width = data.1.unwrap_or_else(|| {
-            warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA_FALLBACK);
-            24.
-        });
         let movement_speed = MovementSpeed::default();
 
         (
@@ -122,8 +114,7 @@ impl Character for Player {
             Self,
             Transform::from_translation(pos.extend(DEFAULT_Z)),
             YSort(DEFAULT_Z),
-            YSortOffset(width / 4.),
-            character_collider(data),
+            character_collider(collision_set),
             Visibility::Inherited,
             RigidBody::KinematicVelocityBased,
             GravityScale(0.),
@@ -279,10 +270,7 @@ fn apply_jump(
     parent: Single<(Entity, &mut Movement, &JumpTimer), With<Player>>,
     mut child_query: Query<(&AnimationController, &mut Transform), Without<Player>>,
     mut commands: Commands,
-    data: Res<Assets<CollisionData<Player>>>,
-    handle: Res<CollisionHandle<Player>>,
     visual_map: Res<VisualMap>,
-    mut width: Local<Option<f32>>,
 ) {
     let (entity, mut movement, timer) = parent.into_inner();
 
@@ -317,21 +305,7 @@ fn apply_jump(
     } else {
         target
     };
-
-    // Init local values
-    let width = width.unwrap_or_else(|| {
-        let data = data.get(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
-        let value = data.width.unwrap_or_else(|| {
-            warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA_FALLBACK);
-            24.
-        });
-        *width = Some(value);
-        value
-    });
-
-    commands
-        .entity(entity)
-        .insert(YSortOffset(width / 4. + y_sort_offset));
+    commands.entity(entity).insert(YSortOffset(y_sort_offset));
 }
 
 /// Limit jump by setting fall after specific time and then switching to walk
@@ -339,10 +313,7 @@ fn limit_jump(
     parent: Single<(Entity, &mut Movement, &JumpTimer), With<Player>>,
     mut child_query: Query<&mut AnimationController, Without<Player>>,
     mut commands: Commands,
-    data: Res<Assets<CollisionData<Player>>>,
-    handle: Res<CollisionHandle<Player>>,
     visual_map: Res<VisualMap>,
-    mut width: Local<Option<f32>>,
 ) {
     let (entity, mut movement, timer) = parent.into_inner();
 
@@ -365,18 +336,7 @@ fn limit_jump(
             animation_controller.state = AnimationState::Fall;
         }
         AnimationState::Fall => {
-            // Init local values
-            let width = width.unwrap_or_else(|| {
-                let data = data.get(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
-                let value = data.width.unwrap_or_else(|| {
-                    warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA_FALLBACK);
-                    24.
-                });
-                *width = Some(value);
-                value
-            });
-
-            commands.entity(entity).insert(YSortOffset(width / 4.));
+            commands.entity(entity).remove::<YSortOffset>();
             animation_controller.state = AnimationState::Idle
         }
         _ => (),

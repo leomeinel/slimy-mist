@@ -108,7 +108,7 @@ fn spawn_character<T>(
     visual_map: &mut ResMut<VisualMap>,
     level: Entity,
     animations: &Res<Animations<T>>,
-    data: &(Option<String>, Option<f32>, Option<f32>),
+    collision_set: &(Option<String>, Option<f32>, Option<f32>),
     chunk_pos: &IVec2,
     tile_size: &Vec2,
 ) where
@@ -134,7 +134,7 @@ fn spawn_character<T>(
         let entity = T::spawn(
             commands,
             visual_map,
-            data,
+            collision_set,
             target_pos,
             animations,
             animation_delay,

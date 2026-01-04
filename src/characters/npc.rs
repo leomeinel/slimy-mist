@@ -83,7 +83,7 @@ pub(crate) struct Slime;
 impl Character for Slime {
     fn container_bundle(
         &self,
-        data: &(Option<String>, Option<f32>, Option<f32>),
+        collision_set: &(Option<String>, Option<f32>, Option<f32>),
         pos: Vec2,
     ) -> impl Bundle {
         (
@@ -93,7 +93,7 @@ impl Character for Slime {
             Self,
             Transform::from_translation(pos.extend(DEFAULT_Z)),
             YSort(DEFAULT_Z),
-            character_collider(data),
+            character_collider(collision_set),
             Visibility::Inherited,
             RigidBody::KinematicPositionBased,
             GravityScale(0.),

@@ -24,7 +24,6 @@ use bevy_spritesheet_animation::prelude::SpritesheetAnimation;
 use crate::{
     AppSystems,
     characters::animations::{AnimationController, AnimationTimer, Animations},
-    levels::{DEFAULT_Z, YSort},
     logging::warn::WARN_INCOMPLETE_COLLISION_DATA_FALLBACK,
 };
 
@@ -79,7 +78,7 @@ where
 {
     fn container_bundle(
         &self,
-        data: &(Option<String>, Option<f32>, Option<f32>),
+        collision_set: &(Option<String>, Option<f32>, Option<f32>),
         pos: Vec2,
     ) -> impl Bundle;
 
@@ -89,7 +88,6 @@ where
         animation_delay: f32,
     ) -> impl Bundle {
         (
-            YSort(DEFAULT_Z),
             animations.sprite.clone(),
             SpritesheetAnimation::new(animations.idle.clone()),
             AnimationController::default(),
@@ -100,13 +98,15 @@ where
     fn spawn(
         commands: &mut Commands,
         visual_map: &mut ResMut<VisualMap>,
-        data: &(Option<String>, Option<f32>, Option<f32>),
+        collision_set: &(Option<String>, Option<f32>, Option<f32>),
         pos: Vec2,
         animations: &Res<Animations<Self>>,
         animation_delay: f32,
     ) -> Entity {
         let character = Self::default();
-        let container = commands.spawn(character.container_bundle(data, pos)).id();
+        let container = commands
+            .spawn(character.container_bundle(collision_set, pos))
+            .id();
 
         let visual = commands
             .spawn(character.visual_bundle(animations, animation_delay))
@@ -182,8 +182,10 @@ impl Default for JumpTimer {
 pub(crate) struct VisualMap(pub(crate) HashMap<Entity, Entity>);
 
 /// Collider for different shapes
-pub(crate) fn character_collider(data: &(Option<String>, Option<f32>, Option<f32>)) -> Collider {
-    let (Some(shape), Some(width), Some(height)) = data else {
+pub(crate) fn character_collider(
+    collision_set: &(Option<String>, Option<f32>, Option<f32>),
+) -> Collider {
+    let (Some(shape), Some(width), Some(height)) = collision_set else {
         // Return default collider if data is not complete
         warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA_FALLBACK);
         return Collider::ball(12.);

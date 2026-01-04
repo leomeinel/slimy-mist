@@ -2,7 +2,7 @@
  * File: main.rs
  * Author: Leopold Johannes Meinel (leo@meinel.dev)
  * -----
- * Copyright (c) 2025 Leopold Johannes Meinel & contributors
+ * Copyright (c) 2026 Leopold Johannes Meinel & contributors
  * SPDX ID: Apache-2.0
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  * -----
@@ -183,8 +183,7 @@ fn update_camera(
     player: Single<&Transform, (With<Player>, Without<CanvasCamera>)>,
     time: Res<Time>,
 ) {
-    let Vec3 { x, y, .. } = player.translation;
-    let direction = Vec3::new(x, y, camera.translation.z);
+    let direction = player.translation.xy().extend(camera.translation.z);
 
     // Applies a smooth effect to camera movement using stable interpolation
     // between the camera position and the player position on the x and y axes.

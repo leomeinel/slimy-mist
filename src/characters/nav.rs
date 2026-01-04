@@ -287,7 +287,7 @@ fn apply_path<T, A>(
             animation_controller.state = AnimationState::Idle;
             // DEBUG: Remove this debug info.
             // info!(
-            //     "NavState::ApplyPath: Reached goal - entity: {}, distance: {}, direction: {}, pos: {}, goal_world_pos: {}",
+            //     "NavState::ApplyPath: Reached goal - entity: {}, dist_squared: {}, direction: {}, pos: {}, goal_world_pos: {}",
             //     entity,
             //     dist_squared,
             //     direction,
@@ -309,7 +309,7 @@ fn apply_path<T, A>(
             commands.entity(entity).remove::<NextPos>();
             // DEBUG: Remove this debug info.
             // info!(
-            //     "NavState::ApplyPath: Reached next_pos - entity: {}, distance: {}, direction: {}, pos: {}, goal_world_pos: {}",
+            //     "NavState::ApplyPath: Reached next_pos - entity: {}, dist_squared: {}, direction: {}, pos: {}, next_world_pos: {}",
             //     entity,
             //     dist_squared,
             //     direction,

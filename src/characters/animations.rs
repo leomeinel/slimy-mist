@@ -28,8 +28,8 @@ use rand::seq::IndexedRandom as _;
 use crate::{
     AppSystems,
     audio::sound_effect,
+    camera::ysort::{YSortCache, YSorted},
     characters::{Character, CharacterAssets, JUMP_DURATION_SECS, Movement, VisualMap},
-    levels::YSorted,
     logging::{
         error::{
             ERR_INVALID_REQUIRED_ANIMATION_DATA, ERR_INVALID_TEXTURE_ATLAS, ERR_INVALID_VISUAL_MAP,
@@ -153,20 +153,6 @@ impl Default for AnimationController {
     }
 }
 
-/// Texture size derived from [`TextureAtlasLayout`]
-///
-/// ## Traits
-///
-/// - `T` must implement [`YSorted`].
-#[derive(Resource, Default)]
-pub(crate) struct AtlasTexture<T>
-where
-    T: YSorted,
-{
-    pub(crate) size: UVec2,
-    _phantom: PhantomData<T>,
-}
-
 /// Timer that tracks animation
 #[derive(Component, Debug, Clone, PartialEq, Reflect)]
 #[reflect(Component)]
@@ -208,19 +194,6 @@ pub(crate) fn setup_animations<T, A>(
         .with_loaded_image(&images)
         .expect(ERR_NOT_LOADED_SPRITE_IMAGE)
         .sprite(&mut atlas_layouts);
-    let sprite_layout_id = sprite
-        .texture_atlas
-        .as_ref()
-        .expect(ERR_INVALID_TEXTURE_ATLAS)
-        .layout
-        .id();
-    let texture_size = atlas_layouts
-        .get(sprite_layout_id)
-        .expect(ERR_INVALID_TEXTURE_ATLAS)
-        .textures
-        .first()
-        .expect(ERR_INVALID_TEXTURE_ATLAS)
-        .size();
 
     // Idle animation: This is the only required animation
     let idle = animation_handle(
@@ -277,7 +250,22 @@ pub(crate) fn setup_animations<T, A>(
         })
         .unwrap_or_else(|| None);
 
-    // Add to `Animations`
+    // Data for `YSortCache`
+    let sprite_layout_id = sprite
+        .texture_atlas
+        .as_ref()
+        .expect(ERR_INVALID_TEXTURE_ATLAS)
+        .layout
+        .id();
+    let texture_size = atlas_layouts
+        .get(sprite_layout_id)
+        .expect(ERR_INVALID_TEXTURE_ATLAS)
+        .textures
+        .first()
+        .expect(ERR_INVALID_TEXTURE_ATLAS)
+        .size();
+
+    // Init `Animations`
     commands.insert_resource(Animations::<T> {
         sprite,
         idle,
@@ -286,8 +274,9 @@ pub(crate) fn setup_animations<T, A>(
         fall,
         ..default()
     });
-    commands.insert_resource(AtlasTexture::<T> {
-        size: texture_size,
+    // Init `YSortCache`
+    commands.insert_resource(YSortCache::<T> {
+        texture_size,
         ..default()
     });
 }

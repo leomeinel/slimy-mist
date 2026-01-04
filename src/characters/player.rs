@@ -21,6 +21,10 @@ use bevy_rapier2d::prelude::*;
 
 use crate::{
     AppSystems, PausableSystems, Pause,
+    camera::{
+        DEFAULT_Z,
+        ysort::{YSort, YSortOffset, YSorted},
+    },
     characters::{
         Character, CharacterAssets, JumpTimer, Movement, MovementSpeed, VisualMap,
         animations::{self, AnimationController, AnimationState, Animations},
@@ -29,7 +33,6 @@ use crate::{
         tick_jump_timer,
     },
     impl_character_assets,
-    levels::{DEFAULT_Z, YSort, YSortOffset, YSorted},
     logging::error::ERR_INVALID_VISUAL_MAP,
     screens::Screen,
 };

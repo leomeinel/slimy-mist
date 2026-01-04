@@ -13,7 +13,8 @@ use bevy_prng::WyRand;
 use rand::Rng as _;
 
 use crate::{
-    levels::{LEVEL_Z, Level, LevelAssets},
+    camera::LEVEL_Z,
+    levels::{Level, LevelAssets},
     logging::{error::ERR_LOADING_TILE_DATA, warn::WARN_INCOMPLETE_TILE_DATA},
     procgen::{
         CHUNK_SIZE, PROCGEN_DISTANCE, ProcGenController, ProcGenRng, ProcGenState, ProcGenerated,

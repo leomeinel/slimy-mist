@@ -16,6 +16,7 @@ use rand::{Rng as _, seq::IndexedRandom};
 
 use crate::{
     audio::music,
+    camera::LEVEL_Z,
     characters::{
         Character as _, CollisionData, CollisionHandle, VisualMap,
         animations::{ANIMATION_DELAY_RANGE, AnimationRng, Animations},
@@ -23,7 +24,7 @@ use crate::{
         player::Player,
     },
     impl_level_assets,
-    levels::{LEVEL_Z, Level, LevelAssets, LevelRng},
+    levels::{Level, LevelAssets, LevelRng},
     logging::{error::ERR_LOADING_COLLISION_DATA, warn::WARN_INCOMPLETE_ASSET_DATA},
     procgen::{ProcGenController, ProcGenerated},
     screens::Screen,

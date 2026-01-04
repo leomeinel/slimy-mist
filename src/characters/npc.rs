@@ -20,6 +20,10 @@ use bevy_rapier2d::prelude::*;
 
 use crate::{
     AppSystems, PausableSystems,
+    camera::{
+        DEFAULT_Z,
+        ysort::{YSort, YSorted},
+    },
     characters::{
         Character, CharacterAssets, Movement, MovementSpeed,
         animations::{self, Animations},
@@ -27,7 +31,6 @@ use crate::{
         nav::NavController,
     },
     impl_character_assets,
-    levels::{DEFAULT_Z, YSort, YSorted},
     procgen::ProcGenerated,
     screens::Screen,
 };

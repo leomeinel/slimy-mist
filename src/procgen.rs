@@ -22,7 +22,8 @@ use bevy_prng::WyRand;
 use bevy_rand::{global::GlobalRng, traits::ForkableSeed as _};
 
 use crate::{
-    AppSystems, CanvasCamera,
+    AppSystems,
+    camera::CanvasCamera,
     characters::npc::Slime,
     levels::overworld::{Overworld, OverworldAssets, OverworldProcGen},
     logging::error::{ERR_INVALID_MINIMUM_CHUNK_POS, ERR_LOADING_TILE_DATA},

@@ -180,14 +180,14 @@ const CAMERA_DECAY_RATE: f32 = 3.;
 /// Heavily inspired by: <https://bevy.org/examples/camera/2d-top-down-camera/>
 fn update_camera(
     mut camera: Single<&mut Transform, (With<CanvasCamera>, Without<Player>)>,
-    player: Single<&Transform, (With<Player>, Without<CanvasCamera>)>,
+    player: Single<&Transform, (Changed<Transform>, With<Player>, Without<CanvasCamera>)>,
     time: Res<Time>,
 ) {
-    let direction = player.translation.xy().extend(camera.translation.z);
+    let target_pos = player.translation.xy().extend(camera.translation.z);
 
     // Applies a smooth effect to camera movement using stable interpolation
     // between the camera position and the player position on the x and y axes.
     camera
         .translation
-        .smooth_nudge(&direction, CAMERA_DECAY_RATE, time.delta_secs());
+        .smooth_nudge(&target_pos, CAMERA_DECAY_RATE, time.delta_secs());
 }

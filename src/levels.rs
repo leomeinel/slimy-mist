@@ -16,6 +16,8 @@ use bevy_asset_loader::asset_collection::AssetCollection;
 use bevy_prng::WyRand;
 use bevy_rand::{global::GlobalRng, traits::ForkableSeed as _};
 
+use crate::screens::Screen;
+
 pub(super) fn plugin(app: &mut App) {
     // Add rng for levels
     app.add_systems(Startup, setup_rng);
@@ -24,7 +26,12 @@ pub(super) fn plugin(app: &mut App) {
     app.add_plugins(overworld::plugin);
 
     // Sort entities with `YSort` by Y
-    app.add_systems(PostUpdate, y_sort);
+    app.add_systems(
+        PostUpdate,
+        y_sort
+            .before(TransformSystems::Propagate)
+            .run_if(in_state(Screen::Gameplay)),
+    );
 }
 
 /// Z-level for the level
@@ -90,7 +97,7 @@ fn setup_rng(mut global: Single<&mut WyRand, With<GlobalRng>>, mut commands: Com
 /// Applies the y-sorting to the entities Z position.
 ///
 /// Heavily inspired by: <https://github.com/fishfolk/punchy>
-fn y_sort(mut query: Query<(&mut Transform, &YSort, Option<&YSortOffset>)>) {
+fn y_sort(mut query: Query<(&mut Transform, &YSort, Option<&YSortOffset>), Changed<Transform>>) {
     for (mut transform, sort, sort_offset) in query.iter_mut() {
         transform.translation.z = (sort.0
             + sort_offset.map_or(0., |offset| offset.0) * Y_SORT_FACTOR)

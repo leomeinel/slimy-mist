@@ -223,7 +223,7 @@ pub(crate) struct ProcGenRng;
 /// - `T` must implement [`ProcGenerated`] and is used as the procedurally generated item associated with a [`ProcGenController<T>`].
 /// - `A` must implement [`ProcGenerated`] and is used as a level's procedurally generated item.
 pub(crate) fn despawn_procgen<T, A, const PROCEED: bool>(
-    camera: Single<&Transform, (With<CanvasCamera>, Without<T>)>,
+    camera: Single<&Transform, (Changed<Transform>, With<CanvasCamera>, Without<T>)>,
     query: Query<(Entity, &Transform), (With<T>, Without<CanvasCamera>)>,
     mut commands: Commands,
     mut controller: ResMut<ProcGenController<T>>,

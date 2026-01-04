@@ -25,7 +25,6 @@ use crate::{
         animations::{self, Animations},
         character_collider,
         nav::NavController,
-        setup_shadow,
     },
     impl_character_assets,
     levels::{DEFAULT_Z, YSort},
@@ -36,9 +35,6 @@ use crate::{
 pub(super) fn plugin(app: &mut App) {
     // Insert Animation resource
     app.insert_resource(Animations::<Slime>::default());
-
-    // Setup slime shadow
-    app.add_systems(OnEnter(Screen::Gameplay), setup_shadow::<Slime>);
 
     // Animation setup
     app.add_systems(

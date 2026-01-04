@@ -27,7 +27,7 @@ use crate::{
         animations::{self, AnimationController, AnimationState, Animations},
         character_collider,
         nav::{NavController, NavState},
-        setup_shadow, tick_jump_timer,
+        tick_jump_timer,
     },
     impl_character_assets,
     levels::{DEFAULT_Z, YSort, YSortOffset},
@@ -44,9 +44,6 @@ pub(super) fn plugin(app: &mut App) {
 
     // Add enhanced input plugin
     app.add_plugins(EnhancedInputPlugin);
-
-    // Setup player
-    app.add_systems(OnEnter(Screen::Gameplay), setup_shadow::<Player>);
 
     // Animation setup
     app.add_systems(

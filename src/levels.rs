@@ -2,7 +2,7 @@
  * File: levels.rs
  * Author: Leopold Johannes Meinel (leo@meinel.dev)
  * -----
- * Copyright (c) 2025 Leopold Johannes Meinel & contributors
+ * Copyright (c) 2026 Leopold Johannes Meinel & contributors
  * SPDX ID: Apache-2.0
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  */
@@ -29,8 +29,6 @@ pub(super) fn plugin(app: &mut App) {
 
 /// Z-level for the level
 pub(crate) const LEVEL_Z: f32 = 1.;
-/// Z-level for shadows
-pub(crate) const SHADOW_Z: f32 = 9.;
 /// Z-level for any foreground object
 pub(crate) const DEFAULT_Z: f32 = 10.;
 

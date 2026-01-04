@@ -2,7 +2,7 @@
  * File: gameplay.rs
  * Author: Leopold Johannes Meinel (leo@meinel.dev)
  * -----
- * Copyright (c) 2025 Leopold Johannes Meinel & contributors
+ * Copyright (c) 2026 Leopold Johannes Meinel & contributors
  * SPDX ID: Apache-2.0
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  * -----
@@ -15,7 +15,6 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
 use crate::{
     Pause,
-    characters::{player::Player, setup_shadow},
     levels::overworld::{Overworld, spawn_overworld},
     menus::Menu,
     procgen::nav_grid::spawn_nav_grid,
@@ -26,11 +25,7 @@ pub(super) fn plugin(app: &mut App) {
     // Spawn overworld with nav grid
     app.add_systems(
         OnEnter(Screen::Gameplay),
-        (
-            spawn_overworld.after(setup_shadow::<Player>),
-            spawn_nav_grid::<Overworld>,
-        )
-            .chain(),
+        (spawn_overworld, spawn_nav_grid::<Overworld>).chain(),
     );
 
     // Open pause on pressing P or Escape and pause game

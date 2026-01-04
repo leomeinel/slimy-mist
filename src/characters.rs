@@ -16,9 +16,7 @@ pub(crate) mod player;
 
 use std::marker::PhantomData;
 
-use bevy::{
-    color::palettes::tailwind, platform::collections::HashMap, prelude::*, reflect::Reflectable,
-};
+use bevy::{platform::collections::HashMap, prelude::*, reflect::Reflectable};
 use bevy_asset_loader::asset_collection::AssetCollection;
 use bevy_rapier2d::prelude::*;
 use bevy_spritesheet_animation::prelude::SpritesheetAnimation;
@@ -26,8 +24,8 @@ use bevy_spritesheet_animation::prelude::SpritesheetAnimation;
 use crate::{
     AppSystems,
     characters::animations::{AnimationController, AnimationTimer, Animations},
-    levels::{DEFAULT_Z, SHADOW_Z, YSort},
-    logging::{error::ERR_LOADING_COLLISION_DATA, warn::WARN_INCOMPLETE_COLLISION_DATA_FALLBACK},
+    levels::{DEFAULT_Z, YSort},
+    logging::warn::WARN_INCOMPLETE_COLLISION_DATA_FALLBACK,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -99,22 +97,12 @@ where
         )
     }
 
-    fn shadow_bundle(&self, shadow: &Res<Shadow<Self>>, width: f32) -> impl Bundle {
-        (
-            YSort(SHADOW_Z),
-            Transform::from_xyz(0., -width / 2., SHADOW_Z),
-            Mesh2d(shadow.mesh.clone()),
-            MeshMaterial2d(shadow.material.clone()),
-        )
-    }
-
     fn spawn(
         commands: &mut Commands,
         visual_map: &mut ResMut<VisualMap>,
         data: &(Option<String>, Option<f32>, Option<f32>),
         pos: Vec2,
         animations: &Res<Animations<Self>>,
-        shadow: &Res<Shadow<Self>>,
         animation_delay: f32,
     ) -> Entity {
         let character = Self::default();
@@ -125,13 +113,6 @@ where
             .id();
         commands.entity(container).add_child(visual);
         visual_map.0.insert(container, visual);
-
-        let width = data.1.unwrap_or_else(|| {
-            warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA_FALLBACK);
-            24.
-        });
-        let shadow = commands.spawn(character.shadow_bundle(shadow, width)).id();
-        commands.entity(container).add_child(shadow);
 
         container
     }
@@ -199,54 +180,6 @@ impl Default for JumpTimer {
 /// Map of characters to their visual representations
 #[derive(Resource, Default)]
 pub(crate) struct VisualMap(pub(crate) HashMap<Entity, Entity>);
-
-/// Shadow data for characters
-///
-/// ## Traits
-///
-/// - `T` must implement [`Character`].
-#[derive(Resource, Default, Debug)]
-pub(crate) struct Shadow<T>
-where
-    T: Character,
-{
-    mesh: Handle<Mesh>,
-    material: Handle<ColorMaterial>,
-    _phantom: PhantomData<T>,
-}
-
-/// Color for cast shadows
-const SHADOW_COLOR: Srgba = tailwind::GRAY_700;
-
-/// Setup [`Shadow`]
-///
-/// ## Traits
-///
-/// - `T` must implement [`Character`].
-pub(crate) fn setup_shadow<T>(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    data: Res<Assets<CollisionData<T>>>,
-    handle: Res<CollisionHandle<T>>,
-) where
-    T: Character,
-{
-    // Get animation from `AnimationData` with `CollisionHandle`
-    let data = data.get(handle.0.id()).expect(ERR_LOADING_COLLISION_DATA);
-    let width = data.width.unwrap_or_else(|| {
-        warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA_FALLBACK);
-        24.
-    });
-
-    let resource = Shadow::<T> {
-        mesh: meshes.add(Circle::new(-width / 4.)),
-        material: materials.add(Color::from(SHADOW_COLOR.with_alpha(0.25))),
-        ..default()
-    };
-
-    commands.insert_resource(resource);
-}
 
 /// Collider for different shapes
 pub(crate) fn character_collider(data: &(Option<String>, Option<f32>, Option<f32>)) -> Collider {

@@ -2,7 +2,7 @@
  * File: overworld.rs
  * Author: Leopold Johannes Meinel (leo@meinel.dev)
  * -----
- * Copyright (c) 2025 Leopold Johannes Meinel & contributors
+ * Copyright (c) 2026 Leopold Johannes Meinel & contributors
  * SPDX ID: Apache-2.0
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  */
@@ -17,7 +17,7 @@ use rand::{Rng as _, seq::IndexedRandom};
 use crate::{
     audio::music,
     characters::{
-        Character as _, CollisionData, CollisionHandle, Shadow, VisualMap,
+        Character as _, CollisionData, CollisionHandle, VisualMap,
         animations::{ANIMATION_DELAY_RANGE, AnimationRng, Animations},
         npc::Slime,
         player::Player,
@@ -72,7 +72,6 @@ pub(crate) fn spawn_overworld(
     data: Res<Assets<CollisionData<Player>>>,
     handle: Res<CollisionHandle<Player>>,
     level_assets: Res<OverworldAssets>,
-    shadow: Res<Shadow<Player>>,
 ) {
     // Get data from `CollisionData` with `CollisionHandle`
     let data = data.get(handle.0.id()).expect(ERR_LOADING_COLLISION_DATA);
@@ -111,7 +110,6 @@ pub(crate) fn spawn_overworld(
         &data,
         PLAYER_POS,
         &animations,
-        &shadow,
         animation_rng.random_range(ANIMATION_DELAY_RANGE),
     );
     commands.entity(level).add_child(player);

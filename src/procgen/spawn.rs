@@ -13,7 +13,7 @@ use rand::{Rng as _, seq::IndexedRandom as _};
 
 use crate::{
     characters::{
-        Character, CollisionData, CollisionHandle, Shadow, VisualMap,
+        Character, CollisionData, CollisionHandle, VisualMap,
         animations::{ANIMATION_DELAY_RANGE, AnimationRng, Animations},
     },
     levels::Level,
@@ -39,7 +39,6 @@ pub(crate) fn spawn_characters<T, A, B>(
     chunk_controller: Res<ProcGenController<A>>,
     collision_data: Res<Assets<CollisionData<T>>>,
     collision_handle: Res<CollisionHandle<T>>,
-    shadow: Res<Shadow<T>>,
     tile_data: Res<Assets<TileData<A>>>,
     tile_handle: Res<TileHandle<A>>,
     mut collision_set: Local<Option<(Option<String>, Option<f32>, Option<f32>)>>,
@@ -87,7 +86,6 @@ pub(crate) fn spawn_characters<T, A, B>(
             level.entity(),
             &animations,
             collision_set,
-            &shadow,
             chunk_pos,
             &tile_size,
         );
@@ -111,7 +109,6 @@ fn spawn_character<T>(
     level: Entity,
     animations: &Res<Animations<T>>,
     data: &(Option<String>, Option<f32>, Option<f32>),
-    shadow: &Res<Shadow<T>>,
     chunk_pos: &IVec2,
     tile_size: &Vec2,
 ) where
@@ -140,7 +137,6 @@ fn spawn_character<T>(
             data,
             target_pos,
             animations,
-            shadow,
             animation_delay,
         );
         controller.chunk_positions.insert(entity, *chunk_pos);

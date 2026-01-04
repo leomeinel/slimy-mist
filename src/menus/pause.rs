@@ -42,18 +42,18 @@ fn spawn_pause_menu(mut commands: Commands) {
 }
 
 /// Open settings
-fn open_settings_menu(_: On<Pointer<Click>>, mut next_menu: ResMut<NextState<Menu>>) {
-    next_menu.set(Menu::Settings);
+fn open_settings_menu(_: On<Pointer<Click>>, mut next_state: ResMut<NextState<Menu>>) {
+    next_state.set(Menu::Settings);
 }
 
 /// Close menu via on click
-fn close_menu(_: On<Pointer<Click>>, mut next_menu: ResMut<NextState<Menu>>) {
-    next_menu.set(Menu::None);
+fn close_menu(_: On<Pointer<Click>>, mut next_state: ResMut<NextState<Menu>>) {
+    next_state.set(Menu::None);
 }
 
 /// Close menu manually
-fn go_back(mut next_menu: ResMut<NextState<Menu>>) {
-    next_menu.set(Menu::None);
+fn go_back(mut next_state: ResMut<NextState<Menu>>) {
+    next_state.set(Menu::None);
 }
 
 /// Quit to title

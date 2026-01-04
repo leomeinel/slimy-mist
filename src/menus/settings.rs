@@ -130,9 +130,9 @@ fn update_global_volume_label(
 fn go_back_on_click(
     _: On<Pointer<Click>>,
     screen: Res<State<Screen>>,
-    mut next_menu: ResMut<NextState<Menu>>,
+    mut next_state: ResMut<NextState<Menu>>,
 ) {
-    next_menu.set(if screen.get() == &Screen::Title {
+    next_state.set(if screen.get() == &Screen::Title {
         Menu::Main
     } else {
         Menu::Pause
@@ -140,8 +140,8 @@ fn go_back_on_click(
 }
 
 /// Go back manually
-fn go_back(screen: Res<State<Screen>>, mut next_menu: ResMut<NextState<Menu>>) {
-    next_menu.set(if screen.get() == &Screen::Title {
+fn go_back(screen: Res<State<Screen>>, mut next_state: ResMut<NextState<Menu>>) {
+    next_state.set(if screen.get() == &Screen::Title {
         Menu::Main
     } else {
         Menu::Pause

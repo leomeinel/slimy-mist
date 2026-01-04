@@ -24,11 +24,11 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 /// Open main menu
-fn open_main_menu(mut next_menu: ResMut<NextState<Menu>>) {
-    next_menu.set(Menu::Main);
+fn open_main_menu(mut next_state: ResMut<NextState<Menu>>) {
+    next_state.set(Menu::Main);
 }
 
 /// Close main menu
-fn close_menu(mut next_menu: ResMut<NextState<Menu>>) {
-    next_menu.set(Menu::None);
+fn close_menu(mut next_state: ResMut<NextState<Menu>>) {
+    next_state.set(Menu::None);
 }

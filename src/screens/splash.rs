@@ -159,18 +159,18 @@ fn tick_splash_timer(time: Res<Time>, mut timer: ResMut<SplashTimer>) {
 }
 
 /// Check status of [`SplashTimer`]
-fn check_splash_timer(timer: ResMut<SplashTimer>, mut next_screen: ResMut<NextState<Screen>>) {
+fn check_splash_timer(timer: ResMut<SplashTimer>, mut next_state: ResMut<NextState<Screen>>) {
     if timer.0.just_finished() {
-        next_screen.set(Screen::Title);
+        next_state.set(Screen::Title);
     }
 }
 
 /// Enter title screen
-fn enter_title_screen(mut next_screen: ResMut<NextState<Screen>>) {
-    next_screen.set(Screen::Title);
+fn enter_title_screen(mut next_state: ResMut<NextState<Screen>>) {
+    next_state.set(Screen::Title);
 }
 
 /// Enter splash screen
-fn enter_splash_screen(mut next_screen: ResMut<NextState<Screen>>) {
-    next_screen.set(Screen::Splash);
+fn enter_splash_screen(mut next_state: ResMut<NextState<Screen>>) {
+    next_state.set(Screen::Splash);
 }

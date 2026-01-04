@@ -253,7 +253,7 @@ pub(crate) fn despawn_procgen<T, A, const PROCEED: bool>(
 
     let mut despawned = false;
     // Despawn entities outside of `DESPAWN_RANGE`
-    for (entity, transform) in query.iter() {
+    for (entity, transform) in query {
         let chunk_pos = (transform.translation.xy() / chunk_size_px)
             .floor()
             .as_ivec2();

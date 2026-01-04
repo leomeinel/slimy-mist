@@ -121,18 +121,17 @@ fn spawn_character<T>(
     let target_origins: Vec<(u32, u32)> = (0..CHUNK_SIZE.x)
         .flat_map(|x| (0..CHUNK_SIZE.y).map(move |y| (x, y)))
         .collect();
-    let target_origins: Vec<&(u32, u32)> = target_origins
+    let target_origins: Vec<Vec2> = target_origins
         .choose_multiple(procgen_rng, CHARACTERS_PER_CHUNK)
+        .map(|&(x, y)| Vec2::new(x as f32, y as f32))
         .collect();
 
-    for (x, y) in target_origins {
+    for origin in target_origins {
         let animation_delay = animation_rng.random_range(ANIMATION_DELAY_RANGE);
 
         // Set target position in pixels
-        let target_pos = Vec2::new(
-            chunk_pos.x as f32 * CHUNK_SIZE.x as f32 * tile_size.x + *x as f32 * tile_size.x,
-            chunk_pos.y as f32 * CHUNK_SIZE.y as f32 * tile_size.y + *y as f32 * tile_size.y,
-        );
+        let world_pos = chunk_pos.as_vec2() * CHUNK_SIZE.as_vec2() * tile_size;
+        let target_pos = world_pos + origin * tile_size;
 
         // Spawn entity in chosen tile and store in controller
         let entity = T::spawn(

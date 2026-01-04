@@ -280,7 +280,7 @@ fn apply_path<T, A>(
         let goal_world_pos = path_find.goal.xy().as_vec2() * tile_size + world_pos;
         let direction = goal_world_pos - transform.translation.xy();
         let dist_squared = direction.length_squared();
-        if dist_squared <= MAX_GOAL_TILE_DIST * tile_size.x * tile_size.x {
+        if dist_squared <= MAX_GOAL_TILE_DIST * tile_size.x * MAX_GOAL_TILE_DIST * tile_size.x {
             agent_pos.0 = next_pos.0;
             commands.entity(entity).remove::<NextPos>();
             nav_controller.state = NavState::None;

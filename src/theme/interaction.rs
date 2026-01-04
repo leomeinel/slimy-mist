@@ -64,12 +64,8 @@ fn play_on_hover_sound_effect(
     event: On<Pointer<Over>>,
     query: Query<(), With<Interaction>>,
     mut commands: Commands,
-    interaction_assets: Option<Res<InteractionAssets>>,
+    interaction_assets: If<Res<InteractionAssets>>,
 ) {
-    let Some(interaction_assets) = interaction_assets else {
-        return;
-    };
-
     if query.contains(event.entity) {
         commands.spawn(sound_effect(interaction_assets.hover.clone()));
     }
@@ -80,12 +76,8 @@ fn play_on_click_sound_effect(
     event: On<Pointer<Click>>,
     query: Query<(), With<Interaction>>,
     mut commands: Commands,
-    interaction_assets: Option<Res<InteractionAssets>>,
+    interaction_assets: If<Res<InteractionAssets>>,
 ) {
-    let Some(interaction_assets) = interaction_assets else {
-        return;
-    };
-
     if query.contains(event.entity) {
         commands.spawn(sound_effect(interaction_assets.click.clone()));
     }

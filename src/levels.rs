@@ -16,7 +16,10 @@ use bevy_asset_loader::asset_collection::AssetCollection;
 use bevy_prng::WyRand;
 use bevy_rand::{global::GlobalRng, traits::ForkableSeed as _};
 
-use crate::screens::Screen;
+use crate::{
+    characters::{animations::AtlasTexture, npc::Slime, player::Player},
+    screens::Screen,
+};
 
 pub(super) fn plugin(app: &mut App) {
     // Add rng for levels
@@ -25,10 +28,10 @@ pub(super) fn plugin(app: &mut App) {
     // Add child plugins
     app.add_plugins(overworld::plugin);
 
-    // Sort entities with `YSort` by Y
+    // Sort entities with `YSort`
     app.add_systems(
         PostUpdate,
-        y_sort
+        (y_sort::<Player>, y_sort::<Slime>)
             .before(TransformSystems::Propagate)
             .run_if(in_state(Screen::Gameplay)),
     );
@@ -73,6 +76,13 @@ where
 {
 }
 
+/// Applies to anything that is y-sorted
+pub(crate) trait YSorted
+where
+    Self: Component + Default + Reflectable,
+{
+}
+
 /// Sorts entities by their y position.
 #[derive(Component, Default, Reflect)]
 #[reflect(Component)]
@@ -97,10 +107,19 @@ fn setup_rng(mut global: Single<&mut WyRand, With<GlobalRng>>, mut commands: Com
 /// Applies the y-sorting to the entities Z position.
 ///
 /// Heavily inspired by: <https://github.com/fishfolk/punchy>
-fn y_sort(mut query: Query<(&mut Transform, &YSort, Option<&YSortOffset>), Changed<Transform>>) {
-    for (mut transform, sort, sort_offset) in query.iter_mut() {
+///
+/// ## Traits
+///
+/// - `T` must implement [`YSorted`].
+fn y_sort<T>(
+    query: Query<(&mut Transform, &YSort, Option<&YSortOffset>), (Changed<Transform>, With<T>)>,
+    texture: Res<AtlasTexture<T>>,
+) where
+    T: YSorted,
+{
+    for (mut transform, sort, sort_offset) in query {
         transform.translation.z = (sort.0
             + sort_offset.map_or(0., |offset| offset.0) * Y_SORT_FACTOR)
-            - transform.translation.y * Y_SORT_FACTOR;
+            - (transform.translation.y - texture.size.y as f32 * 0.5) * Y_SORT_FACTOR;
     }
 }

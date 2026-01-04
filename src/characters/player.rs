@@ -29,7 +29,7 @@ use crate::{
         tick_jump_timer,
     },
     impl_character_assets,
-    levels::{DEFAULT_Z, YSort, YSortOffset},
+    levels::{DEFAULT_Z, YSort, YSortOffset, YSorted},
     logging::error::ERR_INVALID_VISUAL_MAP,
     screens::Screen,
 };
@@ -142,6 +142,7 @@ impl Character for Player {
         )
     }
 }
+impl YSorted for Player {}
 
 /// Walk marker
 #[derive(Debug, InputAction)]

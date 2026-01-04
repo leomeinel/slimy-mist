@@ -27,7 +27,7 @@ use crate::{
         nav::NavController,
     },
     impl_character_assets,
-    levels::{DEFAULT_Z, YSort},
+    levels::{DEFAULT_Z, YSort, YSorted},
     procgen::ProcGenerated,
     screens::Screen,
 };
@@ -105,3 +105,4 @@ impl Character for Slime {
     }
 }
 impl ProcGenerated for Slime {}
+impl YSorted for Slime {}

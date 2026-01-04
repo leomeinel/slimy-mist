@@ -29,9 +29,10 @@ use crate::{
     AppSystems,
     audio::sound_effect,
     characters::{Character, CharacterAssets, JUMP_DURATION_SECS, Movement, VisualMap},
+    levels::YSorted,
     logging::{
         error::{
-            ERR_INVALID_REQUIRED_ANIMATION_DATA, ERR_INVALID_VISUAL_MAP,
+            ERR_INVALID_REQUIRED_ANIMATION_DATA, ERR_INVALID_TEXTURE_ATLAS, ERR_INVALID_VISUAL_MAP,
             ERR_LOADING_ANIMATION_DATA, ERR_NOT_LOADED_SPRITE_IMAGE,
             ERR_UNINITIALIZED_REQUIRED_ANIMATION,
         },
@@ -152,6 +153,20 @@ impl Default for AnimationController {
     }
 }
 
+/// Texture size derived from [`TextureAtlasLayout`]
+///
+/// ## Traits
+///
+/// - `T` must implement [`YSorted`].
+#[derive(Resource, Default)]
+pub(crate) struct AtlasTexture<T>
+where
+    T: YSorted,
+{
+    pub(crate) size: UVec2,
+    _phantom: PhantomData<T>,
+}
+
 /// Timer that tracks animation
 #[derive(Component, Debug, Clone, PartialEq, Reflect)]
 #[reflect(Component)]
@@ -170,7 +185,7 @@ fn setup_rng(mut global: Single<&mut WyRand, With<GlobalRng>>, mut commands: Com
 ///
 /// ## Traits
 ///
-/// - `T` must implement [`Character`].
+/// - `T` must implement [`Character`] and [`YSorted`].
 /// - `A` must implement [`CharacterAssets`]
 pub(crate) fn setup_animations<T, A>(
     mut commands: Commands,
@@ -181,7 +196,7 @@ pub(crate) fn setup_animations<T, A>(
     assets: Res<A>,
     images: Res<Assets<Image>>,
 ) where
-    T: Character,
+    T: Character + YSorted,
     A: CharacterAssets,
 {
     // Get animation from `AnimationData` with `AnimationHandle`
@@ -193,6 +208,19 @@ pub(crate) fn setup_animations<T, A>(
         .with_loaded_image(&images)
         .expect(ERR_NOT_LOADED_SPRITE_IMAGE)
         .sprite(&mut atlas_layouts);
+    let sprite_layout_id = sprite
+        .texture_atlas
+        .as_ref()
+        .expect(ERR_INVALID_TEXTURE_ATLAS)
+        .layout
+        .id();
+    let texture_size = atlas_layouts
+        .get(sprite_layout_id)
+        .expect(ERR_INVALID_TEXTURE_ATLAS)
+        .textures
+        .first()
+        .expect(ERR_INVALID_TEXTURE_ATLAS)
+        .size();
 
     // Idle animation: This is the only required animation
     let idle = animation_handle(
@@ -256,6 +284,10 @@ pub(crate) fn setup_animations<T, A>(
         walk,
         jump,
         fall,
+        ..default()
+    });
+    commands.insert_resource(AtlasTexture::<T> {
+        size: texture_size,
         ..default()
     });
 }

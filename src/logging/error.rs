@@ -25,6 +25,9 @@ pub(crate) const ERR_INVALID_MINIMUM_CHUNK_POS: &str =
 /// Since only the idle animation is required, the error message includes that.
 pub(crate) const ERR_INVALID_REQUIRED_ANIMATION_DATA: &str =
     "The animation data for required idle animation is invalid or incomplete.";
+/// Error message if an error has been encountered while processing texture atlas
+pub(crate) const ERR_INVALID_TEXTURE_ATLAS: &str =
+    "The loaded texture atlas is invalid. This is a bug.";
 /// Error message if an error has been encountered while processing visual_map
 pub(crate) const ERR_INVALID_VISUAL_MAP: &str = "The loaded visual map is invalid. This is a bug.";
 

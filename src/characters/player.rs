@@ -41,12 +41,6 @@ pub(super) fn plugin(app: &mut App) {
     // Add enhanced input plugin
     app.add_plugins(EnhancedInputPlugin);
 
-    // Animation setup
-    app.add_systems(
-        OnEnter(Screen::Gameplay),
-        animations::setup_animations::<Player, PlayerAssets>,
-    );
-
     // Jump or stop jump depending on timer
     app.add_systems(
         Update,

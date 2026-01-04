@@ -15,6 +15,11 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
 use crate::{
     Pause,
+    characters::{
+        animations::setup_animations,
+        npc::{Slime, SlimeAssets},
+        player::{Player, PlayerAssets},
+    },
     levels::overworld::{Overworld, spawn_overworld},
     menus::Menu,
     procgen::nav_grid::spawn_nav_grid,
@@ -25,7 +30,13 @@ pub(super) fn plugin(app: &mut App) {
     // Spawn overworld with nav grid
     app.add_systems(
         OnEnter(Screen::Gameplay),
-        (spawn_overworld, spawn_nav_grid::<Overworld>).chain(),
+        (
+            setup_animations::<Player, PlayerAssets>,
+            setup_animations::<Slime, SlimeAssets>,
+            spawn_overworld,
+            spawn_nav_grid::<Overworld>,
+        )
+            .chain(),
     );
 
     // Open pause on pressing P or Escape and pause game

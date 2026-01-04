@@ -36,12 +36,6 @@ pub(super) fn plugin(app: &mut App) {
     // Insert Animation resource
     app.insert_resource(Animations::<Slime>::default());
 
-    // Animation setup
-    app.add_systems(
-        OnEnter(Screen::Gameplay),
-        animations::setup_animations::<Slime, SlimeAssets>,
-    );
-
     // Animation updates
     app.add_systems(
         Update,

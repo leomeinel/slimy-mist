@@ -434,16 +434,13 @@ pub(crate) fn update_animation_sounds<T, A>(
         let (mut controller, animation) =
             child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
 
-        // Set translation to target translation because we even want to animate if walking against a wall
-        let state = controller.state;
-
         // Continue if sound has already been played
         if controller.sound_frame == animation.progress.frame {
             continue;
         }
 
         // Match to current `AnimationState`
-        let Some(sound) = (match state {
+        let Some(sound) = (match controller.state {
             AnimationState::Walk => choose_sound(
                 &mut rng,
                 &animation.progress.frame,

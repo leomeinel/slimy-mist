@@ -2,7 +2,7 @@
  * File: player.rs
  * Author: Leopold Johannes Meinel (leo@meinel.dev)
  * -----
- * Copyright (c) 2025 Leopold Johannes Meinel & contributors
+ * Copyright (c) 2026 Leopold Johannes Meinel & contributors
  * SPDX ID: Apache-2.0
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  * -----
@@ -17,19 +17,24 @@
 use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
 use bevy_enhanced_input::prelude::*;
-use bevy_northstar::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
     AppSystems, PausableSystems, Pause,
     characters::{
-        Character, CharacterAssets, CollisionData, CollisionHandle, JumpTimer, Movement, VisualMap,
+        Character, CharacterAssets, CollisionData, CollisionHandle, JumpTimer, Movement,
+        MovementSpeed, VisualMap,
         animations::{self, AnimationController, AnimationState, Animations},
-        character_collider, setup_shadow, tick_jump_timer,
+        character_collider,
+        nav::{NavController, NavState},
+        setup_shadow, tick_jump_timer,
     },
     impl_character_assets,
     levels::{DEFAULT_Z, YSort, YSortOffset},
-    logging::{error::ERR_LOADING_TILE_DATA, warn::WARN_INCOMPLETE_COLLISION_DATA_FALLBACK},
+    logging::{
+        error::{ERR_INVALID_VISUAL_MAP, ERR_LOADING_TILE_DATA},
+        warn::WARN_INCOMPLETE_COLLISION_DATA_FALLBACK,
+    },
     screens::Screen,
 };
 
@@ -98,9 +103,6 @@ pub(crate) struct PlayerAssets {
 }
 impl_character_assets!(PlayerAssets);
 
-/// Walking speed of the player
-const WALK_SPEED: f32 = 80.;
-
 /// Player marker
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
 #[reflect(Component)]
@@ -115,8 +117,10 @@ impl Character for Player {
             warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA_FALLBACK);
             24.
         });
+        let movement_speed = MovementSpeed::default();
 
         (
+            // FIXME: Use struct for this bundle
             Name::new("Player"),
             Self,
             Transform::from_translation(pos.extend(DEFAULT_Z)),
@@ -131,15 +135,16 @@ impl Character for Player {
                 ..default()
             },
             LockedAxes::ROTATION_LOCKED,
+            NavController::default(),
             Movement::default(),
-            Blocking,
+            movement_speed,
             actions!(
                 Self[
                     (
                         Action::<Walk>::new(),
                         DeadZone::default(),
                         SmoothNudge::default(),
-                        Scale::splat(WALK_SPEED),
+                        Scale::splat(movement_speed.0),
                         Bindings::spawn((
                             Cardinal::arrows(),
                             Cardinal::wasd_keys(),
@@ -169,7 +174,15 @@ struct Jump;
 /// On a fired walk, set translation to the given input
 fn apply_walk(
     event: On<Fire<Walk>>,
-    parent: Single<(Entity, &mut KinematicCharacterController, &mut Movement), With<Player>>,
+    parent: Single<
+        (
+            Entity,
+            &mut KinematicCharacterController,
+            &mut NavController,
+            &mut Movement,
+        ),
+        With<Player>,
+    >,
     mut child_query: Query<&mut AnimationController, Without<Player>>,
     pause: Res<State<Pause>>,
     time: Res<Time>,
@@ -180,19 +193,18 @@ fn apply_walk(
         return;
     }
 
-    let (entity, mut character_controller, mut movement) = parent.into_inner();
+    let (entity, mut character_controller, mut nav_controller, mut movement) = parent.into_inner();
 
     // Extract `animation_controller` from `child_query`
-    let Some(visual) = visual_map.0.get(&entity) else {
-        return;
-    };
-    let Ok(mut animation_controller) = child_query.get_mut(*visual) else {
-        return;
-    };
+    let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
+    let mut animation_controller = child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
 
     // Apply movement from input
-    movement.target = event.value * time.delta_secs();
-    character_controller.translation = Some(movement.target);
+    movement.direction = event.value * time.delta_secs();
+    character_controller.translation = Some(movement.direction);
+
+    // Update nav position if timer just finished
+    nav_controller.state = NavState::UpdatePos;
 
     // Return if we are jumping
     let state = animation_controller.state;
@@ -214,15 +226,11 @@ fn stop_walk(
     let (entity, mut character_controller, mut movement) = parent.into_inner();
 
     // Extract `animation_controller` from `child_query`
-    let Some(visual) = visual_map.0.get(&entity) else {
-        return;
-    };
-    let Ok(mut animation_controller) = child_query.get_mut(*visual) else {
-        return;
-    };
+    let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
+    let mut animation_controller = child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
 
     // Reset movement target
-    movement.target = Vec2::ZERO;
+    movement.direction = Vec2::ZERO;
 
     // Return if we are jumping
     let state = animation_controller.state;
@@ -231,7 +239,7 @@ fn stop_walk(
     }
 
     // Stop movement
-    character_controller.translation = Some(movement.target);
+    character_controller.translation = Some(movement.direction);
     animation_controller.state = AnimationState::Idle;
 }
 
@@ -252,12 +260,8 @@ fn set_jump(
     let entity = parent.entity();
 
     // Extract `animation_controller` from `child_query`
-    let Some(visual) = visual_map.0.get(&entity) else {
-        return;
-    };
-    let Ok(mut animation_controller) = child_query.get_mut(*visual) else {
-        return;
-    };
+    let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
+    let mut animation_controller = child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
 
     // Return if we are already jumping
     let state = animation_controller.state;
@@ -281,16 +285,14 @@ fn apply_jump(
     data: Res<Assets<CollisionData<Player>>>,
     handle: Res<CollisionHandle<Player>>,
     visual_map: Res<VisualMap>,
+    mut width: Local<Option<f32>>,
 ) {
     let (entity, mut movement, timer) = parent.into_inner();
 
     // Extract `animation_controller` from `child_query`
-    let Some(visual) = visual_map.0.get(&entity) else {
-        return;
-    };
-    let Ok((animation_controller, mut transform)) = child_query.get_mut(*visual) else {
-        return;
-    };
+    let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
+    let (animation_controller, mut transform) =
+        child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
 
     let state = animation_controller.state;
 
@@ -318,11 +320,18 @@ fn apply_jump(
     } else {
         target
     };
-    let data = data.get(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
-    let width = data.width.unwrap_or_else(|| {
-        warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA_FALLBACK);
-        24.
+
+    // Init local values
+    let width = width.unwrap_or_else(|| {
+        let data = data.get(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
+        let value = data.width.unwrap_or_else(|| {
+            warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA_FALLBACK);
+            24.
+        });
+        *width = Some(value);
+        value
     });
+
     commands
         .entity(entity)
         .insert(YSortOffset(width / 4. + y_sort_offset));
@@ -336,6 +345,7 @@ fn limit_jump(
     data: Res<Assets<CollisionData<Player>>>,
     handle: Res<CollisionHandle<Player>>,
     visual_map: Res<VisualMap>,
+    mut width: Local<Option<f32>>,
 ) {
     let (entity, mut movement, timer) = parent.into_inner();
 
@@ -345,12 +355,8 @@ fn limit_jump(
     }
 
     // Extract `animation_controller` from `child_query`
-    let Some(visual) = visual_map.0.get(&entity) else {
-        return;
-    };
-    let Ok(mut animation_controller) = child_query.get_mut(*visual) else {
-        return;
-    };
+    let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
+    let mut animation_controller = child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
 
     // Reset jump height
     movement.jump_height = 0.;
@@ -362,11 +368,17 @@ fn limit_jump(
             animation_controller.state = AnimationState::Fall;
         }
         AnimationState::Fall => {
-            let data = data.get(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
-            let width = data.width.unwrap_or_else(|| {
-                warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA_FALLBACK);
-                24.
+            // Init local values
+            let width = width.unwrap_or_else(|| {
+                let data = data.get(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
+                let value = data.width.unwrap_or_else(|| {
+                    warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA_FALLBACK);
+                    24.
+                });
+                *width = Some(value);
+                value
             });
+
             commands.entity(entity).insert(YSortOffset(width / 4.));
             animation_controller.state = AnimationState::Idle
         }

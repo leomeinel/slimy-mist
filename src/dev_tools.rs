@@ -2,7 +2,7 @@
  * File: dev_tools.rs
  * Author: Leopold Johannes Meinel (leo@meinel.dev)
  * -----
- * Copyright (c) 2025 Leopold Johannes Meinel & contributors
+ * Copyright (c) 2026 Leopold Johannes Meinel & contributors
  * SPDX ID: Apache-2.0
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  * -----
@@ -23,8 +23,11 @@ use rand::Rng;
 use crate::{
     characters::{Character, npc::Slime},
     levels::overworld::OverworldProcGen,
-    logging::error::{ERR_INVALID_MINIMUM_CHUNK_POS, ERR_LOADING_TILE_DATA},
-    procgen::{CHUNK_SIZE, ProcGenController, ProcGenState, ProcGenerated, TileData, TileHandle},
+    logging::error::ERR_LOADING_TILE_DATA,
+    procgen::{
+        CHUNK_SIZE, ProcGenController, ProcGenInit, ProcGenState, ProcGenerated, TileData,
+        TileHandle,
+    },
     screens::Screen,
 };
 
@@ -43,6 +46,8 @@ pub(super) fn plugin(app: &mut App) {
 
     // Log `Screen` state transitions.
     app.add_systems(Update, log_transitions::<Screen>);
+    app.add_systems(Update, log_transitions::<ProcGenState>);
+    app.add_systems(Update, log_transitions::<ProcGenInit>);
 
     // Set debugging state
     app.init_state::<Debugging>();
@@ -65,12 +70,16 @@ pub(super) fn plugin(app: &mut App) {
         despawn_debug_nav_grid.run_if(in_state(Screen::Gameplay)),
     );
     app.add_systems(
-        OnEnter(ProcGenState::RebuildNavGrid),
+        Update,
         (
             spawn_debug_nav_grid::<OverworldProcGen>,
-            spawn_debug_path::<Slime>,
+            spawn_debug_path::<Slime>.after(PathingSet),
         )
-            .run_if(in_state(Debugging(true)).and(in_state(Screen::Gameplay))),
+            .run_if(
+                in_state(ProcGenInit(true))
+                    .and(in_state(Debugging(true)))
+                    .and(in_state(Screen::Gameplay)),
+            ),
     );
 }
 
@@ -128,23 +137,19 @@ fn spawn_debug_nav_grid<T>(
     controller: Res<ProcGenController<T>>,
     data: Res<Assets<TileData<T>>>,
     handle: Res<TileHandle<T>>,
+    mut tile_size: Local<Option<Vec2>>,
 ) where
     T: ProcGenerated,
 {
-    // Get data from `TileData` with `TileHandle`
-    let data = data.get(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
-    let tile_size = Vec2::new(data.tile_height, data.tile_width);
+    // Init local values
+    let tile_size = tile_size.unwrap_or_else(|| {
+        let data = data.get(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
+        let value = Vec2::new(data.tile_height, data.tile_width);
+        *tile_size = Some(value);
+        value
+    });
 
-    // Determine world pos from minimum chunk pos
-    let min_chunk_pos = controller
-        .positions
-        .values()
-        .min_by_key(|pos| (pos.x, pos.y))
-        .expect(ERR_INVALID_MINIMUM_CHUNK_POS);
-    let world_pos = Vec2::new(
-        min_chunk_pos.x as f32 * CHUNK_SIZE.x as f32 * tile_size.x,
-        min_chunk_pos.y as f32 * CHUNK_SIZE.y as f32 * tile_size.y,
-    );
+    let world_pos = controller.min_chunk_pos().as_vec2() * CHUNK_SIZE.as_vec2() * tile_size;
 
     // Return if debug grid is present and update offset
     if let Some(mut offset) = debug_nav_grid {
@@ -185,7 +190,10 @@ fn spawn_debug_path<T>(
         );
 
         // Insert debug path with random color
-        commands.entity(entity).insert(DebugPath::new(color));
+        commands.entity(entity).insert(DebugPath {
+            color,
+            draw_unrefined: true,
+        });
     }
 }
 

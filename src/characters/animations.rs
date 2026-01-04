@@ -2,7 +2,7 @@
  * File: animations.rs
  * Author: Leopold Johannes Meinel (leo@meinel.dev)
  * -----
- * Copyright (c) 2025 Leopold Johannes Meinel & contributors
+ * Copyright (c) 2026 Leopold Johannes Meinel & contributors
  * SPDX ID: Apache-2.0
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  * -----
@@ -31,8 +31,9 @@ use crate::{
     characters::{Character, CharacterAssets, JUMP_DURATION_SECS, Movement, VisualMap},
     logging::{
         error::{
-            ERR_INVALID_REQUIRED_ANIMATION_DATA, ERR_LOADING_ANIMATION_DATA,
-            ERR_SPRITE_IMAGE_NOT_LOADED, ERR_UNINITIALIZED_REQUIRED_ANIMATION,
+            ERR_INVALID_REQUIRED_ANIMATION_DATA, ERR_INVALID_VISUAL_MAP,
+            ERR_LOADING_ANIMATION_DATA, ERR_NOT_LOADED_SPRITE_IMAGE,
+            ERR_UNINITIALIZED_REQUIRED_ANIMATION,
         },
         warn::{WARN_INCOMPLETE_ANIMATION_DATA, WARN_INCOMPLETE_ASSET_DATA},
     },
@@ -190,7 +191,7 @@ pub(crate) fn setup_animations<T, A>(
     let sprite_sheet = Spritesheet::new(assets.get_image(), data.atlas_columns, data.atlas_rows);
     let sprite = sprite_sheet
         .with_loaded_image(&images)
-        .expect(ERR_SPRITE_IMAGE_NOT_LOADED)
+        .expect(ERR_NOT_LOADED_SPRITE_IMAGE)
         .sprite(&mut atlas_layouts);
 
     // Idle animation: This is the only required animation
@@ -322,30 +323,23 @@ pub(crate) fn update_animations<T>(
 {
     for (entity, movement) in &parent_query {
         // Extract `animation_controller` from `child_query`
-        let Some(visual) = visual_map.0.get(&entity) else {
-            continue;
-        };
-        let Ok((mut controller, mut sprite, mut animation, timer)) = child_query.get_mut(*visual)
-        else {
-            continue;
-        };
+        let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
+        let (mut controller, mut sprite, mut animation, timer) =
+            child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
 
         // Reset animation after timer has finished
         if timer.0.just_finished() {
             animation.reset();
         }
 
-        // Set translation to target translation because we even want to animate if walking against a wall
-        let state = controller.state;
-
         // Sprite flipping
-        let dx = movement.target.x;
+        let dx = movement.direction.x;
         if dx != 0. {
             sprite.flip_x = dx < 0.;
         }
 
         // Match to current `AnimationState`
-        match state {
+        match controller.state {
             AnimationState::Walk
                 if &animation.animation
                     != animations
@@ -417,21 +411,28 @@ pub(crate) fn update_animation_sounds<T, A>(
     handle: Res<AnimationHandle<T>>,
     visual_map: Res<VisualMap>,
     assets: Res<A>,
+    mut frame_set: Local<Option<(Option<Vec<usize>>, Option<Vec<usize>>, Option<Vec<usize>>)>>,
 ) where
     T: Character,
     A: CharacterAssets,
 {
-    // Get animation from `AnimationData` with `AnimationHandle`
-    let data = data.get(handle.0.id()).expect(ERR_LOADING_ANIMATION_DATA);
+    // Init local values
+    if frame_set.is_none() {
+        let data = data.get(handle.0.id()).expect(ERR_LOADING_ANIMATION_DATA);
+        let value = (
+            data.walk_sound_frames.clone(),
+            data.jump_sound_frames.clone(),
+            data.fall_sound_frames.clone(),
+        );
+        *frame_set = Some(value);
+    }
+    let frame_set = frame_set.as_ref().unwrap();
 
     for entity in &parent_query {
         // Extract `animation_controller` from `child_query`
-        let Some(visual) = visual_map.0.get(&entity) else {
-            continue;
-        };
-        let Ok((mut controller, animation)) = child_query.get_mut(*visual) else {
-            continue;
-        };
+        let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
+        let (mut controller, animation) =
+            child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
 
         // Set translation to target translation because we even want to animate if walking against a wall
         let state = controller.state;
@@ -444,21 +445,21 @@ pub(crate) fn update_animation_sounds<T, A>(
         // Match to current `AnimationState`
         let Some(sound) = (match state {
             AnimationState::Walk => choose_sound(
-                rng.as_mut(),
+                &mut rng,
                 &animation.progress.frame,
-                &data.walk_sound_frames,
+                &frame_set.0,
                 assets.get_walk_sounds(),
             ),
             AnimationState::Jump => choose_sound(
-                rng.as_mut(),
+                &mut rng,
                 &animation.progress.frame,
-                &data.jump_sound_frames,
+                &frame_set.1,
                 assets.get_jump_sounds(),
             ),
             AnimationState::Fall => choose_sound(
-                rng.as_mut(),
+                &mut rng,
                 &animation.progress.frame,
-                &data.fall_sound_frames,
+                &frame_set.2,
                 assets.get_fall_sounds(),
             ),
             _ => None,

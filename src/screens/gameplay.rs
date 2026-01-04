@@ -15,23 +15,15 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
 use crate::{
     Pause,
-    characters::{npc::Slime, player::Player, setup_shadow},
-    levels::overworld::{Overworld, OverworldAssets, OverworldProcGen, spawn_overworld},
+    characters::{player::Player, setup_shadow},
+    levels::overworld::{Overworld, spawn_overworld},
     menus::Menu,
-    procgen::{
-        ProcGenState,
-        chunks::spawn_chunks,
-        clear_procgen_controller, despawn_procgen,
-        navigation::{
-            pathfind_to_character, rebuild_nav_grid, spawn_nav_grid, update_nav_grid_agent_pos,
-        },
-        spawn::spawn_characters,
-    },
+    procgen::nav_grid::spawn_nav_grid,
     screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {
-    // Spawn overworld
+    // Spawn overworld with nav grid
     app.add_systems(
         OnEnter(Screen::Gameplay),
         (
@@ -39,39 +31,6 @@ pub(super) fn plugin(app: &mut App) {
             spawn_nav_grid::<Overworld>,
         )
             .chain(),
-    );
-
-    // Start spawning/despawning chunks and characters and build nav grid
-    app.add_systems(
-        Update,
-        (
-            (
-                despawn_procgen::<Slime, OverworldProcGen, false>,
-                despawn_procgen::<OverworldProcGen, OverworldProcGen, true>,
-            )
-                .chain()
-                .run_if(in_state(ProcGenState::Despawn).and(in_state(Screen::Gameplay))),
-            (
-                spawn_chunks::<OverworldProcGen, OverworldAssets, Overworld>,
-                spawn_characters::<Slime, OverworldProcGen, Overworld>,
-            )
-                .chain()
-                .run_if(in_state(ProcGenState::Spawn).and(in_state(Screen::Gameplay))),
-            rebuild_nav_grid
-                .run_if(in_state(ProcGenState::RebuildNavGrid).and(in_state(Screen::Gameplay))),
-        ),
-    );
-
-    // Update agent pos after exiting `ProcGenState::RebuildNavGrid`
-    app.add_systems(
-        OnExit(ProcGenState::RebuildNavGrid),
-        (
-            update_nav_grid_agent_pos::<Player, OverworldProcGen>,
-            update_nav_grid_agent_pos::<Slime, OverworldProcGen>,
-            pathfind_to_character::<Slime, Player>,
-        )
-            .chain()
-            .run_if(in_state(Screen::Gameplay)),
     );
 
     // Open pause on pressing P or Escape and pause game
@@ -92,17 +51,7 @@ pub(super) fn plugin(app: &mut App) {
     );
     // Exit pause menu that was used to exit, unpause game and clear chunks
     // and spawn points when exiting `Gameplay` screen
-    app.add_systems(
-        OnExit(Screen::Gameplay),
-        (
-            clear_procgen_controller::<OverworldProcGen>,
-            clear_procgen_controller::<Slime>,
-            reset_procgen_state,
-            close_menu,
-            unpause,
-        )
-            .chain(),
-    );
+    app.add_systems(OnExit(Screen::Gameplay), (close_menu, unpause));
 
     // Unpause if in no menu and in gameplay screen
     app.add_systems(
@@ -112,18 +61,13 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 /// Unpause the game
-fn unpause(mut next_pause: ResMut<NextState<Pause>>) {
-    next_pause.set(Pause(false));
+fn unpause(mut next_state: ResMut<NextState<Pause>>) {
+    next_state.set(Pause(false));
 }
 
 /// Pause the game
-fn pause(mut next_pause: ResMut<NextState<Pause>>) {
-    next_pause.set(Pause(true));
-}
-
-/// Reset [`ProcGenState`]
-fn reset_procgen_state(mut procgen_state: ResMut<NextState<ProcGenState>>) {
-    procgen_state.set(ProcGenState::default());
+fn pause(mut next_state: ResMut<NextState<Pause>>) {
+    next_state.set(Pause(true));
 }
 
 /// rgba(0, 0, 0, 204)
@@ -145,11 +89,11 @@ fn spawn_pause_overlay(mut commands: Commands) {
 }
 
 /// Open pause menu
-fn open_pause_menu(mut next_menu: ResMut<NextState<Menu>>) {
-    next_menu.set(Menu::Pause);
+fn open_pause_menu(mut next_state: ResMut<NextState<Menu>>) {
+    next_state.set(Menu::Pause);
 }
 
 /// Close pause menu
-fn close_menu(mut next_menu: ResMut<NextState<Menu>>) {
-    next_menu.set(Menu::None);
+fn close_menu(mut next_state: ResMut<NextState<Menu>>) {
+    next_state.set(Menu::None);
 }

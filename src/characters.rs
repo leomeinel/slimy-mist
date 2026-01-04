@@ -2,7 +2,7 @@
  * File: characters.rs
  * Author: Leopold Johannes Meinel (leo@meinel.dev)
  * -----
- * Copyright (c) 2025 Leopold Johannes Meinel & contributors
+ * Copyright (c) 2026 Leopold Johannes Meinel & contributors
  * SPDX ID: Apache-2.0
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  */
@@ -10,6 +10,7 @@
 //! Characters
 
 pub(crate) mod animations;
+pub(crate) mod nav;
 pub(crate) mod npc;
 pub(crate) mod player;
 
@@ -34,9 +35,9 @@ pub(super) fn plugin(app: &mut App) {
     app.insert_resource(VisualMap::default());
 
     // Add child plugins
-    app.add_plugins((animations::plugin, npc::plugin, player::plugin));
+    app.add_plugins((animations::plugin, npc::plugin, nav::plugin, player::plugin));
 
-    // Tick jump timer
+    // Tick timers
     app.add_systems(Update, tick_jump_timer.in_set(AppSystems::TickTimers));
 }
 
@@ -169,8 +170,17 @@ where
 /// Current data about movement
 #[derive(Component, Default)]
 pub(crate) struct Movement {
-    pub(crate) target: Vec2,
+    pub(crate) direction: Vec2,
     jump_height: f32,
+}
+
+/// Current data about movement
+#[derive(Component, Copy, Clone)]
+pub(crate) struct MovementSpeed(f32);
+impl Default for MovementSpeed {
+    fn default() -> Self {
+        Self(80.)
+    }
 }
 
 /// Timer that tracks jumping

@@ -44,18 +44,18 @@ fn spawn_main_menu(mut commands: Commands) {
 }
 
 /// Enter the gameplay screen
-fn enter_gameplay_screen(_: On<Pointer<Click>>, mut next_screen: ResMut<NextState<Screen>>) {
-    next_screen.set(Screen::Gameplay);
+fn enter_gameplay_screen(_: On<Pointer<Click>>, mut next_state: ResMut<NextState<Screen>>) {
+    next_state.set(Screen::Gameplay);
 }
 
 /// Open settings
-fn open_settings_menu(_: On<Pointer<Click>>, mut next_menu: ResMut<NextState<Menu>>) {
-    next_menu.set(Menu::Settings);
+fn open_settings_menu(_: On<Pointer<Click>>, mut next_state: ResMut<NextState<Menu>>) {
+    next_state.set(Menu::Settings);
 }
 
 /// Open credits
-fn open_credits_menu(_: On<Pointer<Click>>, mut next_menu: ResMut<NextState<Menu>>) {
-    next_menu.set(Menu::Credits);
+fn open_credits_menu(_: On<Pointer<Click>>, mut next_state: ResMut<NextState<Menu>>) {
+    next_state.set(Menu::Credits);
 }
 
 /// Exit the app

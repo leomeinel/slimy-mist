@@ -96,7 +96,7 @@ pub(crate) fn spawn_overworld(
             warn_once!("{}", WARN_INCOMPLETE_ASSET_DATA);
             Vec::default()
         })
-        .choose(level_rng.as_mut())
+        .choose(&mut level_rng)
         .cloned()
     {
         commands.entity(level).with_children(|commands| {

@@ -2,18 +2,17 @@
  * File: chunks.rs
  * Author: Leopold Johannes Meinel (leo@meinel.dev)
  * -----
- * Copyright (c) 2025 Leopold Johannes Meinel & contributors
+ * Copyright (c) 2026 Leopold Johannes Meinel & contributors
  * SPDX ID: Apache-2.0
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  */
 
-use bevy::prelude::*;
+use bevy::{platform::collections::HashSet, prelude::*};
 use bevy_ecs_tilemap::prelude::*;
 use bevy_prng::WyRand;
 use rand::Rng as _;
 
 use crate::{
-    CanvasCamera,
     levels::{LEVEL_Z, Level, LevelAssets},
     logging::{error::ERR_LOADING_TILE_DATA, warn::WARN_INCOMPLETE_TILE_DATA},
     procgen::{
@@ -22,7 +21,7 @@ use crate::{
     },
 };
 
-/// Spawn chunks around the [`CanvasCamera`]
+/// Spawn chunks around the camera
 ///
 /// ## Traits
 ///
@@ -30,45 +29,59 @@ use crate::{
 /// - `A` must implement [`LevelAssets`] and is used as a level's assets.
 /// - `B` must implement [`Level`].
 pub(crate) fn spawn_chunks<T, A, B>(
-    camera: Single<&Transform, With<CanvasCamera>>,
     level: Single<Entity, With<B>>,
     mut rng: Single<&mut WyRand, With<ProcGenRng>>,
     mut commands: Commands,
     mut controller: ResMut<ProcGenController<T>>,
-    mut procgen_state: ResMut<NextState<ProcGenState>>,
+    mut next_state: ResMut<NextState<ProcGenState>>,
     data: Res<Assets<TileData<T>>>,
     handle: Res<TileHandle<T>>,
     assets: Res<A>,
+    mut tile_size: Local<Option<Vec2>>,
+    mut tiles: Local<
+        Option<(
+            HashSet<UVec2>,
+            HashSet<UVec2>,
+            HashSet<UVec2>,
+            HashSet<UVec2>,
+            HashSet<UVec2>,
+            HashSet<UVec2>,
+        )>,
+    >,
 ) where
     T: ProcGenerated,
     A: LevelAssets,
     B: Level,
 {
-    // Get data from `TileData` with `TileHandle`
-    let data = data.get(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
-    let tile_size = Vec2::new(data.tile_height, data.tile_width);
-    // FIXME: Use this for conditional spawning/arranging
-    let Some(_tiles) = data.get_tiles() else {
-        // Return and do not spawn chunks if tiles are not configured correctly
-        warn_once!("{}", WARN_INCOMPLETE_TILE_DATA);
-        return;
-    };
+    // Init local values
+    let tile_size = tile_size.unwrap_or_else(|| {
+        let data = data.get(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
+        let value = Vec2::new(data.tile_height, data.tile_width);
+        *tile_size = Some(value);
+        value
+    });
+    if tiles.is_none() {
+        let data = data.get(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
+        let Some(value) = data.get_tiles() else {
+            // Return and do not spawn chunks if tiles are not configured correctly
+            warn_once!("{}", WARN_INCOMPLETE_TILE_DATA);
+            return;
+        };
+        *tiles = Some(value);
+    }
+    let _tiles = tiles.as_ref().unwrap();
 
-    // Get target translation for new chunk from camera translation
-    let camera_pos = camera.translation.xy();
-    let chunk_size_px = Vec2::new(CHUNK_SIZE.x as f32, CHUNK_SIZE.y as f32) * tile_size;
-    let chunk_pos = (camera_pos / chunk_size_px).floor().as_ivec2();
-
-    // Spawn chunk behind and in front of chunk position if it does not contain a chunk already
+    // Spawn chunk behind and in front of camera chunk position if it does not contain a chunk already
     // NOTE: We are using inclusive range because we might have a movement offset of 1 chunk.
     // NOTE: We are spawning in a square. Since that has only minimal performance overhead.
     //       I deem this a cleaner solution and if spawning in a circle, distance calculations
     //       would be more expensive.
+    let chunk_pos = controller.camera_chunk_pos;
     for y in (chunk_pos.y - PROCGEN_DISTANCE)..=(chunk_pos.y + PROCGEN_DISTANCE) {
         for x in (chunk_pos.x - PROCGEN_DISTANCE)..=(chunk_pos.x + PROCGEN_DISTANCE) {
             // Continue if a chunk has already been stored
             if controller
-                .positions
+                .chunk_positions
                 .values()
                 .any(|&v| v == IVec2::new(x, y))
             {
@@ -76,7 +89,7 @@ pub(crate) fn spawn_chunks<T, A, B>(
             }
 
             // FIXME: Currently this just chooses from a range of random numbers.
-            //        Make this choose in a way that makes sense with noise
+            //        Make this choose from _tiles in a way that makes sense with noise.
             let rand_index = rng.random_range(0_u32..15_u32);
 
             // Spawn chunk
@@ -92,7 +105,7 @@ pub(crate) fn spawn_chunks<T, A, B>(
         }
     }
 
-    procgen_state.set(ProcGenState::RebuildNavGrid);
+    next_state.set(ProcGenState::UpdateNav);
 }
 
 /// Spawn a single chunk
@@ -115,7 +128,7 @@ fn spawn_chunk<T, A>(
 {
     // Create empty container and store in controller
     let container = commands.spawn(T::default()).id();
-    controller.positions.insert(container, chunk_pos);
+    controller.chunk_positions.insert(container, chunk_pos);
     let mut storage = TileStorage::empty(CHUNK_SIZE.into());
 
     // Spawn a `TileBundle` mapped to the container entity for each x/y in `CHUNK_SIZE`,
@@ -136,10 +149,7 @@ fn spawn_chunk<T, A>(
         }
     }
 
-    let world_pos = Vec2::new(
-        chunk_pos.x as f32 * CHUNK_SIZE.x as f32 * tile_size.x,
-        chunk_pos.y as f32 * CHUNK_SIZE.y as f32 * tile_size.y,
-    );
+    let world_pos = chunk_pos.as_vec2() * CHUNK_SIZE.as_vec2() * tile_size;
     let handle = assets.get_tile_set().clone();
 
     // Insert TileMapBundle with storage, transform and texture from handle to container entity

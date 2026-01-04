@@ -2,7 +2,7 @@
  * File: spawn.rs
  * Author: Leopold Johannes Meinel (leo@meinel.dev)
  * -----
- * Copyright (c) 2025 Leopold Johannes Meinel & contributors
+ * Copyright (c) 2026 Leopold Johannes Meinel & contributors
  * SPDX ID: Apache-2.0
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  */
@@ -18,10 +18,7 @@ use crate::{
     },
     levels::Level,
     logging::error::{ERR_LOADING_COLLISION_DATA, ERR_LOADING_TILE_DATA},
-    procgen::{
-        CHUNK_SIZE, ProcGenController, ProcGenRng, ProcGenState, ProcGenerated, TileData,
-        TileHandle,
-    },
+    procgen::{CHUNK_SIZE, ProcGenController, ProcGenRng, ProcGenerated, TileData, TileHandle},
 };
 
 /// Spawn characters in every chunk contained in [`ProcGenController<A>`]
@@ -33,11 +30,10 @@ use crate::{
 /// - `B` must implement [`Level`].
 pub(crate) fn spawn_characters<T, A, B>(
     mut animation_rng: Single<&mut WyRand, (With<AnimationRng>, Without<ProcGenRng>)>,
-    mut rng: Single<&mut WyRand, (With<ProcGenRng>, Without<AnimationRng>)>,
+    mut procgen_rng: Single<&mut WyRand, (With<ProcGenRng>, Without<AnimationRng>)>,
     level: Single<Entity, With<B>>,
     mut commands: Commands,
     mut controller: ResMut<ProcGenController<T>>,
-    mut procgen_state: ResMut<NextState<ProcGenState>>,
     mut visual_map: ResMut<VisualMap>,
     animations: Res<Animations<T>>,
     chunk_controller: Res<ProcGenController<A>>,
@@ -46,46 +42,56 @@ pub(crate) fn spawn_characters<T, A, B>(
     shadow: Res<Shadow<T>>,
     tile_data: Res<Assets<TileData<A>>>,
     tile_handle: Res<TileHandle<A>>,
+    mut collision_set: Local<Option<(Option<String>, Option<f32>, Option<f32>)>>,
+    mut tile_size: Local<Option<Vec2>>,
 ) where
     T: Character + ProcGenerated,
     A: ProcGenerated,
     B: Level,
 {
-    // Get data from `TileData` with `TileHandle`
-    let data = tile_data
-        .get(tile_handle.0.id())
-        .expect(ERR_LOADING_TILE_DATA);
-    let tile_size = Vec2::new(data.tile_height, data.tile_width);
-    // Get data from `CollisionData` with `CollisionHandle`
-    let data = collision_data
-        .get(collision_handle.0.id())
-        .expect(ERR_LOADING_COLLISION_DATA);
-    let data = (data.shape.clone(), data.width, data.height);
+    // Init local values
+    let tile_size = tile_size.unwrap_or_else(|| {
+        let data = tile_data
+            .get(tile_handle.0.id())
+            .expect(ERR_LOADING_TILE_DATA);
+        let value = Vec2::new(data.tile_height, data.tile_width);
+        *tile_size = Some(value);
+        value
+    });
+    if collision_set.is_none() {
+        let data = collision_data
+            .get(collision_handle.0.id())
+            .expect(ERR_LOADING_COLLISION_DATA);
+        let value = (data.shape.clone(), data.width, data.height);
+        *collision_set = Some(value);
+    }
+    let collision_set = collision_set.as_ref().unwrap();
 
-    // FIXME: Use noise for spawning positions
-    for (_, chunk_pos) in &chunk_controller.positions {
+    for (_, chunk_pos) in &chunk_controller.chunk_positions {
         // Continue if chunk has already been stored
-        if controller.positions.values().any(|&v| v == *chunk_pos) {
+        if controller
+            .chunk_positions
+            .values()
+            .any(|&v| v == *chunk_pos)
+        {
             continue;
         }
 
         // Spawn character
         spawn_character::<T>(
             &mut animation_rng,
-            &mut rng,
+            &mut procgen_rng,
             &mut commands,
             &mut controller,
             &mut visual_map,
             level.entity(),
             &animations,
-            &data,
+            collision_set,
             &shadow,
             chunk_pos,
             &tile_size,
         );
     }
-
-    procgen_state.set(ProcGenState::RebuildNavGrid);
 }
 
 /// Number of characters to spawn per chunk
@@ -98,7 +104,7 @@ const CHARACTERS_PER_CHUNK: usize = 4;
 /// - `T` must implement [`Character`] + [`ProcGenerated`] and is used as the procedurally generated character.
 fn spawn_character<T>(
     animation_rng: &mut WyRand,
-    rng: &mut WyRand,
+    procgen_rng: &mut WyRand,
     commands: &mut Commands,
     controller: &mut ResMut<ProcGenController<T>>,
     visual_map: &mut ResMut<VisualMap>,
@@ -116,11 +122,11 @@ fn spawn_character<T>(
         .flat_map(|x| (0..CHUNK_SIZE.y).map(move |y| (x, y)))
         .collect();
     let target_origins: Vec<&(u32, u32)> = target_origins
-        .choose_multiple(rng, CHARACTERS_PER_CHUNK)
+        .choose_multiple(procgen_rng, CHARACTERS_PER_CHUNK)
         .collect();
 
     for (x, y) in target_origins {
-        let delay = animation_rng.random_range(ANIMATION_DELAY_RANGE);
+        let animation_delay = animation_rng.random_range(ANIMATION_DELAY_RANGE);
 
         // Set target position in pixels
         let target_pos = Vec2::new(
@@ -130,9 +136,15 @@ fn spawn_character<T>(
 
         // Spawn entity in chosen tile and store in controller
         let entity = T::spawn(
-            commands, visual_map, data, target_pos, animations, shadow, delay,
+            commands,
+            visual_map,
+            data,
+            target_pos,
+            animations,
+            shadow,
+            animation_delay,
         );
-        controller.positions.insert(entity, *chunk_pos);
+        controller.chunk_positions.insert(entity, *chunk_pos);
 
         // Add entity to level so that level handles despawning
         commands.entity(level).add_child(entity);

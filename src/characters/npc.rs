@@ -2,7 +2,7 @@
  * File: npc.rs
  * Author: Leopold Johannes Meinel (leo@meinel.dev)
  * -----
- * Copyright (c) 2025 Leopold Johannes Meinel & contributors
+ * Copyright (c) 2026 Leopold Johannes Meinel & contributors
  * SPDX ID: Apache-2.0
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  * -----
@@ -16,15 +16,16 @@
 
 use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
-use bevy_northstar::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
     AppSystems, PausableSystems,
     characters::{
-        Character, CharacterAssets, JumpTimer, Movement,
+        Character, CharacterAssets, Movement, MovementSpeed,
         animations::{self, Animations},
-        character_collider, setup_shadow,
+        character_collider,
+        nav::NavController,
+        setup_shadow,
     },
     impl_character_assets,
     levels::{DEFAULT_Z, YSort},
@@ -50,9 +51,9 @@ pub(super) fn plugin(app: &mut App) {
         Update,
         (
             animations::update_animations::<Slime>.after(animations::tick_animation_timer),
-            animations::update_animation_sounds::<Slime, SlimeAssets>
-                .run_if(in_state(Screen::Gameplay)),
+            animations::update_animation_sounds::<Slime, SlimeAssets>,
         )
+            .run_if(in_state(Screen::Gameplay))
             .chain()
             .in_set(AppSystems::Update)
             .in_set(PausableSystems),
@@ -90,6 +91,7 @@ impl Character for Slime {
         pos: Vec2,
     ) -> impl Bundle {
         (
+            // FIXME: Use struct for this bundle
             Name::new("Slime"),
             Npc,
             Self,
@@ -99,14 +101,16 @@ impl Character for Slime {
             Visibility::Inherited,
             RigidBody::KinematicPositionBased,
             GravityScale(0.),
+            // FIXME: Uncomment this when collision support is added.
+            // KinematicCharacterController::default(),
             KinematicCharacterController {
                 filter_flags: QueryFilterFlags::EXCLUDE_KINEMATIC,
                 ..default()
             },
             LockedAxes::ROTATION_LOCKED,
             Movement::default(),
-            JumpTimer::default(),
-            Blocking,
+            MovementSpeed::default(),
+            NavController::default(),
         )
     }
 }

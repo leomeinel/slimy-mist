@@ -22,7 +22,7 @@
 
 use std::ops::Range;
 
-use bevy::prelude::*;
+use bevy::{math::FloatPow, prelude::*};
 use bevy_northstar::prelude::*;
 use bevy_prng::WyRand;
 use bevy_rand::{global::GlobalRng, traits::ForkableSeed as _};
@@ -280,7 +280,7 @@ fn apply_path<T, A>(
         let goal_world_pos = path_find.goal.xy().as_vec2() * tile_size + world_pos;
         let direction = goal_world_pos - transform.translation.xy();
         let dist_squared = direction.length_squared();
-        if dist_squared <= MAX_GOAL_TILE_DIST * tile_size.x * MAX_GOAL_TILE_DIST * tile_size.x {
+        if dist_squared <= (MAX_GOAL_TILE_DIST * tile_size.x).squared() {
             agent_pos.0 = next_pos.0;
             commands.entity(entity).remove::<NextPos>();
             nav_controller.state = NavState::None;
@@ -300,12 +300,9 @@ fn apply_path<T, A>(
         let next_world_pos = next_pos.0.xy().as_vec2() * tile_size + world_pos;
         let direction = next_world_pos - transform.translation.xy();
         let dist_squared = direction.length_squared();
-
-        // Set default direction to normalized vector of `direction / distance`
         let movement_dist = movement_speed.0 * time.delta_secs();
-        movement.direction = movement_dist * direction.normalize_or_zero();
 
-        if dist_squared < movement_dist * movement_dist {
+        if dist_squared < movement_dist.squared() {
             // Would overshoot, therefore apply direction and set/remove next_pos
             character_controller.translation = Some(direction);
             agent_pos.0 = next_pos.0;
@@ -320,6 +317,9 @@ fn apply_path<T, A>(
             //     next_world_pos
             // );
         } else {
+            // Set default direction to normalized vector of `direction / dist`
+            let dist = dist_squared.sqrt();
+            movement.direction = movement_dist * direction / dist;
             character_controller.translation = Some(movement.direction);
         }
 

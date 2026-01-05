@@ -65,7 +65,7 @@ pub(crate) struct Path {
 /// ## Traits
 ///
 /// - `T` must implement [`ProcGenerated`]' and is used as the procedurally generated level.
-pub(crate) fn find_path<T>(
+fn find_path<T>(
     navmesh: Single<(&ManagedNavMesh, Ref<NavMeshStatus>)>,
     target_query: Query<(Entity, &Transform, &NavTarget), (Changed<Transform>, Without<Navigator>)>,
     navigator_query: Query<
@@ -82,6 +82,7 @@ pub(crate) fn find_path<T>(
     T: ProcGenerated,
 {
     let (navmesh_handle, status) = navmesh.deref();
+    // Return if navmesh is not built
     if **status != NavMeshStatus::Built {
         return;
     }
@@ -133,18 +134,21 @@ pub(crate) fn find_path<T>(
 }
 
 /// Refresh [`Path`]
-pub(crate) fn refresh_path(
+fn refresh_path(
     navmesh: Single<(&ManagedNavMesh, Ref<NavMeshStatus>)>,
-    mut commands: Commands,
     navigator_query: Query<(Entity, &Transform, &mut Path), With<Navigator>>,
     target_transforms: Query<&Transform, (Changed<Transform>, With<NavTarget>)>,
+    mut commands: Commands,
     mut navmeshes: ResMut<Assets<NavMesh>>,
     mut delta: Local<f32>,
 ) {
+    // Return if target transforms is empty
     if target_transforms.is_empty() {
         return;
     }
+
     let (navmesh_handle, status) = navmesh.deref();
+    // Return if navmesh is not built
     if **status != NavMeshStatus::Built && *delta == 0.0 {
         return;
     }
@@ -192,8 +196,7 @@ pub(crate) fn refresh_path(
 }
 
 /// Apply [`Path`]
-pub(crate) fn apply_path(
-    mut commands: Commands,
+fn apply_path(
     mut child_query: Query<&mut AnimationController, Without<Navigator>>,
     navigator_query: Query<(
         Entity,
@@ -203,6 +206,7 @@ pub(crate) fn apply_path(
         &mut Path,
         &Navigator,
     )>,
+    mut commands: Commands,
     time: Res<Time>,
     visual_map: Res<VisualMap>,
 ) {

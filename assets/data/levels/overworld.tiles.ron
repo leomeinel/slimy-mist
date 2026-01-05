@@ -1,6 +1,5 @@
 TileData (
-    tile_width: 16.,
-    tile_height: 16.,
+    tile_size: 16.,
     full_dirt_tiles: Some([
         (0, 0),
         (0, 1),

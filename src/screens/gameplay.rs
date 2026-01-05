@@ -20,9 +20,9 @@ use crate::{
         npc::{Slime, SlimeAssets},
         player::{Player, PlayerAssets},
     },
-    levels::overworld::{Overworld, spawn_overworld},
+    levels::overworld::{Overworld, OverworldProcGen, spawn_overworld},
     menus::Menu,
-    procgen::nav_grid::spawn_nav_grid,
+    procgen::navmesh::spawn_navmesh,
     screens::Screen,
 };
 
@@ -34,7 +34,7 @@ pub(super) fn plugin(app: &mut App) {
             setup_animations::<Player, PlayerAssets>,
             setup_animations::<Slime, SlimeAssets>,
             spawn_overworld,
-            spawn_nav_grid::<Overworld>,
+            spawn_navmesh::<OverworldProcGen, Overworld>,
         )
             .chain(),
     );

@@ -132,7 +132,7 @@ fn update_pos<T, A, const IS_GOAL: bool>(
     handle: Res<TileHandle<A>>,
     procgen_controller: Res<ProcGenController<A>>,
     state: Res<State<ProcGenState>>,
-    mut tile_size: Local<Option<Vec2>>,
+    mut tile_size: Local<Option<f32>>,
 ) where
     T: Character,
     A: ProcGenerated,
@@ -148,7 +148,7 @@ fn update_pos<T, A, const IS_GOAL: bool>(
     // Init local values
     let tile_size = tile_size.unwrap_or_else(|| {
         let data = data.get(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
-        let value = Vec2::new(data.tile_height, data.tile_width);
+        let value = data.tile_size;
         *tile_size = Some(value);
         value
     });
@@ -245,7 +245,7 @@ fn apply_path<T, A>(
     handle: Res<TileHandle<A>>,
     time: Res<Time>,
     visual_map: Res<VisualMap>,
-    mut tile_size: Local<Option<Vec2>>,
+    mut tile_size: Local<Option<f32>>,
 ) where
     T: Character,
     A: ProcGenerated,
@@ -253,7 +253,7 @@ fn apply_path<T, A>(
     // Init local values
     let tile_size = tile_size.unwrap_or_else(|| {
         let data = data.get(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
-        let value = Vec2::new(data.tile_height, data.tile_width);
+        let value = data.tile_size;
         *tile_size = Some(value);
         value
     });

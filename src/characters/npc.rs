@@ -25,10 +25,13 @@ use crate::{
         ysort::{YSort, YSorted},
     },
     characters::{
-        Character, CharacterAssets, Movement, MovementSpeed,
+        Character,
+        CharacterAssets,
+        Movement,
+        MovementSpeed,
         animations::{self, Animations},
         character_collider,
-        nav::NavController,
+        //nav::NavController,
     },
     impl_character_assets,
     procgen::ProcGenerated,
@@ -103,7 +106,7 @@ impl Character for Slime {
             LockedAxes::ROTATION_LOCKED,
             Movement::default(),
             MovementSpeed::default(),
-            NavController::default(),
+            //NavController::default(),
         )
     }
 }

@@ -10,7 +10,7 @@
 //! Characters
 
 pub(crate) mod animations;
-pub(crate) mod nav;
+//pub(crate) mod nav;
 pub(crate) mod npc;
 pub(crate) mod player;
 
@@ -20,6 +20,7 @@ use bevy::{platform::collections::HashMap, prelude::*, reflect::Reflectable};
 use bevy_asset_loader::asset_collection::AssetCollection;
 use bevy_rapier2d::prelude::*;
 use bevy_spritesheet_animation::prelude::SpritesheetAnimation;
+use vleue_navigator::prelude::*;
 
 use crate::{
     AppSystems,
@@ -32,7 +33,11 @@ pub(super) fn plugin(app: &mut App) {
     app.insert_resource(VisualMap::default());
 
     // Add child plugins
-    app.add_plugins((animations::plugin, npc::plugin, nav::plugin, player::plugin));
+    app.add_plugins((
+        animations::plugin,
+        npc::plugin,
+        /*nav::plugin,*/ player::plugin,
+    ));
 
     // Tick timers
     app.add_systems(Update, tick_jump_timer.in_set(AppSystems::TickTimers));
@@ -184,20 +189,49 @@ pub(crate) struct VisualMap(pub(crate) HashMap<Entity, Entity>);
 /// Collider for different shapes
 pub(crate) fn character_collider(
     collision_set: &(Option<String>, Option<f32>, Option<f32>),
-) -> Collider {
+) -> (Collider, PrimitiveObstacle) {
     let (Some(shape), Some(width), Some(height)) = collision_set else {
         // Return default collider if data is not complete
         warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA_FALLBACK);
-        return Collider::ball(12.);
+        let radius = 12.;
+        return (
+            Collider::ball(radius),
+            PrimitiveObstacle::Circle(Circle::new(radius)),
+        );
     };
 
     // Set correct collider for each shape
     // NOTE: For capsules, we just assume that the values are correct, meaning that for x: `width < height` and for y: `width > height`
     match shape.as_str() {
-        "ball" => Collider::ball(width / 2.),
-        "capsule_x" => Collider::capsule_x((height - width) / 2., height / 2.),
-        "capsule_y" => Collider::capsule_y((width - height) / 2., width / 2.),
-        _ => Collider::cuboid(width / 2., height / 2.),
+        "ball" => {
+            let radius = width / 2.;
+            (
+                Collider::ball(radius),
+                PrimitiveObstacle::Circle(Circle::new(radius)),
+            )
+        }
+        "capsule_x" => {
+            let length = height - width;
+            let radius = height / 2.;
+            (
+                Collider::capsule_x(length / 2., radius),
+                // NOTE: Return `Rectangle` since the `Capsule` is a different variant. Also rectangle is fine for navigation.
+                PrimitiveObstacle::Rectangle(Rectangle::new(*width, *height)),
+            )
+        }
+        "capsule_y" => {
+            let length = width - height;
+            let radius = width / 2.;
+            (
+                Collider::capsule_y(length / 2., radius),
+                // NOTE: Return `Rectangle` since the `Capsule` is a different variant. Also rectangle is fine for navigation.
+                PrimitiveObstacle::Rectangle(Rectangle::new(*width, *height)),
+            )
+        }
+        _ => (
+            Collider::cuboid(width / 2., height / 2.),
+            PrimitiveObstacle::Rectangle(Rectangle::new(*width, *height)),
+        ),
     }
 }
 

@@ -26,10 +26,15 @@ use crate::{
         ysort::{YSort, YSortOffset, YSorted},
     },
     characters::{
-        Character, CharacterAssets, JumpTimer, Movement, MovementSpeed, VisualMap,
+        Character,
+        CharacterAssets,
+        JumpTimer,
+        Movement,
+        MovementSpeed,
+        VisualMap,
         animations::{self, AnimationController, AnimationState, Animations},
         character_collider,
-        nav::{NavController, NavState},
+        //nav::{NavController, NavState},
         tick_jump_timer,
     },
     impl_character_assets,
@@ -120,7 +125,7 @@ impl Character for Player {
                 ..default()
             },
             LockedAxes::ROTATION_LOCKED,
-            NavController::default(),
+            //NavController::default(),
             Movement::default(),
             movement_speed,
             actions!(
@@ -164,7 +169,7 @@ fn apply_walk(
         (
             Entity,
             &mut KinematicCharacterController,
-            &mut NavController,
+            //&mut NavController,
             &mut Movement,
         ),
         With<Player>,
@@ -179,7 +184,8 @@ fn apply_walk(
         return;
     }
 
-    let (entity, mut character_controller, mut nav_controller, mut movement) = parent.into_inner();
+    let (entity, mut character_controller, /*mut nav_controller,*/ mut movement) =
+        parent.into_inner();
 
     // Extract `animation_controller` from `child_query`
     let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
@@ -190,7 +196,7 @@ fn apply_walk(
     character_controller.translation = Some(movement.direction);
 
     // Update nav position if timer just finished
-    nav_controller.state = NavState::UpdatePos;
+    //nav_controller.state = NavState::UpdatePos;
 
     // Return if we are jumping
     let state = animation_controller.state;

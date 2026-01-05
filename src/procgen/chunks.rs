@@ -38,7 +38,7 @@ pub(crate) fn spawn_chunks<T, A, B>(
     data: Res<Assets<TileData<T>>>,
     handle: Res<TileHandle<T>>,
     assets: Res<A>,
-    mut tile_size: Local<Option<Vec2>>,
+    mut tile_size: Local<Option<f32>>,
     mut tiles: Local<
         Option<(
             HashSet<UVec2>,
@@ -57,7 +57,7 @@ pub(crate) fn spawn_chunks<T, A, B>(
     // Init local values
     let tile_size = tile_size.unwrap_or_else(|| {
         let data = data.get(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
-        let value = Vec2::new(data.tile_height, data.tile_width);
+        let value = data.tile_size;
         *tile_size = Some(value);
         value
     });
@@ -106,7 +106,7 @@ pub(crate) fn spawn_chunks<T, A, B>(
         }
     }
 
-    next_state.set(ProcGenState::UpdateNav);
+    next_state.set(ProcGenState::None);
 }
 
 /// Spawn a single chunk
@@ -121,7 +121,7 @@ fn spawn_chunk<T, A>(
     level: Entity,
     assets: &Res<A>,
     chunk_pos: IVec2,
-    tile_size: Vec2,
+    tile_size: f32,
     texture_index: TileTextureIndex,
 ) where
     T: ProcGenerated,
@@ -154,12 +154,13 @@ fn spawn_chunk<T, A>(
     let handle = assets.get_tile_set().clone();
 
     // Insert TileMapBundle with storage, transform and texture from handle to container entity
+    let tile_size_vec = Vec2::splat(tile_size);
     commands.entity(container).insert(TilemapBundle {
-        grid_size: tile_size.into(),
+        grid_size: tile_size_vec.into(),
         size: CHUNK_SIZE.into(),
         storage,
         texture: TilemapTexture::Single(handle),
-        tile_size: tile_size.into(),
+        tile_size: tile_size_vec.into(),
         transform: Transform::from_translation(world_pos.extend(LEVEL_Z)),
         render_settings: TilemapRenderSettings {
             render_chunk_size: CHUNK_SIZE,

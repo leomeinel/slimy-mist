@@ -68,7 +68,7 @@ fn fit_canvas(
     };
     for msg in msgs.read() {
         let scale_factor = 1. / (msg.height / RES_HEIGHT).round();
-        projection.scale = scale_factor;
+        projection.scale = scale_factor * 10.;
     }
 }
 

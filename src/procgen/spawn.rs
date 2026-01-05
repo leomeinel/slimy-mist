@@ -42,7 +42,7 @@ pub(crate) fn spawn_characters<T, A, B>(
     tile_data: Res<Assets<TileData<A>>>,
     tile_handle: Res<TileHandle<A>>,
     mut collision_set: Local<Option<(Option<String>, Option<f32>, Option<f32>)>>,
-    mut tile_size: Local<Option<Vec2>>,
+    mut tile_size: Local<Option<f32>>,
 ) where
     T: Character + ProcGenerated,
     A: ProcGenerated,
@@ -53,7 +53,7 @@ pub(crate) fn spawn_characters<T, A, B>(
         let data = tile_data
             .get(tile_handle.0.id())
             .expect(ERR_LOADING_TILE_DATA);
-        let value = Vec2::new(data.tile_height, data.tile_width);
+        let value = data.tile_size;
         *tile_size = Some(value);
         value
     });
@@ -87,7 +87,7 @@ pub(crate) fn spawn_characters<T, A, B>(
             &animations,
             collision_set,
             chunk_pos,
-            &tile_size,
+            tile_size,
         );
     }
 }
@@ -110,7 +110,7 @@ fn spawn_character<T>(
     animations: &Res<Animations<T>>,
     collision_set: &(Option<String>, Option<f32>, Option<f32>),
     chunk_pos: &IVec2,
-    tile_size: &Vec2,
+    tile_size: f32,
 ) where
     T: Character + ProcGenerated,
 {

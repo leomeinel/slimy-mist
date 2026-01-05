@@ -6,28 +6,22 @@
  * SPDX ID: Apache-2.0
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  * -----
- * Heavily inspired by: https://github.com/TheBevyFlock/bevy_new_2d
+ * Heavily inspired by:
+ * - https://github.com/TheBevyFlock/bevy_new_2d
+ * - https://github.com/vleue/vleue_navigator
  */
 
 //! Development tools for the game. This plugin is only enabled in dev builds.
 
 use bevy::{
-    dev_tools::states::log_transitions, input::common_conditions::input_just_pressed, prelude::*,
+    color::palettes::tailwind, dev_tools::states::log_transitions,
+    input::common_conditions::input_just_pressed, prelude::*,
 };
-use bevy_northstar::prelude::*;
-use bevy_prng::WyRand;
-use bevy_rand::{global::GlobalRng, traits::ForkableSeed as _};
 use bevy_rapier2d::render::{DebugRenderContext, RapierDebugRenderPlugin};
-use rand::Rng;
+use vleue_navigator::prelude::*;
 
 use crate::{
-    characters::{Character, npc::Slime},
-    levels::overworld::OverworldProcGen,
-    logging::error::ERR_LOADING_TILE_DATA,
-    procgen::{
-        CHUNK_SIZE, ProcGenController, ProcGenInit, ProcGenState, ProcGenerated, TileData,
-        TileHandle,
-    },
+    procgen::{ProcGenInit, ProcGenState},
     screens::Screen,
 };
 
@@ -37,12 +31,6 @@ pub(super) fn plugin(app: &mut App) {
         enabled: false,
         ..default()
     });
-
-    // Add north star debug plugin
-    app.add_plugins(NorthstarDebugPlugin::<OrdinalNeighborhood>::default());
-
-    // Setup debug rng
-    app.add_systems(Startup, setup_rng);
 
     // Log `Screen` state transitions.
     app.add_systems(Update, log_transitions::<Screen>);
@@ -62,24 +50,14 @@ pub(super) fn plugin(app: &mut App) {
         (
             toggle_debug_ui,
             toggle_debug_colliders.run_if(in_state(Screen::Gameplay)),
+            toggle_debug_navmeshes.run_if(in_state(Screen::Gameplay)),
         )
             .run_if(state_changed::<Debugging>),
     );
     app.add_systems(
-        OnEnter(Debugging(false)),
-        despawn_debug_nav_grid.run_if(in_state(Screen::Gameplay)),
-    );
-    app.add_systems(
         Update,
-        (
-            spawn_debug_nav_grid::<OverworldProcGen>,
-            spawn_debug_path::<Slime>.after(PathingSet),
-        )
-            .run_if(
-                in_state(ProcGenInit(true))
-                    .and(in_state(Debugging(true)))
-                    .and(in_state(Screen::Gameplay)),
-            ),
+        display_primitive_obstacles
+            .run_if(in_state(Debugging(true)).and(in_state(Screen::Gameplay))),
     );
 }
 
@@ -89,10 +67,6 @@ const TOGGLE_KEY: KeyCode = KeyCode::Backquote;
 /// Whether or not debugging is active
 #[derive(States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
 struct Debugging(bool);
-
-/// Rng for debugging
-#[derive(Component)]
-struct DebugRng;
 
 /// Toggle debugging
 fn toggle_debugging(
@@ -115,89 +89,118 @@ fn toggle_debug_colliders(
     render_context.enabled = debug_state.0;
 }
 
-/// Despawn debug nav grid
-fn despawn_debug_nav_grid(
-    debug_nav_grid: Single<Entity, (With<DebugGrid>, Without<Grid<OrdinalNeighborhood>>)>,
+/// Color for the debug navmesh
+const DEBUG_NAVMESH_COLOR: Srgba = tailwind::PINK_600;
+
+/// Toggle debug navmeshes
+fn toggle_debug_navmeshes(
+    debug_query: Query<Entity, With<NavMeshDebug>>,
+    query: Query<Entity, With<ManagedNavMesh>>,
     mut commands: Commands,
 ) {
-    commands.entity(debug_nav_grid.entity()).despawn();
-}
-
-/// Spawn debug nav grid
-///
-/// ## Traits
-///
-/// - `T` must implement [`ProcGenerated`] and is used as a level's procedurally generated item.
-fn spawn_debug_nav_grid<T>(
-    debug_nav_grid: Option<
-        Single<&mut DebugOffset, (With<DebugGrid>, Without<Grid<OrdinalNeighborhood>>)>,
-    >,
-    nav_grid: Single<Entity, (With<Grid<OrdinalNeighborhood>>, Without<DebugGrid>)>,
-    mut commands: Commands,
-    controller: Res<ProcGenController<T>>,
-    data: Res<Assets<TileData<T>>>,
-    handle: Res<TileHandle<T>>,
-    mut tile_size: Local<Option<Vec2>>,
-) where
-    T: ProcGenerated,
-{
-    // Init local values
-    let tile_size = tile_size.unwrap_or_else(|| {
-        let data = data.get(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
-        let value = Vec2::new(data.tile_height, data.tile_width);
-        *tile_size = Some(value);
-        value
-    });
-
-    let world_pos = controller.min_chunk_pos().as_vec2() * CHUNK_SIZE.as_vec2() * tile_size;
-
-    // Return if debug grid is present and update offset
-    if let Some(mut offset) = debug_nav_grid {
-        offset.0 = world_pos.extend(0.);
+    // Remove debug navmeshes
+    if !debug_query.is_empty() {
+        for entity in debug_query {
+            commands.entity(entity).remove::<NavMeshDebug>();
+        }
         return;
     }
 
-    // Spawn debug grid
-    let debug = commands
-        .spawn((
-            DebugGridBuilder::new(tile_size.x as u32, tile_size.y as u32)
-                .enable_chunks()
-                .enable_entrances()
-                .build(),
-            DebugOffset(world_pos.extend(0.)),
-        ))
-        .id();
-    commands.entity(nav_grid.entity()).add_child(debug);
-}
-
-/// Spawn debug path for [`Character`]
-///
-/// ## Traits
-///
-/// - `T` must implement [`Character`].
-fn spawn_debug_path<T>(
-    mut debug_rng: Single<&mut WyRand, With<DebugRng>>,
-    characters: Query<Entity, (With<T>, With<AgentPos>, Without<DebugPath>)>,
-    mut commands: Commands,
-) where
-    T: Character,
-{
-    for entity in characters {
-        let color = Color::srgb(
-            debug_rng.random_range(0.0..=1.),
-            debug_rng.random_range(0.0..=1.),
-            debug_rng.random_range(0.0..=1.),
-        );
-
-        // Insert debug path with random color
-        commands.entity(entity).insert(DebugPath {
-            color,
-            draw_unrefined: true,
-        });
+    // Insert debug navmeshes
+    for entity in query {
+        commands
+            .entity(entity)
+            .insert(NavMeshDebug(DEBUG_NAVMESH_COLOR.into()));
     }
 }
 
-/// Spawn [`DebugRng`] by forking [`GlobalRng`]
-fn setup_rng(mut global: Single<&mut WyRand, With<GlobalRng>>, mut commands: Commands) {
-    commands.spawn((DebugRng, global.fork_seed()));
+/// Color for the debug obstacle used in the navmesh
+const DEBUG_OBSTACLE_COLOR: Srgba = tailwind::CYAN_600;
+
+/// Display [`PrimitiveObstacle`]s
+fn display_primitive_obstacles(mut gizmos: Gizmos, query: Query<(&PrimitiveObstacle, &Transform)>) {
+    for (prim, transform) in &query {
+        match prim {
+            PrimitiveObstacle::Rectangle(prim) => {
+                gizmos.primitive_2d(
+                    prim,
+                    Isometry2d::new(
+                        transform.translation.xy(),
+                        Rot2::radians(transform.rotation.to_axis_angle().1),
+                    ),
+                    Color::from(DEBUG_OBSTACLE_COLOR),
+                );
+            }
+            PrimitiveObstacle::Circle(prim) => {
+                gizmos.primitive_2d(
+                    prim,
+                    Isometry2d::new(
+                        transform.translation.xy(),
+                        Rot2::radians(transform.rotation.to_axis_angle().1),
+                    ),
+                    Color::from(DEBUG_OBSTACLE_COLOR),
+                );
+            }
+            PrimitiveObstacle::Ellipse(prim) => {
+                gizmos.primitive_2d(
+                    prim,
+                    Isometry2d::new(
+                        transform.translation.xy(),
+                        Rot2::radians(transform.rotation.to_axis_angle().1),
+                    ),
+                    Color::from(DEBUG_OBSTACLE_COLOR),
+                );
+            }
+            PrimitiveObstacle::CircularSector(prim) => {
+                gizmos.primitive_2d(
+                    prim,
+                    Isometry2d::new(
+                        transform.translation.xy(),
+                        Rot2::radians(transform.rotation.to_axis_angle().1),
+                    ),
+                    Color::from(DEBUG_OBSTACLE_COLOR),
+                );
+            }
+            PrimitiveObstacle::CircularSegment(prim) => {
+                gizmos.primitive_2d(
+                    prim,
+                    Isometry2d::new(
+                        transform.translation.xy(),
+                        Rot2::radians(transform.rotation.to_axis_angle().1),
+                    ),
+                    Color::from(DEBUG_OBSTACLE_COLOR),
+                );
+            }
+            PrimitiveObstacle::Capsule(prim) => {
+                gizmos.primitive_2d(
+                    prim,
+                    Isometry2d::new(
+                        transform.translation.xy(),
+                        Rot2::radians(transform.rotation.to_axis_angle().1),
+                    ),
+                    Color::from(DEBUG_OBSTACLE_COLOR),
+                );
+            }
+            PrimitiveObstacle::RegularPolygon(prim) => {
+                gizmos.primitive_2d(
+                    prim,
+                    Isometry2d::new(
+                        transform.translation.xy(),
+                        Rot2::radians(transform.rotation.to_axis_angle().1),
+                    ),
+                    Color::from(DEBUG_OBSTACLE_COLOR),
+                );
+            }
+            PrimitiveObstacle::Rhombus(prim) => {
+                gizmos.primitive_2d(
+                    prim,
+                    Isometry2d::new(
+                        transform.translation.xy(),
+                        Rot2::radians(transform.rotation.to_axis_angle().1),
+                    ),
+                    Color::from(DEBUG_OBSTACLE_COLOR),
+                );
+            }
+        }
+    }
 }

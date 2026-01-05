@@ -8,7 +8,7 @@
  */
 
 pub(crate) mod chunks;
-pub(crate) mod nav_grid;
+pub(crate) mod navmesh;
 pub(crate) mod spawn;
 
 use std::marker::PhantomData;
@@ -27,7 +27,7 @@ use crate::{
     characters::npc::Slime,
     levels::overworld::{Overworld, OverworldAssets, OverworldProcGen},
     logging::error::{ERR_INVALID_MINIMUM_CHUNK_POS, ERR_LOADING_TILE_DATA},
-    procgen::{chunks::spawn_chunks, nav_grid::rebuild_nav_grid, spawn::spawn_characters},
+    procgen::{chunks::spawn_chunks, spawn::spawn_characters},
     screens::Screen,
 };
 
@@ -41,7 +41,7 @@ pub(super) fn plugin(app: &mut App) {
     app.init_state::<ProcGenInit>();
 
     // Child plugins
-    app.add_plugins(nav_grid::plugin);
+    app.add_plugins(navmesh::plugin);
 
     // Add rng for procedural generation
     app.add_systems(Startup, setup_rng);
@@ -49,14 +49,11 @@ pub(super) fn plugin(app: &mut App) {
     // Spawn/Despawn and build nav grid
     app.add_systems(
         Update,
-        (
-            (
-                despawn_procgen::<Slime, OverworldProcGen, false>,
-                despawn_procgen::<OverworldProcGen, OverworldProcGen, true>,
-            )
-                .run_if(in_state(ProcGenState::Despawn)),
-            rebuild_nav_grid.run_if(in_state(ProcGenState::UpdateNav)),
+        ((
+            despawn_procgen::<Slime, OverworldProcGen, false>,
+            despawn_procgen::<OverworldProcGen, OverworldProcGen, true>,
         )
+            .run_if(in_state(ProcGenState::Despawn)),)
             .run_if(in_state(Screen::Gameplay)),
     );
 
@@ -161,8 +158,7 @@ pub(crate) struct TileData<T>
 where
     T: ProcGenerated,
 {
-    pub(crate) tile_width: f32,
-    pub(crate) tile_height: f32,
+    pub(crate) tile_size: f32,
     #[serde(default)]
     full_dirt_tiles: Option<HashSet<UVec2>>,
     #[serde(default)]
@@ -232,7 +228,7 @@ pub(crate) fn despawn_procgen<T, A, const PROCEED: bool>(
     data: Res<Assets<TileData<A>>>,
     handle: Res<TileHandle<A>>,
     mut chunk_size_px: Local<Option<Vec2>>,
-    mut tile_size: Local<Option<Vec2>>,
+    mut tile_size: Local<Option<f32>>,
 ) where
     T: ProcGenerated,
     A: ProcGenerated,
@@ -240,7 +236,7 @@ pub(crate) fn despawn_procgen<T, A, const PROCEED: bool>(
     // Init local values
     let tile_size = tile_size.unwrap_or_else(|| {
         let data = data.get(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
-        let value = Vec2::new(data.tile_height, data.tile_width);
+        let value = data.tile_size;
         *tile_size = Some(value);
         value
     });

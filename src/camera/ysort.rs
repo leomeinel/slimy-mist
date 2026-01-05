@@ -80,6 +80,6 @@ fn y_sort<T>(
     for (mut transform, sort, sort_offset) in query {
         transform.translation.z = (sort.0
             + sort_offset.map_or(0., |offset| offset.0) * Y_SORT_FACTOR)
-            - (transform.translation.y - texture.texture_size.y as f32 * 0.5) * Y_SORT_FACTOR;
+            - (transform.translation.y - texture.texture_size.y as f32 / 2.) * Y_SORT_FACTOR;
     }
 }

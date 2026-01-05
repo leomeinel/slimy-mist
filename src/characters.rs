@@ -182,6 +182,9 @@ impl Default for JumpTimer {
 #[derive(Resource, Default)]
 pub(crate) struct VisualMap(pub(crate) HashMap<Entity, Entity>);
 
+/// Radius of the fallback ball collider
+const FALLBACK_BALL_COLLIDER_RADIUS: f32 = 8.;
+
 /// [`Collider`] for different shapes
 pub(crate) fn character_collider(
     collision_set: &(Option<String>, Option<f32>, Option<f32>),
@@ -189,7 +192,7 @@ pub(crate) fn character_collider(
     let (Some(shape), Some(width), Some(height)) = collision_set else {
         // Return default collider if data is not complete
         warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA_FALLBACK);
-        return Collider::ball(8.);
+        return Collider::ball(FALLBACK_BALL_COLLIDER_RADIUS);
     };
 
     // Set correct collider for each shape
@@ -209,7 +212,7 @@ pub(crate) fn character_obstacle(
     let (Some(shape), Some(width), Some(height)) = collision_set else {
         // Return default collider if data is not complete
         warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA_FALLBACK);
-        return PrimitiveObstacle::Circle(Circle::new(8.));
+        return PrimitiveObstacle::Circle(Circle::new(FALLBACK_BALL_COLLIDER_RADIUS));
     };
 
     // Set correct collider for each shape

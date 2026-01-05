@@ -69,7 +69,8 @@ pub(crate) fn spawn_navmesh<T, A>(
     let entity = commands
         .spawn((
             NavMeshSettings {
-                simplify: 0.05,
+                simplify: 0.1,
+                merge_steps: 1,
                 fixed: Triangulation::from_outer_edges(&[
                     Vec2::ZERO,
                     Vec2::new(NAVMESH_SIZE.x as f32, 0.),
@@ -78,7 +79,8 @@ pub(crate) fn spawn_navmesh<T, A>(
                 ]),
                 ..default()
             },
-            NavMeshUpdateMode::Debounced(0.2),
+            // FIXME: Investigate why `NavMeshUpdateMode::Direct` does not update correctly and prevents pathfinding
+            NavMeshUpdateMode::Debounced(0.1),
             Transform::from_translation(target_pos.extend(0.)).with_scale(Vec3::splat(tile_size)),
         ))
         .id();

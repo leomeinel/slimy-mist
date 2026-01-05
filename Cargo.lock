@@ -338,7 +338,7 @@ dependencies = [
 
 [[package]]
 name = "bevy-slime-dodge"
-version = "0.8.5"
+version = "0.9.0"
 dependencies = [
  "bevy",
  "bevy_asset_loader",
@@ -6611,6 +6611,6 @@ dependencies = [
 
 [[package]]
 name = "zmij"
-version = "1.0.9"
+version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ee2a72b10d087f75fb2e1c2c7343e308fe6970527c22a41caf8372e165ff5c1"
+checksum = "dcb2c125bd7365735bebeb420ccb880265ed2d2bddcbcd49f597fdfe6bd5e577"

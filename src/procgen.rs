@@ -22,7 +22,6 @@ use bevy_prng::WyRand;
 use bevy_rand::{global::GlobalRng, traits::ForkableSeed as _};
 
 use crate::{
-    AppSystems,
     camera::CanvasCamera,
     characters::npc::Slime,
     levels::overworld::{Overworld, OverworldAssets, OverworldProcGen},
@@ -32,10 +31,6 @@ use crate::{
 };
 
 pub(super) fn plugin(app: &mut App) {
-    // Setup timer
-    app.insert_resource(ProcGenTimer::default());
-    app.add_systems(Update, tick_procgen_timer.in_set(AppSystems::TickTimers));
-
     // Initialize proc gen state
     app.init_state::<ProcGenState>();
     app.init_state::<ProcGenInit>();
@@ -78,9 +73,6 @@ pub(super) fn plugin(app: &mut App) {
         ),
     );
 }
-
-/// Interval for procedural generation
-pub(crate) const PROCGEN_INTERVAL: f32 = 1.;
 
 /// Size of a single chunk
 pub(crate) const CHUNK_SIZE: UVec2 = UVec2 { x: 16, y: 16 };
@@ -135,16 +127,6 @@ where
             .values()
             .min_by_key(|pos| (pos.x, pos.y))
             .expect(ERR_INVALID_MINIMUM_CHUNK_POS)
-    }
-}
-
-/// Timer that tracks procedural generation
-#[derive(Resource, Debug, Clone, PartialEq, Reflect)]
-#[reflect(Resource)]
-pub(crate) struct ProcGenTimer(Timer);
-impl Default for ProcGenTimer {
-    fn default() -> Self {
-        Self(Timer::from_seconds(PROCGEN_INTERVAL, TimerMode::Repeating))
     }
 }
 
@@ -284,11 +266,6 @@ where
 /// Spawn [`ProcGenRng`] by forking [`GlobalRng`]
 fn setup_rng(mut global: Single<&mut WyRand, With<GlobalRng>>, mut commands: Commands) {
     commands.spawn((ProcGenRng, global.fork_seed()));
-}
-
-/// Tick timer for procedural generation
-fn tick_procgen_timer(mut timer: ResMut<ProcGenTimer>, time: Res<Time>) {
-    timer.0.tick(time.delta());
 }
 
 /// Reset [`ProcGenState`]

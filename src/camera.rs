@@ -54,7 +54,7 @@ fn spawn_camera(mut commands: Commands) {
 }
 
 /// In-game resolution height.
-const RES_HEIGHT: f32 = 180.;
+const RES_HEIGHT: f32 = 256.;
 
 /// Scales camera projection to fit the window (integer multiples only).
 ///

@@ -20,6 +20,10 @@ pub(crate) const ERR_LOADING_TILE_DATA: &str =
 /// Error message if an error has been encountered while calculating minimum chunk pos
 pub(crate) const ERR_INVALID_MINIMUM_CHUNK_POS: &str =
     "Could not determine correct minimum chunk position. This is a bug.";
+/// Error message if navmesh is invalid
+pub(crate) const ERR_INVALID_NAVMESH: &str = "The navmesh is invalid. This is a bug.";
+/// Error message if nav target is invalid
+pub(crate) const ERR_INVALID_NAV_TARGET: &str = "The navigation target is invalid. This is a bug.";
 /// Error message if animation data is invalid or incomplete
 ///
 /// Since only the idle animation is required, the error message includes that.

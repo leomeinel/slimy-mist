@@ -68,13 +68,15 @@ fn fit_canvas(
     };
     for msg in msgs.read() {
         let scale_factor = 1. / (msg.height / RES_HEIGHT).round();
-        projection.scale = scale_factor * 10.;
+        projection.scale = scale_factor;
     }
 }
 
 /// How quickly should the camera snap to the target location.
 const CAMERA_DECAY_RATE: f32 = 3.;
 
+// FIXME: When reentering gameplay while having moved, since we are using Changed, the camera will not update correctly.
+//        We could probably fix this by triggering a manual update when player spawns.^
 /// Update the camera position by tracking the player.
 ///
 /// Heavily inspired by: <https://bevy.org/examples/camera/2d-top-down-camera/>

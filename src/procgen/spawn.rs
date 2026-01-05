@@ -93,7 +93,7 @@ pub(crate) fn spawn_characters<T, A, B>(
 }
 
 /// Number of characters to spawn per chunk
-const CHARACTERS_PER_CHUNK: usize = 4;
+const CHARACTERS_PER_CHUNK: usize = 1;
 
 /// Spawn characters in a chunk
 ///

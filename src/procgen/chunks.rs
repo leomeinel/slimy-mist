@@ -106,7 +106,7 @@ pub(crate) fn spawn_chunks<T, A, B>(
         }
     }
 
-    next_state.set(ProcGenState::None);
+    next_state.set(ProcGenState::MoveNavMesh);
 }
 
 /// Spawn a single chunk

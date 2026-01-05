@@ -21,6 +21,7 @@ use bevy_rapier2d::render::{DebugRenderContext, RapierDebugRenderPlugin};
 use vleue_navigator::prelude::*;
 
 use crate::{
+    characters::nav::Path,
     procgen::{ProcGenInit, ProcGenState},
     screens::Screen,
 };
@@ -32,7 +33,7 @@ pub(super) fn plugin(app: &mut App) {
         ..default()
     });
 
-    // Log `Screen` state transitions.
+    // Log state transitions.
     app.add_systems(Update, log_transitions::<Screen>);
     app.add_systems(Update, log_transitions::<ProcGenState>);
     app.add_systems(Update, log_transitions::<ProcGenInit>);
@@ -56,7 +57,7 @@ pub(super) fn plugin(app: &mut App) {
     );
     app.add_systems(
         Update,
-        display_primitive_obstacles
+        (display_primitive_obstacles, display_navigator_path)
             .run_if(in_state(Debugging(true)).and(in_state(Screen::Gameplay))),
     );
 }
@@ -90,7 +91,7 @@ fn toggle_debug_colliders(
 }
 
 /// Color for the debug navmesh
-const DEBUG_NAVMESH_COLOR: Srgba = tailwind::PINK_600;
+const DEBUG_NAVMESH_COLOR: Srgba = tailwind::AMBER_500;
 
 /// Toggle debug navmeshes
 fn toggle_debug_navmeshes(
@@ -114,8 +115,24 @@ fn toggle_debug_navmeshes(
     }
 }
 
-/// Color for the debug obstacle used in the navmesh
-const DEBUG_OBSTACLE_COLOR: Srgba = tailwind::CYAN_600;
+/// Color for the debug path used in the debug navmesh
+const DEBUG_PATH_COLOR: Srgba = tailwind::FUCHSIA_500;
+
+/// Display [`Path`]s
+pub fn display_navigator_path(navigator: Query<(&Transform, &Path)>, mut gizmos: Gizmos) {
+    for (transform, path) in navigator {
+        let mut to_display = path.next.clone();
+        to_display.push(path.current);
+        to_display.push(transform.translation.xy());
+        to_display.reverse();
+        if !to_display.is_empty() {
+            gizmos.linestrip_2d(to_display, Color::from(DEBUG_PATH_COLOR));
+        }
+    }
+}
+
+/// Color for the debug obstacle used in the debug navmesh
+const DEBUG_OBSTACLE_COLOR: Srgba = tailwind::VIOLET_800;
 
 /// Display [`PrimitiveObstacle`]s
 fn display_primitive_obstacles(mut gizmos: Gizmos, query: Query<(&PrimitiveObstacle, &Transform)>) {

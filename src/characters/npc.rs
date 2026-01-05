@@ -25,13 +25,10 @@ use crate::{
         ysort::{YSort, YSorted},
     },
     characters::{
-        Character,
-        CharacterAssets,
-        Movement,
-        MovementSpeed,
+        Character, CharacterAssets, Movement, MovementSpeed,
         animations::{self, Animations},
-        character_collider,
-        //nav::NavController,
+        character_collider, character_obstacle,
+        nav::Navigator,
     },
     impl_character_assets,
     procgen::ProcGenerated,
@@ -86,6 +83,8 @@ impl Character for Slime {
         collision_set: &(Option<String>, Option<f32>, Option<f32>),
         pos: Vec2,
     ) -> impl Bundle {
+        let movement_speed = MovementSpeed::default();
+
         (
             // FIXME: Use struct for this bundle
             Name::new("Slime"),
@@ -94,19 +93,15 @@ impl Character for Slime {
             Transform::from_translation(pos.extend(DEFAULT_Z)),
             YSort(DEFAULT_Z),
             character_collider(collision_set),
+            character_obstacle(collision_set),
             Visibility::Inherited,
             RigidBody::KinematicPositionBased,
             GravityScale(0.),
-            // FIXME: Uncomment this when collision support is added.
-            // KinematicCharacterController::default(),
-            KinematicCharacterController {
-                filter_flags: QueryFilterFlags::EXCLUDE_KINEMATIC,
-                ..default()
-            },
+            KinematicCharacterController::default(),
             LockedAxes::ROTATION_LOCKED,
             Movement::default(),
-            MovementSpeed::default(),
-            //NavController::default(),
+            movement_speed,
+            Navigator(movement_speed.0),
         )
     }
 }

@@ -10,7 +10,7 @@
 //! Characters
 
 pub(crate) mod animations;
-//pub(crate) mod nav;
+pub(crate) mod nav;
 pub(crate) mod npc;
 pub(crate) mod player;
 
@@ -33,11 +33,7 @@ pub(super) fn plugin(app: &mut App) {
     app.insert_resource(VisualMap::default());
 
     // Add child plugins
-    app.add_plugins((
-        animations::plugin,
-        npc::plugin,
-        /*nav::plugin,*/ player::plugin,
-    ));
+    app.add_plugins((animations::plugin, npc::plugin, nav::plugin, player::plugin));
 
     // Tick timers
     app.add_systems(Update, tick_jump_timer.in_set(AppSystems::TickTimers));
@@ -186,52 +182,43 @@ impl Default for JumpTimer {
 #[derive(Resource, Default)]
 pub(crate) struct VisualMap(pub(crate) HashMap<Entity, Entity>);
 
-/// Collider for different shapes
+/// [`Collider`] for different shapes
 pub(crate) fn character_collider(
     collision_set: &(Option<String>, Option<f32>, Option<f32>),
-) -> (Collider, PrimitiveObstacle) {
+) -> Collider {
     let (Some(shape), Some(width), Some(height)) = collision_set else {
         // Return default collider if data is not complete
         warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA_FALLBACK);
-        let radius = 12.;
-        return (
-            Collider::ball(radius),
-            PrimitiveObstacle::Circle(Circle::new(radius)),
-        );
+        return Collider::ball(8.);
     };
 
     // Set correct collider for each shape
     // NOTE: For capsules, we just assume that the values are correct, meaning that for x: `width < height` and for y: `width > height`
     match shape.as_str() {
-        "ball" => {
-            let radius = width / 2.;
-            (
-                Collider::ball(radius),
-                PrimitiveObstacle::Circle(Circle::new(radius)),
-            )
-        }
-        "capsule_x" => {
-            let length = height - width;
-            let radius = height / 2.;
-            (
-                Collider::capsule_x(length / 2., radius),
-                // NOTE: Return `Rectangle` since the `Capsule` is a different variant. Also rectangle is fine for navigation.
-                PrimitiveObstacle::Rectangle(Rectangle::new(*width, *height)),
-            )
-        }
-        "capsule_y" => {
-            let length = width - height;
-            let radius = width / 2.;
-            (
-                Collider::capsule_y(length / 2., radius),
-                // NOTE: Return `Rectangle` since the `Capsule` is a different variant. Also rectangle is fine for navigation.
-                PrimitiveObstacle::Rectangle(Rectangle::new(*width, *height)),
-            )
-        }
-        _ => (
-            Collider::cuboid(width / 2., height / 2.),
-            PrimitiveObstacle::Rectangle(Rectangle::new(*width, *height)),
-        ),
+        "ball" => Collider::ball(width / 2.),
+        "capsule_x" => Collider::capsule_x((height - width) / 2., height / 2.),
+        "capsule_y" => Collider::capsule_y((width - height) / 2., width / 2.),
+        _ => Collider::cuboid(width / 2., height / 2.),
+    }
+}
+
+/// [`PrimitiveObstacle`] for different shapes
+pub(crate) fn character_obstacle(
+    collision_set: &(Option<String>, Option<f32>, Option<f32>),
+) -> PrimitiveObstacle {
+    let (Some(shape), Some(width), Some(height)) = collision_set else {
+        // Return default collider if data is not complete
+        warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA_FALLBACK);
+        return PrimitiveObstacle::Circle(Circle::new(8.));
+    };
+
+    // Set correct collider for each shape
+    // NOTE: For capsules, we just assume that the values are correct, meaning that for x: `width < height` and for y: `width > height`
+    match shape.as_str() {
+        "ball" => PrimitiveObstacle::Circle(Circle::new(width / 2.)),
+        "capsule_x" => PrimitiveObstacle::Rectangle(Rectangle::new(*width, *height)),
+        "capsule_y" => PrimitiveObstacle::Rectangle(Rectangle::new(*width, *height)),
+        _ => PrimitiveObstacle::Rectangle(Rectangle::new(*width, *height)),
     }
 }
 

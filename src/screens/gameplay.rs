@@ -27,7 +27,7 @@ use crate::{
 };
 
 pub(super) fn plugin(app: &mut App) {
-    // Spawn overworld with nav grid
+    // Spawn overworld with navmesh
     app.add_systems(
         OnEnter(Screen::Gameplay),
         (

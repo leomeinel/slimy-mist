@@ -26,15 +26,10 @@ use crate::{
         ysort::{YSort, YSortOffset, YSorted},
     },
     characters::{
-        Character,
-        CharacterAssets,
-        JumpTimer,
-        Movement,
-        MovementSpeed,
-        VisualMap,
+        Character, CharacterAssets, JumpTimer, Movement, MovementSpeed, VisualMap,
         animations::{self, AnimationController, AnimationState, Animations},
         character_collider,
-        //nav::{NavController, NavState},
+        nav::NavTarget,
         tick_jump_timer,
     },
     impl_character_assets,
@@ -125,7 +120,7 @@ impl Character for Player {
                 ..default()
             },
             LockedAxes::ROTATION_LOCKED,
-            //NavController::default(),
+            NavTarget(128),
             Movement::default(),
             movement_speed,
             actions!(
@@ -165,15 +160,7 @@ struct Jump;
 /// On a fired walk, set translation to the given input
 fn apply_walk(
     event: On<Fire<Walk>>,
-    parent: Single<
-        (
-            Entity,
-            &mut KinematicCharacterController,
-            //&mut NavController,
-            &mut Movement,
-        ),
-        With<Player>,
-    >,
+    parent: Single<(Entity, &mut KinematicCharacterController, &mut Movement), With<Player>>,
     mut child_query: Query<&mut AnimationController, Without<Player>>,
     pause: Res<State<Pause>>,
     time: Res<Time>,
@@ -184,28 +171,21 @@ fn apply_walk(
         return;
     }
 
-    let (entity, mut character_controller, /*mut nav_controller,*/ mut movement) =
-        parent.into_inner();
-
-    // Extract `animation_controller` from `child_query`
-    let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
-    let mut animation_controller = child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
+    let (entity, mut character_controller, mut movement) = parent.into_inner();
 
     // Apply movement from input
     movement.direction = event.value * time.delta_secs();
     character_controller.translation = Some(movement.direction);
 
-    // Update nav position if timer just finished
-    //nav_controller.state = NavState::UpdatePos;
+    // Extract `animation_controller` from `child_query`
+    let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
+    let mut animation_controller = child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
 
-    // Return if we are jumping
+    // Set animation state if we are `Idle`
     let state = animation_controller.state;
-    if state == AnimationState::Jump || state == AnimationState::Fall {
-        return;
+    if state == AnimationState::Idle {
+        animation_controller.state = AnimationState::Walk;
     }
-
-    // Set animation state
-    animation_controller.state = AnimationState::Walk;
 }
 
 /// On a completed walk, set translation to zero
@@ -217,22 +197,19 @@ fn stop_walk(
 ) {
     let (entity, mut character_controller, mut movement) = parent.into_inner();
 
+    // Reset movement target
+    movement.direction = Vec2::ZERO;
+
     // Extract `animation_controller` from `child_query`
     let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
     let mut animation_controller = child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
 
-    // Reset movement target
-    movement.direction = Vec2::ZERO;
-
-    // Return if we are jumping
+    // Stop movement if we are not jumping
     let state = animation_controller.state;
-    if state == AnimationState::Jump || state == AnimationState::Fall {
-        return;
+    if state != AnimationState::Jump && state != AnimationState::Fall {
+        character_controller.translation = Some(movement.direction);
+        animation_controller.state = AnimationState::Idle;
     }
-
-    // Stop movement
-    character_controller.translation = Some(movement.direction);
-    animation_controller.state = AnimationState::Idle;
 }
 
 // On a fired jump, move player up
@@ -255,15 +232,12 @@ fn set_jump(
     let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
     let mut animation_controller = child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
 
-    // Return if we are already jumping
+    // Set state to jump if we are not jumping
     let state = animation_controller.state;
-    if state == AnimationState::Jump || state == AnimationState::Fall {
-        return;
+    if state != AnimationState::Jump && state != AnimationState::Fall {
+        commands.entity(entity).insert(JumpTimer::default());
+        animation_controller.state = AnimationState::Jump;
     }
-
-    // Set state to jump
-    commands.entity(entity).insert(JumpTimer::default());
-    animation_controller.state = AnimationState::Jump;
 }
 
 /// Jump height
@@ -326,12 +300,12 @@ fn limit_jump(
         return;
     }
 
+    // Reset jump height
+    movement.jump_height = 0.;
+
     // Extract `animation_controller` from `child_query`
     let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
     let mut animation_controller = child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
-
-    // Reset jump height
-    movement.jump_height = 0.;
 
     // Set animation states
     match animation_controller.state {

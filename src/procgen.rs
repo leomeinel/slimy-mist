@@ -26,7 +26,7 @@ use crate::{
     characters::npc::Slime,
     levels::overworld::{Overworld, OverworldAssets, OverworldProcGen},
     logging::error::{ERR_INVALID_MINIMUM_CHUNK_POS, ERR_LOADING_TILE_DATA},
-    procgen::{chunks::spawn_chunks, spawn::spawn_characters},
+    procgen::{chunks::spawn_chunks, navmesh::move_navmesh, spawn::spawn_characters},
     screens::Screen,
 };
 
@@ -41,7 +41,7 @@ pub(super) fn plugin(app: &mut App) {
     // Add rng for procedural generation
     app.add_systems(Startup, setup_rng);
 
-    // Spawn/Despawn and build nav grid
+    // Despawn procgen
     app.add_systems(
         Update,
         ((
@@ -51,8 +51,7 @@ pub(super) fn plugin(app: &mut App) {
             .run_if(in_state(ProcGenState::Despawn)),)
             .run_if(in_state(Screen::Gameplay)),
     );
-
-    //
+    // Spawn procgen
     app.add_systems(
         OnEnter(ProcGenState::Spawn),
         (
@@ -60,6 +59,11 @@ pub(super) fn plugin(app: &mut App) {
             spawn_characters::<Slime, OverworldProcGen, Overworld>,
         )
             .run_if(in_state(Screen::Gameplay)),
+    );
+    // Move navmesh
+    app.add_systems(
+        OnEnter(ProcGenState::MoveNavMesh),
+        move_navmesh::<OverworldProcGen>.run_if(in_state(Screen::Gameplay)),
     );
 
     // Reset controllers and states when exiting gameplay
@@ -86,8 +90,7 @@ pub(crate) enum ProcGenState {
     #[default]
     Despawn,
     Spawn,
-    UpdateNav,
-    None,
+    MoveNavMesh,
 }
 
 /// Tracks the proc gen has been initialized fully at least once

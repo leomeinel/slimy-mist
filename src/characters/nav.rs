@@ -25,7 +25,7 @@ use crate::{
     logging::error::{
         ERR_INVALID_NAV_TARGET, ERR_INVALID_NAVMESH, ERR_INVALID_VISUAL_MAP, ERR_LOADING_TILE_DATA,
     },
-    procgen::{CHUNK_SIZE, ProcGenController, ProcGenInit, ProcGenerated, TileData, TileHandle},
+    procgen::{ProcGenInit, ProcGenerated, TileData, TileHandle},
     screens::{GameplayInsertResSystems, Screen},
 };
 
@@ -86,7 +86,6 @@ fn find_path<T>(
     >,
     mut commands: Commands,
     mut target_map: ResMut<NavTargetPosMap>,
-    controller: Res<ProcGenController<T>>,
     data: Res<Assets<TileData<T>>>,
     handle: Res<TileHandle<T>>,
     navmeshes: Res<Assets<NavMesh>>,
@@ -121,13 +120,10 @@ fn find_path<T>(
     {
         return;
     }
-
-    let min_world_pos_scaled = controller.min_chunk_pos().as_vec2() * CHUNK_SIZE.as_vec2();
-    // NOTE: We are subtracting `min_world_pos_scaled` to get the nav mesh pos
-    let target_pos_scaled = (target_pos / tile_size - min_world_pos_scaled).floor();
+    let target_pos_vec3 = target_pos.extend(0.);
 
     // Return if target pos is not in mesh
-    if !navmesh.is_in_mesh(target_pos_scaled) {
+    if !navmesh.transformed_is_in_mesh(target_pos_vec3) {
         return;
     }
 
@@ -136,12 +132,8 @@ fn find_path<T>(
         // FIXME: On wasm, we are often not finding a valid path here. That behavior is quite inconsistent.
         //        Sometimes it works after reloading the game. Moving does not affect this.
         // Find path to target
-        let Some(path) = navmesh.transformed_path(
-            transform.translation.xyz(),
-            navmesh
-                .transform()
-                .transform_point(target_pos_scaled.extend(0.)),
-        ) else {
+        let Some(path) = navmesh.transformed_path(transform.translation.xyz(), target_pos_vec3)
+        else {
             continue;
         };
         // Get current and first from path

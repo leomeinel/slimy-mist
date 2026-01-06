@@ -144,6 +144,14 @@ pub(crate) struct AnimationController {
     /// Used to determine if we should play sound again
     pub(crate) sound_frame: usize,
 }
+impl AnimationController {
+    /// Sets a new [`AnimationState`] if it has not already been set.
+    pub(crate) fn set_new_state(&mut self, new_state: AnimationState) {
+        if self.state != new_state {
+            self.state = new_state;
+        }
+    }
+}
 impl Default for AnimationController {
     fn default() -> Self {
         Self {

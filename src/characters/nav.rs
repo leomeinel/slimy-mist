@@ -281,39 +281,40 @@ fn apply_path(
         // Extract `animation_controller` from `child_query`
         let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
         let mut animation_controller = child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
-        let state = animation_controller.state;
 
-        // If `entity` collided with `path.target` remove `Path`, set animation state to `Idle` and return.
+        // If `entity` collided with `path.target` stop applying path and return.
         // NOTE: This does not reliably determine whether the `entity` can not advance, just if it has collided with their target.
         //       For now this should be enough since not switching to `Idle` for these entities might cause the illusion of them
         //       still trying to wiggle their way around obstacles.
         if let Some(output) = controller_output
             && output.collisions.iter().any(|c| c.entity == path.target)
         {
-            commands.entity(entity).remove::<Path>();
-            if state != AnimationState::Idle {
-                animation_controller.state = AnimationState::Idle;
-            }
+            stop_apply_path(&mut commands, entity, &mut animation_controller);
             return;
         }
 
         // Set animation state if we are `Idle`
-        if state == AnimationState::Idle {
-            animation_controller.state = AnimationState::Walk;
+        if animation_controller.state == AnimationState::Idle {
+            animation_controller.set_new_state(AnimationState::Walk);
         }
 
         // Loop while distance to `path.current` is smaller than threshold to allow multiple next
         while navigator_pos.distance_squared(path.current)
             < (navigator.0 / PATH_OVERSHOOT_THRESHOLD_DIVISOR).squared()
         {
-            // Set `path.current` to `path.next` if it exists or break from loop.
+            // Set `path.current` to `path.next` if it exists or stop applying path and break from loop.
             if let Some(next) = path.next.pop() {
                 path.current = next;
             } else {
-                // NOTE: We don't need to set idle animation or remove `Path` here since we are using collision detection to determine
-                //       whether the goal has been reached.
+                stop_apply_path(&mut commands, entity, &mut animation_controller);
                 break;
             }
         }
     }
+}
+
+/// Remove [`Path`] and set [`AnimationController`] state to [`AnimationState::Idle`]
+fn stop_apply_path(commands: &mut Commands, entity: Entity, controller: &mut AnimationController) {
+    commands.entity(entity).remove::<Path>();
+    controller.set_new_state(AnimationState::Idle);
 }

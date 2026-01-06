@@ -182,9 +182,8 @@ fn apply_walk(
     let mut animation_controller = child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
 
     // Set animation state if we are `Idle`
-    let state = animation_controller.state;
-    if state == AnimationState::Idle {
-        animation_controller.state = AnimationState::Walk;
+    if animation_controller.state == AnimationState::Idle {
+        animation_controller.set_new_state(AnimationState::Walk);
     }
 }
 
@@ -204,11 +203,10 @@ fn stop_walk(
     let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
     let mut animation_controller = child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
 
-    // Stop movement if we are not jumping
-    let state = animation_controller.state;
-    if state != AnimationState::Jump && state != AnimationState::Fall {
+    // Stop movement if we are walking
+    if animation_controller.state == AnimationState::Walk {
         character_controller.translation = Some(movement.direction);
-        animation_controller.state = AnimationState::Idle;
+        animation_controller.set_new_state(AnimationState::Idle);
     }
 }
 
@@ -232,11 +230,10 @@ fn set_jump(
     let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
     let mut animation_controller = child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
 
-    // Set state to jump if we are not jumping
-    let state = animation_controller.state;
-    if state != AnimationState::Jump && state != AnimationState::Fall {
+    // Set state to jump if we are not falling
+    if animation_controller.state != AnimationState::Fall {
         commands.entity(entity).insert(JumpTimer::default());
-        animation_controller.state = AnimationState::Jump;
+        animation_controller.set_new_state(AnimationState::Jump);
     }
 }
 
@@ -256,10 +253,8 @@ fn apply_jump(
     let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
     let (animation_controller, mut transform) =
         child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
-
-    let state = animation_controller.state;
-
     // Return if we are not jumping or falling
+    let state = animation_controller.state;
     if state != AnimationState::Jump && state != AnimationState::Fall {
         return;
     }

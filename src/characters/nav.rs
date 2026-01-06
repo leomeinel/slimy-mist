@@ -133,6 +133,8 @@ fn find_path<T>(
 
     let mut updated: HashMap<Entity, Vec2> = HashMap::new();
     for (entity, transform) in &navigator_query {
+        // FIXME: On wasm, we are often not finding a valid path here. That behavior is quite inconsistent.
+        //        Sometimes it works after reloading the game. Moving does not affect this.
         // Find path to target
         let Some(path) = navmesh.transformed_path(
             transform.translation.xyz(),

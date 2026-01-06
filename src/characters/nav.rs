@@ -74,7 +74,7 @@ pub(crate) struct Path {
 /// - `T` must implement [`ProcGenerated`]' and is used as the procedurally generated level.
 fn find_path<T>(
     navmesh: Single<(&ManagedNavMesh, Ref<NavMeshStatus>)>,
-    target_query: Query<(Entity, &Transform, &NavTarget), (Changed<Transform>, Without<Navigator>)>,
+    target_query: Query<(Entity, &Transform, &NavTarget), Without<Navigator>>,
     navigator_query: Query<
         (Entity, &Transform),
         (With<Navigator>, Without<Path>, Without<NavTarget>),
@@ -145,7 +145,10 @@ fn find_path<T>(
         next.reverse();
 
         // Insert path
-        commands.entity(entity).insert(Path {
+        // NOTE: We are using `try_insert` since it is possible that `entity` has been despawned by `procgen::despawn_procgen`
+        //       Not calling `updated.insert` conditionally based on success is not desired, but preventing it would be quite ugly.
+        //       If insertion fails, we will just not update a few paths in the following runs while the target has not moved.
+        commands.entity(entity).try_insert(Path {
             current: first.xy(),
             next,
             target,
@@ -163,7 +166,7 @@ fn find_path<T>(
 fn refresh_path<T>(
     navmesh: Single<(&ManagedNavMesh, Ref<NavMeshStatus>)>,
     navigator_query: Query<(Entity, &Transform, &mut Path), With<Navigator>>,
-    target_transforms: Query<&Transform, (Changed<Transform>, With<NavTarget>)>,
+    target_transforms: Query<&Transform, With<NavTarget>>,
     mut commands: Commands,
     mut target_map: ResMut<NavTargetPosMap>,
     mut navmeshes: ResMut<Assets<NavMesh>>,
@@ -220,7 +223,8 @@ fn refresh_path<T>(
         }
         // Remove `Path` if target is outside of navmesh
         if !navmesh.transformed_is_in_mesh(target_pos.extend(0.0)) {
-            commands.entity(entity).remove::<Path>();
+            // NOTE: We are using `try_remove` since it is possible that `entity` has been despawned by `procgen::despawn_procgen`.
+            commands.entity(entity).try_remove::<Path>();
             continue;
         }
 
@@ -228,7 +232,8 @@ fn refresh_path<T>(
         let Some(new_path) =
             navmesh.transformed_path(transform.translation, target_pos.extend(0.0))
         else {
-            commands.entity(entity).remove::<Path>();
+            // NOTE: We are using `try_remove` since it is possible that `entity` has been despawned by `procgen::despawn_procgen`.
+            commands.entity(entity).try_remove::<Path>();
             continue;
         };
         // Get current and first from path

@@ -2,7 +2,7 @@
  * File: splash.rs
  * Author: Leopold Johannes Meinel (leo@meinel.dev)
  * -----
- * Copyright (c) 2025 Leopold Johannes Meinel & contributors
+ * Copyright (c) 2026 Leopold Johannes Meinel & contributors
  * SPDX ID: Apache-2.0
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  * -----
@@ -17,6 +17,9 @@ use bevy_asset_loader::prelude::*;
 use crate::{AppSystems, screens::Screen, theme::prelude::*};
 
 pub(super) fn plugin(app: &mut App) {
+    // Insert resources
+    app.insert_resource(ClearColor(SPLASH_BACKGROUND_COLOR.into()));
+
     // After loading assets, change state to splash screen
     app.add_systems(OnEnter(Screen::LoadingExit), enter_splash_screen);
 
@@ -28,7 +31,6 @@ pub(super) fn plugin(app: &mut App) {
     );
 
     // Open splash screen
-    app.insert_resource(ClearColor(SPLASH_BACKGROUND_COLOR.into()));
     app.add_systems(
         OnEnter(Screen::Splash),
         spawn_splash_screen.run_if(in_state(Screen::LoadingExit)),

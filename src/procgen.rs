@@ -31,16 +31,21 @@ use crate::{
 };
 
 pub(super) fn plugin(app: &mut App) {
-    // Initialize proc gen state
+    // Child plugins
+    app.add_plugins(navmesh::plugin);
+
+    // Init states
     app.init_state::<ProcGenState>();
     app.init_state::<ProcGenInit>();
+    // Reset states
+    app.add_systems(
+        OnExit(Screen::Gameplay),
+        (reset_procgen_state, reset_procgen_init),
+    );
 
     // Insert/Remove resources
     app.add_systems(OnEnter(Screen::Gameplay), insert_resources);
     app.add_systems(OnExit(Screen::Gameplay), remove_resources);
-
-    // Child plugins
-    app.add_plugins(navmesh::plugin);
 
     // Add rng for procedural generation
     app.add_systems(Startup, setup_rng);
@@ -68,12 +73,6 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         OnEnter(ProcGenState::MoveNavMesh),
         move_navmesh::<OverworldProcGen>.run_if(in_state(Screen::Gameplay)),
-    );
-
-    // Reset controllers and states when exiting gameplay
-    app.add_systems(
-        OnExit(Screen::Gameplay),
-        (reset_procgen_state, reset_procgen_init),
     );
 }
 

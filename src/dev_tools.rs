@@ -27,6 +27,9 @@ use crate::{
 };
 
 pub(super) fn plugin(app: &mut App) {
+    // Insert states
+    app.init_state::<Debugging>();
+
     // Add rapier debug render
     app.add_plugins(RapierDebugRenderPlugin {
         enabled: false,
@@ -38,8 +41,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(Update, log_transitions::<ProcGenState>);
     app.add_systems(Update, log_transitions::<ProcGenInit>);
 
-    // Set debugging state
-    app.init_state::<Debugging>();
+    // Toggle debugging state
     app.add_systems(
         Update,
         toggle_debugging.run_if(input_just_pressed(TOGGLE_KEY)),

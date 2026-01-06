@@ -260,6 +260,7 @@ fn apply_path(
         Entity,
         &Transform,
         &mut KinematicCharacterController,
+        Option<&KinematicCharacterControllerOutput>,
         &mut Movement,
         &mut Path,
         &Navigator,
@@ -268,7 +269,9 @@ fn apply_path(
     time: Res<Time>,
     visual_map: Res<VisualMap>,
 ) {
-    for (entity, transform, mut controller, mut movement, mut path, navigator) in navigator_query {
+    for (entity, transform, mut controller, controller_output, mut movement, mut path, navigator) in
+        navigator_query
+    {
         // Set movement direction to normalized vector and apply translation
         let navigator_pos = transform.translation.xy();
         let direction = path.current - navigator_pos;
@@ -278,32 +281,37 @@ fn apply_path(
         // Extract `animation_controller` from `child_query`
         let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
         let mut animation_controller = child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
+        let state = animation_controller.state;
+
+        // If `entity` collided with `path.target` remove `Path`, set animation state to `Idle` and return.
+        // NOTE: This does not reliably determine whether the `entity` can not advance, just if it has collided with their target.
+        //       For now this should be enough since not switching to `Idle` for these entities might cause the illusion of them
+        //       still trying to wiggle their way around obstacles.
+        if let Some(output) = controller_output
+            && output.collisions.iter().any(|c| c.entity == path.target)
+        {
+            commands.entity(entity).remove::<Path>();
+            if state != AnimationState::Idle {
+                animation_controller.state = AnimationState::Idle;
+            }
+            return;
+        }
 
         // Set animation state if we are `Idle`
-        let state = animation_controller.state;
         if state == AnimationState::Idle {
             animation_controller.state = AnimationState::Walk;
         }
-
-        // FIXME: Implement logic to determine correctly if target has been reached.
-        //        I have tried KinematicCharacterControllerOutput for collision detection with character.
-        //        That implementation was quite short and is probably the best way to do this, I am just searching for something
-        //        that will work for more scenarios than just collision. I have tried comparing transform of entity to its
-        //        previous transform. That implementation was quite buggy and in my opinion a bit too much overhead.
-        //        In general however this could also improve performance since targets will not collide indefinitely if they didn't reach their goal.
 
         // Loop while distance to `path.current` is smaller than threshold to allow multiple next
         while navigator_pos.distance_squared(path.current)
             < (navigator.0 / PATH_OVERSHOOT_THRESHOLD_DIVISOR).squared()
         {
-            // Set `path.current` to `path.next` if it exists or remove `Path` from `entity` and switch to idle animation.
+            // Set `path.current` to `path.next` if it exists or break from loop.
             if let Some(next) = path.next.pop() {
                 path.current = next;
             } else {
-                commands.entity(entity).remove::<Path>();
-                if state != AnimationState::Idle {
-                    animation_controller.state = AnimationState::Idle;
-                }
+                // NOTE: We don't need to set idle animation or remove `Path` here since we are using collision detection to determine
+                //       whether the goal has been reached.
                 break;
             }
         }

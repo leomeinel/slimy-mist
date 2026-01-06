@@ -15,6 +15,7 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
 use crate::{
     Pause,
+    camera::init_camera_pos,
     characters::{
         animations::setup_animations,
         npc::{Slime, SlimeAssets},
@@ -27,7 +28,7 @@ use crate::{
 };
 
 pub(super) fn plugin(app: &mut App) {
-    // Spawn overworld with navmesh
+    // Spawn overworld with navmesh and run required systems
     app.add_systems(
         OnEnter(Screen::Gameplay),
         (
@@ -35,6 +36,7 @@ pub(super) fn plugin(app: &mut App) {
             setup_animations::<Slime, SlimeAssets>,
             spawn_overworld,
             spawn_navmesh::<OverworldProcGen, Overworld>,
+            init_camera_pos,
         )
             .chain(),
     );

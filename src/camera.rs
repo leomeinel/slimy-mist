@@ -12,7 +12,7 @@ pub(crate) mod ysort;
 use bevy::{color::palettes::tailwind, prelude::*, window::WindowResized};
 use bevy_light_2d::prelude::*;
 
-use crate::characters::player::Player;
+use crate::{characters::player::Player, screens::Screen};
 
 pub(super) fn plugin(app: &mut App) {
     // Add child plugins
@@ -22,7 +22,10 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(Startup, spawn_camera);
 
     // Update the main camera
-    app.add_systems(Update, (fit_canvas, update_camera));
+    app.add_systems(
+        Update,
+        (fit_canvas, update_camera.run_if(in_state(Screen::Gameplay))),
+    );
 }
 
 /// Z-level for the level
@@ -33,6 +36,16 @@ pub(crate) const DEFAULT_Z: f32 = 10.;
 /// Camera that renders the world to the canvas.
 #[derive(Component)]
 pub(crate) struct CanvasCamera;
+
+/// Initialize the camera position by tracking the player.
+pub(crate) fn init_camera_pos(
+    mut camera: Single<&mut Transform, (With<CanvasCamera>, Without<Player>)>,
+    player: Single<&Transform, (With<Player>, Without<CanvasCamera>)>,
+) {
+    let target_pos = player.translation.xy().extend(camera.translation.z);
+    camera.translation = target_pos;
+    info!("Updated pos");
+}
 
 /// Color for the ambient light: rgb(254, 243, 199)
 const AMBIENT_LIGHT_COLOR: Srgba = tailwind::AMBER_100;
@@ -75,8 +88,6 @@ fn fit_canvas(
 /// How quickly should the camera snap to the target location.
 const CAMERA_DECAY_RATE: f32 = 3.;
 
-// FIXME: When reentering gameplay while having moved, since we are using Changed, the camera will not update correctly.
-//        We could probably fix this by triggering a manual update when player spawns.^
 /// Update the camera position by tracking the player.
 ///
 /// Heavily inspired by: <https://bevy.org/examples/camera/2d-top-down-camera/>

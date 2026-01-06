@@ -137,26 +137,18 @@ pub(crate) enum AnimationState {
 }
 
 /// Controller for animations
-#[derive(Component)]
+#[derive(Component, Default)]
 pub(crate) struct AnimationController {
     /// Used to determine next animation
     pub(crate) state: AnimationState,
     /// Used to determine if we should play sound again
-    pub(crate) sound_frame: usize,
+    pub(crate) sound_frame: Option<usize>,
 }
 impl AnimationController {
     /// Sets a new [`AnimationState`] if it has not already been set.
     pub(crate) fn set_new_state(&mut self, new_state: AnimationState) {
         if self.state != new_state {
             self.state = new_state;
-        }
-    }
-}
-impl Default for AnimationController {
-    fn default() -> Self {
-        Self {
-            state: AnimationState::default(),
-            sound_frame: usize::MAX,
         }
     }
 }
@@ -370,21 +362,20 @@ pub(crate) fn update_animations<T>(
         // Match to current `AnimationState`
         match controller.state {
             AnimationState::Walk => {
-                switch_to_new_animation(&mut animation, animations.walk.clone())
+                switch_to_new_animation(&mut animation, animations.walk.clone(), &mut controller)
             }
-            AnimationState::Idle => {
-                switch_to_new_animation(&mut animation, Some(animations.idle.clone()))
-            }
+            AnimationState::Idle => switch_to_new_animation(
+                &mut animation,
+                Some(animations.idle.clone()),
+                &mut controller,
+            ),
             AnimationState::Jump => {
-                switch_to_new_animation(&mut animation, animations.jump.clone())
+                switch_to_new_animation(&mut animation, animations.jump.clone(), &mut controller)
             }
             AnimationState::Fall => {
-                switch_to_new_animation(&mut animation, animations.fall.clone())
+                switch_to_new_animation(&mut animation, animations.fall.clone(), &mut controller)
             }
         }
-
-        // Reset sound frame
-        controller.sound_frame = usize::MAX;
     }
 }
 
@@ -392,11 +383,14 @@ pub(crate) fn update_animations<T>(
 fn switch_to_new_animation(
     animation: &mut SpritesheetAnimation,
     new_animation: Option<Handle<Animation>>,
+    controller: &mut AnimationController,
 ) {
     let new_animation = new_animation.expect(ERR_UNINITIALIZED_REQUIRED_ANIMATION);
 
     if animation.animation != new_animation {
         animation.switch(new_animation);
+    } else {
+        controller.sound_frame = None;
     }
 }
 
@@ -439,7 +433,9 @@ pub(crate) fn update_animation_sounds<T, A>(
             child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
 
         // Continue if sound has already been played
-        if controller.sound_frame == animation.progress.frame {
+        if let Some(sound_frame) = controller.sound_frame
+            && sound_frame == animation.progress.frame
+        {
             continue;
         }
 
@@ -465,14 +461,13 @@ pub(crate) fn update_animation_sounds<T, A>(
             ),
             _ => None,
         }) else {
-            // Reset sound frame
-            controller.sound_frame = usize::MAX;
+            controller.sound_frame = None;
             continue;
         };
 
         // Play sound
         commands.spawn(sound_effect(sound));
-        controller.sound_frame = animation.progress.frame;
+        controller.sound_frame = Some(animation.progress.frame);
     }
 }
 

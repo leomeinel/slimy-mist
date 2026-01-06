@@ -369,59 +369,34 @@ pub(crate) fn update_animations<T>(
 
         // Match to current `AnimationState`
         match controller.state {
-            AnimationState::Walk
-                if &animation.animation
-                    != animations
-                        .walk
-                        .as_ref()
-                        .expect(ERR_UNINITIALIZED_REQUIRED_ANIMATION) =>
-            {
-                animation.switch(
-                    animations
-                        .walk
-                        .as_ref()
-                        .expect(ERR_UNINITIALIZED_REQUIRED_ANIMATION)
-                        .clone(),
-                );
+            AnimationState::Walk => {
+                switch_to_new_animation(&mut animation, animations.walk.clone())
             }
-            AnimationState::Idle if animation.animation != animations.idle => {
-                animation.switch(animations.idle.clone());
+            AnimationState::Idle => {
+                switch_to_new_animation(&mut animation, Some(animations.idle.clone()))
             }
-            AnimationState::Jump
-                if &animation.animation
-                    != animations
-                        .jump
-                        .as_ref()
-                        .expect(ERR_UNINITIALIZED_REQUIRED_ANIMATION) =>
-            {
-                animation.switch(
-                    animations
-                        .jump
-                        .as_ref()
-                        .expect(ERR_UNINITIALIZED_REQUIRED_ANIMATION)
-                        .clone(),
-                );
+            AnimationState::Jump => {
+                switch_to_new_animation(&mut animation, animations.jump.clone())
             }
-            AnimationState::Fall
-                if &animation.animation
-                    != animations
-                        .fall
-                        .as_ref()
-                        .expect(ERR_UNINITIALIZED_REQUIRED_ANIMATION) =>
-            {
-                animation.switch(
-                    animations
-                        .fall
-                        .as_ref()
-                        .expect(ERR_UNINITIALIZED_REQUIRED_ANIMATION)
-                        .clone(),
-                );
+            AnimationState::Fall => {
+                switch_to_new_animation(&mut animation, animations.fall.clone())
             }
-            _ => continue,
         }
 
         // Reset sound frame
         controller.sound_frame = usize::MAX;
+    }
+}
+
+/// Switches to new [`SpritesheetAnimation`] from [`Option<Handle<Animation>>`] if it has not already been switched to.
+fn switch_to_new_animation(
+    animation: &mut SpritesheetAnimation,
+    new_animation: Option<Handle<Animation>>,
+) {
+    let new_animation = new_animation.expect(ERR_UNINITIALIZED_REQUIRED_ANIMATION);
+
+    if animation.animation != new_animation {
+        animation.switch(new_animation);
     }
 }
 

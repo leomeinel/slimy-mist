@@ -19,9 +19,6 @@ use bevy_rand::{global::GlobalRng, traits::ForkableSeed as _};
 pub(super) fn plugin(app: &mut App) {
     // Add rng for levels
     app.add_systems(Startup, setup_rng);
-
-    // Add child plugins
-    app.add_plugins(overworld::plugin);
 }
 
 /// Applies to anything that stores level assets

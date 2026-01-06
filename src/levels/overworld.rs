@@ -20,21 +20,14 @@ use crate::{
     characters::{
         Character as _, CollisionData, CollisionHandle, VisualMap,
         animations::{ANIMATION_DELAY_RANGE, AnimationRng, Animations},
-        npc::Slime,
         player::Player,
     },
     impl_level_assets,
     levels::{Level, LevelAssets, LevelRng},
     logging::{error::ERR_LOADING_COLLISION_DATA, warn::WARN_INCOMPLETE_ASSET_DATA},
-    procgen::{ProcGenController, ProcGenerated},
+    procgen::ProcGenerated,
     screens::Screen,
 };
-
-pub(super) fn plugin(app: &mut App) {
-    // Add controllers for procedural generation
-    app.insert_resource(ProcGenController::<OverworldProcGen>::default());
-    app.insert_resource(ProcGenController::<Slime>::default());
-}
 
 /// Assets for the overworld
 #[derive(AssetCollection, Resource, Default, Reflect)]

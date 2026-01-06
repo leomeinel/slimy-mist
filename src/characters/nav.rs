@@ -29,8 +29,9 @@ use crate::{
 };
 
 pub(super) fn plugin(app: &mut App) {
-    // Insert resources
-    app.insert_resource(NavTargetPosMap::default());
+    // Insert/Remove resources
+    app.add_systems(OnEnter(Screen::Gameplay), insert_resources);
+    app.add_systems(OnExit(Screen::Gameplay), remove_resources);
 
     // Update pathfinding
     app.add_systems(
@@ -317,4 +318,14 @@ fn apply_path(
 fn stop_apply_path(commands: &mut Commands, entity: Entity, controller: &mut AnimationController) {
     commands.entity(entity).remove::<Path>();
     controller.set_new_state(AnimationState::Idle);
+}
+
+/// Insert resources
+fn insert_resources(mut commands: Commands) {
+    commands.init_resource::<NavTargetPosMap>();
+}
+
+/// Remove resources
+fn remove_resources(mut commands: Commands) {
+    commands.remove_resource::<NavTargetPosMap>();
 }

@@ -61,9 +61,9 @@ pub(super) fn plugin(app: &mut App) {
         Update,
         (
             animations::update_animations::<Player>.after(animations::tick_animation_timer),
-            animations::update_animation_sounds::<Player, PlayerAssets>
-                .run_if(in_state(Screen::Gameplay)),
+            animations::update_animation_sounds::<Player, PlayerAssets>,
         )
+            .run_if(in_state(Screen::Gameplay))
             .chain()
             .in_set(AppSystems::Update)
             .in_set(PausableSystems),

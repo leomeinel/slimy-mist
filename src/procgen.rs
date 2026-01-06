@@ -35,6 +35,10 @@ pub(super) fn plugin(app: &mut App) {
     app.init_state::<ProcGenState>();
     app.init_state::<ProcGenInit>();
 
+    // Insert/Remove resources
+    app.add_systems(OnEnter(Screen::Gameplay), insert_resources);
+    app.add_systems(OnExit(Screen::Gameplay), remove_resources);
+
     // Child plugins
     app.add_plugins(navmesh::plugin);
 
@@ -69,12 +73,7 @@ pub(super) fn plugin(app: &mut App) {
     // Reset controllers and states when exiting gameplay
     app.add_systems(
         OnExit(Screen::Gameplay),
-        (
-            clear_procgen_controller::<OverworldProcGen>,
-            clear_procgen_controller::<Slime>,
-            reset_procgen_state,
-            reset_procgen_init,
-        ),
+        (reset_procgen_state, reset_procgen_init),
     );
 }
 
@@ -254,18 +253,6 @@ pub(crate) fn despawn_procgen<T, A, const PROCEED: bool>(
     }
 }
 
-/// Clear [`ProcGenController<T>`]
-///
-/// ## Traits
-///
-/// - `T` must implement [`ProcGenerated`] and is used as the procedurally generated item associated with a [`ProcGenController<T>`].
-pub(crate) fn clear_procgen_controller<T>(mut controller: ResMut<ProcGenController<T>>)
-where
-    T: ProcGenerated,
-{
-    controller.chunk_positions.clear();
-}
-
 /// Spawn [`ProcGenRng`] by forking [`GlobalRng`]
 fn setup_rng(mut global: Single<&mut WyRand, With<GlobalRng>>, mut commands: Commands) {
     commands.spawn((ProcGenRng, global.fork_seed()));
@@ -279,4 +266,16 @@ fn reset_procgen_state(mut next_state: ResMut<NextState<ProcGenState>>) {
 /// Reset [`ProcGenInit`]
 fn reset_procgen_init(mut next_state: ResMut<NextState<ProcGenInit>>) {
     next_state.set(ProcGenInit::default());
+}
+
+/// Insert resources
+fn insert_resources(mut commands: Commands) {
+    commands.init_resource::<ProcGenController<OverworldProcGen>>();
+    commands.init_resource::<ProcGenController<Slime>>();
+}
+
+/// Remove resources
+fn remove_resources(mut commands: Commands) {
+    commands.remove_resource::<ProcGenController<OverworldProcGen>>();
+    commands.remove_resource::<ProcGenController<Slime>>();
 }

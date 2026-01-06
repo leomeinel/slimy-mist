@@ -26,11 +26,13 @@ use crate::{
     AppSystems,
     characters::animations::{AnimationController, AnimationTimer, Animations},
     logging::warn::WARN_INCOMPLETE_COLLISION_DATA_FALLBACK,
+    screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {
-    // Insert `VisualMap`
-    app.insert_resource(VisualMap::default());
+    // Insert/Remove resources
+    app.add_systems(OnEnter(Screen::Gameplay), insert_resources);
+    app.add_systems(OnExit(Screen::Gameplay), remove_resources);
 
     // Add child plugins
     app.add_plugins((animations::plugin, npc::plugin, nav::plugin, player::plugin));
@@ -230,4 +232,14 @@ fn tick_jump_timer(mut query: Query<&mut JumpTimer>, time: Res<Time>) {
     for mut timer in &mut query {
         timer.0.tick(time.delta());
     }
+}
+
+/// Insert resources
+fn insert_resources(mut commands: Commands) {
+    commands.init_resource::<VisualMap>();
+}
+
+/// Remove resources
+fn remove_resources(mut commands: Commands) {
+    commands.remove_resource::<VisualMap>();
 }

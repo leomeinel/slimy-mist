@@ -220,8 +220,7 @@ pub(crate) fn setup_animations<T, A>(
     let jump = data
         .jump_frames
         .map(|frames| {
-            let interval_ms =
-                (JUMP_DURATION_SECS * 500. / frames.max(1) as f32).min(u32::MAX as f32) as u32;
+            let interval_ms = (JUMP_DURATION_SECS * 500. / frames.max(1) as f32) as u32;
             animation_handle(
                 &mut global_animations,
                 &sprite_sheet,
@@ -237,8 +236,7 @@ pub(crate) fn setup_animations<T, A>(
     let fall = data
         .fall_frames
         .map(|frames| {
-            let interval_ms =
-                (JUMP_DURATION_SECS * 500. / frames.max(1) as f32).min(u32::MAX as f32) as u32;
+            let interval_ms = (JUMP_DURATION_SECS * 500. / frames.max(1) as f32) as u32;
             animation_handle(
                 &mut global_animations,
                 &sprite_sheet,

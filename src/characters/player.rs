@@ -196,15 +196,18 @@ fn stop_walk(
 ) {
     let (entity, mut character_controller, mut movement) = parent.into_inner();
 
-    // Reset movement target
+    // Reset movement diretion
     movement.direction = Vec2::ZERO;
 
     // Extract `animation_controller` from `child_query`
     let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
     let mut animation_controller = child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
 
-    // Stop movement if we are walking
-    if animation_controller.state == AnimationState::Walk {
+    // Stop movement if we are not jumping or falling
+    if !matches!(
+        animation_controller.state,
+        AnimationState::Jump | AnimationState::Fall
+    ) {
         character_controller.translation = Some(movement.direction);
         animation_controller.set_new_state(AnimationState::Idle);
     }
@@ -230,8 +233,11 @@ fn set_jump(
     let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
     let mut animation_controller = child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
 
-    // Set state to jump if we are not falling
-    if animation_controller.state != AnimationState::Fall {
+    // Set state to jump if we are not jumping or falling
+    if !matches!(
+        animation_controller.state,
+        AnimationState::Jump | AnimationState::Fall
+    ) {
         commands.entity(entity).insert(JumpTimer::default());
         animation_controller.set_new_state(AnimationState::Jump);
     }
@@ -255,7 +261,7 @@ fn apply_jump(
         child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
     // Return if we are not jumping or falling
     let state = animation_controller.state;
-    if state != AnimationState::Jump && state != AnimationState::Fall {
+    if !matches!(state, AnimationState::Jump | AnimationState::Fall) {
         return;
     }
 

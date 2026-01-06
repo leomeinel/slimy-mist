@@ -106,7 +106,8 @@ where
 
 /// Controller that maps entities to their positions
 ///
-/// We have to store entities since this also handles moving entities.
+/// We are also storing entities to avoid duplicate spawning for a chunk. This allows us to check
+/// if a chunk has already been spawned to, even for entities that have left the chunk.
 ///
 /// ## Traits
 ///

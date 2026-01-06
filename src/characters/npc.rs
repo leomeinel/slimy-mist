@@ -36,8 +36,8 @@ use crate::{
 };
 
 pub(super) fn plugin(app: &mut App) {
-    // Insert Animation resource
-    app.insert_resource(Animations::<Slime>::default());
+    // Insert resources
+    app.init_resource::<Animations<Slime>>();
 
     // Animation updates
     app.add_systems(

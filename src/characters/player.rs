@@ -38,8 +38,8 @@ use crate::{
 };
 
 pub(super) fn plugin(app: &mut App) {
-    // Insert Animation resource
-    app.insert_resource(Animations::<Player>::default());
+    // Insert resources
+    app.init_resource::<Animations<Player>>();
 
     // Add enhanced input plugin
     app.add_plugins(EnhancedInputPlugin);

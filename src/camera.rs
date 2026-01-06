@@ -44,7 +44,6 @@ pub(crate) fn init_camera_pos(
 ) {
     let target_pos = player.translation.xy().extend(camera.translation.z);
     camera.translation = target_pos;
-    info!("Updated pos");
 }
 
 /// Color for the ambient light: rgb(254, 243, 199)

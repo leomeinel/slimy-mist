@@ -16,6 +16,7 @@ use bevy_rapier2d::prelude::*;
 use vleue_navigator::prelude::*;
 
 use crate::{
+    AppSystems, PausableSystems,
     characters::{
         Movement, VisualMap,
         animations::{AnimationController, AnimationState},
@@ -39,9 +40,10 @@ pub(super) fn plugin(app: &mut App) {
         (
             find_path::<OverworldProcGen>,
             refresh_path::<OverworldProcGen>,
-            apply_path,
+            apply_path.in_set(PausableSystems),
         )
-            .run_if(in_state(ProcGenInit(true)).and(in_state(Screen::Gameplay))),
+            .run_if(in_state(ProcGenInit(true)).and(in_state(Screen::Gameplay)))
+            .in_set(AppSystems::Update),
     );
 }
 

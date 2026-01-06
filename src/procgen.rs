@@ -22,6 +22,7 @@ use bevy_prng::WyRand;
 use bevy_rand::{global::GlobalRng, traits::ForkableSeed as _};
 
 use crate::{
+    AppSystems, PausableSystems,
     camera::CanvasCamera,
     characters::npc::Slime,
     levels::overworld::{Overworld, OverworldAssets, OverworldProcGen},
@@ -53,12 +54,13 @@ pub(super) fn plugin(app: &mut App) {
     // Despawn procgen
     app.add_systems(
         Update,
-        ((
+        (
             despawn_procgen::<Slime, OverworldProcGen, false>,
             despawn_procgen::<OverworldProcGen, OverworldProcGen, true>,
         )
-            .run_if(in_state(ProcGenState::Despawn)),)
-            .run_if(in_state(Screen::Gameplay)),
+            .run_if(in_state(ProcGenState::Despawn).and(in_state(Screen::Gameplay)))
+            .in_set(AppSystems::Update)
+            .in_set(PausableSystems),
     );
     // Spawn procgen
     app.add_systems(

@@ -15,7 +15,7 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
 use crate::{
     Pause,
-    camera::init_camera_pos,
+    camera::center_camera_on_player,
     characters::{
         animations::setup_animations,
         npc::{Slime, SlimeAssets},
@@ -32,11 +32,13 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         OnEnter(Screen::Gameplay),
         (
-            setup_animations::<Player, PlayerAssets>,
-            setup_animations::<Slime, SlimeAssets>,
+            (
+                setup_animations::<Player, PlayerAssets>,
+                setup_animations::<Slime, SlimeAssets>,
+            ),
             spawn_overworld,
+            center_camera_on_player,
             spawn_navmesh::<OverworldProcGen, Overworld>,
-            init_camera_pos,
         )
             .chain(),
     );

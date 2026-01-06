@@ -52,8 +52,7 @@ pub(super) fn plugin(app: &mut App) {
         Update,
         (
             toggle_debug_ui,
-            toggle_debug_colliders.run_if(in_state(Screen::Gameplay)),
-            toggle_debug_navmeshes.run_if(in_state(Screen::Gameplay)),
+            (toggle_debug_colliders, toggle_debug_navmeshes).run_if(in_state(Screen::Gameplay)),
         )
             .run_if(state_changed::<Debugging>),
     );

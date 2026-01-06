@@ -43,7 +43,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         (
-            animations::update_animations::<Slime>.after(animations::tick_animation_timer),
+            animations::update_animations::<Slime>,
             animations::update_animation_sounds::<Slime, SlimeAssets>,
         )
             .run_if(in_state(Screen::Gameplay))

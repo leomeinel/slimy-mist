@@ -2,7 +2,7 @@
  * File: loading.rs
  * Author: Leopold Johannes Meinel (leo@meinel.dev)
  * -----
- * Copyright (c) 2025 Leopold Johannes Meinel & contributors
+ * Copyright (c) 2026 Leopold Johannes Meinel & contributors
  * SPDX ID: Apache-2.0
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  * -----
@@ -70,15 +70,14 @@ pub(super) fn plugin(app: &mut App) {
             .load_collection::<SlimeAssets>(),
     );
 
-    // Spawn loading screen
-    app.add_systems(OnEnter(Screen::Loading), spawn_loading_screen);
-
-    // After initial `LoadingState<Screen::Loading>`, run other requirements before switching to `Screen::LoadingExit`
+    // Spawn loading screen and load custom
     app.add_systems(
-        Update,
-        (setup_overworld, setup_player, setup_slime)
-            .run_if(in_state(Screen::Loading))
-            .after(LoadingStateSet(Screen::Loading)),
+        OnEnter(Screen::Loading),
+        (
+            spawn_loading_screen,
+            // After initial `LoadingState<Screen::Loading>`, run other requirements before switching to `Screen::LoadingExit`
+            (setup_overworld, setup_player, setup_slime).after(LoadingStateSet(Screen::Loading)),
+        ),
     );
 }
 

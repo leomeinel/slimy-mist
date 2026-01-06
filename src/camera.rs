@@ -12,7 +12,7 @@ pub(crate) mod ysort;
 use bevy::{color::palettes::tailwind, prelude::*, window::WindowResized};
 use bevy_light_2d::prelude::*;
 
-use crate::{characters::player::Player, screens::Screen};
+use crate::{AppSystems, PausableSystems, characters::player::Player, screens::Screen};
 
 pub(super) fn plugin(app: &mut App) {
     // Add child plugins
@@ -24,7 +24,15 @@ pub(super) fn plugin(app: &mut App) {
     // Update the main camera
     app.add_systems(
         Update,
-        (fit_canvas, update_camera.run_if(in_state(Screen::Gameplay))),
+        (
+            fit_canvas,
+            // NOTE: Having `update_camera` in `PausableSystems` is not the only thing that causes the camera to be
+            //       offset when pausing while moving. I do however deem that behavior to be acceptable.
+            update_camera
+                .run_if(in_state(Screen::Gameplay))
+                .in_set(PausableSystems),
+        )
+            .in_set(AppSystems::Update),
     );
 }
 
@@ -33,12 +41,12 @@ pub(crate) const LEVEL_Z: f32 = 1.;
 /// Z-level for any foreground object
 pub(crate) const DEFAULT_Z: f32 = 10.;
 
-/// Camera that renders the world to the canvas.
+/// Main camera that renders the world to the canvas.
 #[derive(Component)]
 pub(crate) struct CanvasCamera;
 
-/// Initialize the camera position by tracking the player.
-pub(crate) fn init_camera_pos(
+/// Center the camera on [`Player`]
+pub(crate) fn center_camera_on_player(
     mut camera: Single<&mut Transform, (With<CanvasCamera>, Without<Player>)>,
     player: Single<&Transform, (With<Player>, Without<CanvasCamera>)>,
 ) {

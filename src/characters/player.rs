@@ -30,7 +30,6 @@ use crate::{
         animations::{self, AnimationController, AnimationState, Animations},
         character_collider,
         nav::NavTarget,
-        tick_jump_timer,
     },
     impl_character_assets,
     logging::error::ERR_INVALID_VISUAL_MAP,
@@ -47,20 +46,16 @@ pub(super) fn plugin(app: &mut App) {
     // Jump or stop jump depending on timer
     app.add_systems(
         Update,
-        (
-            apply_jump
-                .before(PhysicsSet::SyncBackend)
-                .in_set(AppSystems::Update),
-            limit_jump.after(tick_jump_timer),
-        )
-            .chain(),
+        (apply_jump.before(PhysicsSet::SyncBackend), limit_jump)
+            .chain()
+            .in_set(AppSystems::Update),
     );
 
     // Animation updates
     app.add_systems(
         Update,
         (
-            animations::update_animations::<Player>.after(animations::tick_animation_timer),
+            animations::update_animations::<Player>,
             animations::update_animation_sounds::<Player, PlayerAssets>,
         )
             .run_if(in_state(Screen::Gameplay))

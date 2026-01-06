@@ -3,7 +3,7 @@
 # File: build.sh
 # Author: Leopold Johannes Meinel (leo@meinel.dev)
 # -----
-# Copyright (c) 2025 Leopold Johannes Meinel & contributors
+# Copyright (c) 2026 Leopold Johannes Meinel & contributors
 # SPDX ID: Apache-2.0
 # URL: https://www.apache.org/licenses/LICENSE-2.0
 ###
@@ -29,7 +29,7 @@ elif [[ "${1}" == "web" ]]; then
     rm -f "${tmpfile}"
 elif [[ "${1}" == "web-dev" ]]; then
     rustup target add wasm32-unknown-unknown
-    cargo build --no-default-features --target wasm32-unknown-unknown --profile web-dev
+    cargo build --no-default-features --features dev --target wasm32-unknown-unknown --profile web-dev
 else
     cargo build
 fi

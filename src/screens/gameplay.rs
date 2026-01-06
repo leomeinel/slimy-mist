@@ -24,7 +24,7 @@ use crate::{
     levels::overworld::{Overworld, OverworldProcGen, spawn_overworld},
     menus::Menu,
     procgen::navmesh::spawn_navmesh,
-    screens::{ResInsertGameplay, Screen},
+    screens::{GameplayInsertResSystems, Screen},
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -40,7 +40,7 @@ pub(super) fn plugin(app: &mut App) {
             center_camera_on_player,
             spawn_navmesh::<OverworldProcGen, Overworld>,
         )
-            .after(ResInsertGameplay)
+            .after(GameplayInsertResSystems)
             .chain(),
     );
 

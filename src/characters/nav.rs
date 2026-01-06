@@ -9,9 +9,6 @@
  * This is heavily inspired by: https://github.com/vleue/vleue_navigator
  */
 
-// FIXME: Current flaws:
-//        - Does not have logic to determine correctly if target has been reached.
-
 use std::ops::Deref;
 
 use bevy::{math::FloatPow, platform::collections::HashMap, prelude::*};
@@ -33,7 +30,7 @@ use crate::{
 
 pub(super) fn plugin(app: &mut App) {
     // Insert resources
-    app.insert_resource(NavTargetMap::default());
+    app.insert_resource(NavTargetPosMap::default());
 
     // Update pathfinding
     app.add_systems(
@@ -49,11 +46,11 @@ pub(super) fn plugin(app: &mut App) {
 
 /// This contains a map of target entities mapped to their last updated position
 #[derive(Resource, Default)]
-pub(crate) struct NavTargetMap(HashMap<Entity, Vec2>);
+pub(crate) struct NavTargetPosMap(HashMap<Entity, Vec2>);
 
 /// Navigation target
 ///
-/// The field is meant as a priority. A higher priority is preferred.
+/// The [`usize`] field is meant as a priority. The higher it is, the more preferred the target is.
 #[derive(Component, Default)]
 pub(crate) struct NavTarget(pub(crate) usize);
 
@@ -82,7 +79,7 @@ fn find_path<T>(
         (With<Navigator>, Without<Path>, Without<NavTarget>),
     >,
     mut commands: Commands,
-    mut target_map: ResMut<NavTargetMap>,
+    mut target_map: ResMut<NavTargetPosMap>,
     controller: Res<ProcGenController<T>>,
     data: Res<Assets<TileData<T>>>,
     handle: Res<TileHandle<T>>,
@@ -111,7 +108,7 @@ fn find_path<T>(
         value
     });
 
-    // Save and validate target pos in `NavTargetMap`
+    // Save and validate target pos in `NavTargetPosMap`
     let target_pos = target_pos.translation.xy();
     if let Some(pos) = target_map.0.get(&target)
         && target_pos.distance_squared(*pos) < tile_size.squared()
@@ -167,7 +164,7 @@ fn refresh_path<T>(
     navigator_query: Query<(Entity, &Transform, &mut Path), With<Navigator>>,
     target_transforms: Query<&Transform, (Changed<Transform>, With<NavTarget>)>,
     mut commands: Commands,
-    mut target_map: ResMut<NavTargetMap>,
+    mut target_map: ResMut<NavTargetPosMap>,
     mut navmeshes: ResMut<Assets<NavMesh>>,
     data: Res<Assets<TileData<T>>>,
     handle: Res<TileHandle<T>>,
@@ -253,6 +250,9 @@ fn refresh_path<T>(
     }
 }
 
+/// Number used as divisor for path overshoot threshold
+const PATH_OVERSHOOT_THRESHOLD_DIVISOR: f32 = 50.;
+
 /// Apply [`Path`]
 fn apply_path(
     mut child_query: Query<&mut AnimationController, Without<Navigator>>,
@@ -270,7 +270,8 @@ fn apply_path(
 ) {
     for (entity, transform, mut controller, mut movement, mut path, navigator) in navigator_query {
         // Set movement direction to normalized vector and apply translation
-        let direction = path.current - transform.translation.xy();
+        let navigator_pos = transform.translation.xy();
+        let direction = path.current - navigator_pos;
         movement.direction = direction.normalize() * navigator.0 * time.delta_secs();
         controller.translation = Some(movement.direction);
 
@@ -284,14 +285,22 @@ fn apply_path(
             animation_controller.state = AnimationState::Walk;
         }
 
-        while transform.translation.xy().distance_squared(path.current)
-            < (navigator.0 / 50.0).squared()
+        // FIXME: Implement logic to determine correctly if target has been reached.
+        //        I have tried KinematicCharacterControllerOutput for collision detection with character.
+        //        That implementation was quite short and is probably the best way to do this, I am just searching for something
+        //        that will work for more scenarios than just collision. I have tried comparing transform of entity to its
+        //        previous transform. That implementation was quite buggy and in my opinion a bit too much overhead.
+        //        In general however this could also improve performance since targets will not collide indefinitely if they didn't reach their goal.
+
+        // Loop while distance to `path.current` is smaller than threshold to allow multiple next
+        while navigator_pos.distance_squared(path.current)
+            < (navigator.0 / PATH_OVERSHOOT_THRESHOLD_DIVISOR).squared()
         {
+            // Set `path.current` to `path.next` if it exists or remove `Path` from `entity` and switch to idle animation.
             if let Some(next) = path.next.pop() {
                 path.current = next;
             } else {
                 commands.entity(entity).remove::<Path>();
-                // FIXME: We need to check for collision with rapier2d instead to determine if target has been reached.
                 if state != AnimationState::Idle {
                     animation_controller.state = AnimationState::Idle;
                 }

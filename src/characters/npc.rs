@@ -86,22 +86,29 @@ impl Character for Slime {
         let movement_speed = MovementSpeed::default();
 
         (
-            // FIXME: Use struct for this bundle
-            Name::new("Slime"),
-            Npc,
-            Self,
-            Transform::from_translation(pos.extend(DEFAULT_Z)),
-            YSort(DEFAULT_Z),
-            character_collider(collision_set),
-            character_obstacle(collision_set),
-            Visibility::Inherited,
-            RigidBody::KinematicPositionBased,
-            GravityScale(0.),
-            KinematicCharacterController::default(),
-            LockedAxes::ROTATION_LOCKED,
-            Movement::default(),
-            movement_speed,
-            Navigator(movement_speed.0),
+            // Identity
+            (Name::new("Slime"), Npc, Self),
+            // Positioning/Visibility
+            (
+                Transform::from_translation(pos.extend(DEFAULT_Z)),
+                YSort(DEFAULT_Z),
+                Visibility::Inherited,
+            ),
+            // Physics
+            (
+                character_collider(collision_set),
+                character_obstacle(collision_set),
+                RigidBody::KinematicPositionBased,
+                GravityScale(0.),
+            ),
+            // Movement
+            (
+                KinematicCharacterController::default(),
+                LockedAxes::ROTATION_LOCKED,
+                Movement::default(),
+                movement_speed,
+                Navigator(movement_speed.0),
+            ),
         )
     }
 }

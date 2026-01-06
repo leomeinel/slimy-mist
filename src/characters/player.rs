@@ -106,41 +106,49 @@ impl Character for Player {
         let movement_speed = MovementSpeed::default();
 
         (
-            // FIXME: Use struct for this bundle
-            Name::new("Player"),
-            Self,
-            Transform::from_translation(pos.extend(DEFAULT_Z)),
-            YSort(DEFAULT_Z),
-            character_collider(collision_set),
-            Visibility::Inherited,
-            RigidBody::KinematicVelocityBased,
-            GravityScale(0.),
-            KinematicCharacterController {
-                filter_flags: QueryFilterFlags::EXCLUDE_KINEMATIC,
-                ..default()
-            },
-            LockedAxes::ROTATION_LOCKED,
-            NavTarget(128),
-            Movement::default(),
-            movement_speed,
-            actions!(
-                Self[
-                    (
-                        Action::<Walk>::new(),
-                        DeadZone::default(),
-                        SmoothNudge::default(),
-                        Scale::splat(movement_speed.0),
-                        Bindings::spawn((
-                            Cardinal::arrows(),
-                            Cardinal::wasd_keys(),
-                            Axial::left_stick(),
-                        ))
-                    ),
-                    (
-                        Action::<Jump>::new(),
-                        bindings![KeyCode::Space, GamepadButton::South],
-                    ),
-                ]
+            // Identity
+            (Name::new("Player"), Self),
+            // Positioning/Visibility
+            (
+                Transform::from_translation(pos.extend(DEFAULT_Z)),
+                YSort(DEFAULT_Z),
+                Visibility::Inherited,
+            ),
+            // Physics
+            (
+                character_collider(collision_set),
+                RigidBody::KinematicVelocityBased,
+                GravityScale(0.),
+            ),
+            // Movement
+            (
+                KinematicCharacterController {
+                    filter_flags: QueryFilterFlags::EXCLUDE_KINEMATIC,
+                    ..default()
+                },
+                LockedAxes::ROTATION_LOCKED,
+                Movement::default(),
+                movement_speed,
+                NavTarget(128),
+                actions!(
+                    Self[
+                        (
+                            Action::<Walk>::new(),
+                            DeadZone::default(),
+                            SmoothNudge::default(),
+                            Scale::splat(movement_speed.0),
+                            Bindings::spawn((
+                                Cardinal::arrows(),
+                                Cardinal::wasd_keys(),
+                                Axial::left_stick(),
+                            ))
+                        ),
+                        (
+                            Action::<Jump>::new(),
+                            bindings![KeyCode::Space, GamepadButton::South],
+                        ),
+                    ]
+                ),
             ),
         )
     }

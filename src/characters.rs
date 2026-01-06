@@ -26,12 +26,15 @@ use crate::{
     AppSystems,
     characters::animations::{AnimationController, AnimationTimer, Animations},
     logging::warn::WARN_INCOMPLETE_COLLISION_DATA_FALLBACK,
-    screens::Screen,
+    screens::{ResInsertGameplay, Screen},
 };
 
 pub(super) fn plugin(app: &mut App) {
     // Insert/Remove resources
-    app.add_systems(OnEnter(Screen::Gameplay), insert_resources);
+    app.add_systems(
+        OnEnter(Screen::Gameplay),
+        insert_resources.in_set(ResInsertGameplay),
+    );
     app.add_systems(OnExit(Screen::Gameplay), remove_resources);
 
     // Add child plugins

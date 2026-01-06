@@ -28,7 +28,7 @@ use crate::{
     levels::overworld::{Overworld, OverworldAssets, OverworldProcGen},
     logging::error::{ERR_INVALID_MINIMUM_CHUNK_POS, ERR_LOADING_TILE_DATA},
     procgen::{chunks::spawn_chunks, navmesh::move_navmesh, spawn::spawn_characters},
-    screens::Screen,
+    screens::{ResInsertGameplay, Screen},
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -45,7 +45,10 @@ pub(super) fn plugin(app: &mut App) {
     );
 
     // Insert/Remove resources
-    app.add_systems(OnEnter(Screen::Gameplay), insert_resources);
+    app.add_systems(
+        OnEnter(Screen::Gameplay),
+        insert_resources.in_set(ResInsertGameplay),
+    );
     app.add_systems(OnExit(Screen::Gameplay), remove_resources);
 
     // Add rng for procedural generation

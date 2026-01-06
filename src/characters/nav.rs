@@ -26,12 +26,15 @@ use crate::{
         ERR_INVALID_NAV_TARGET, ERR_INVALID_NAVMESH, ERR_INVALID_VISUAL_MAP, ERR_LOADING_TILE_DATA,
     },
     procgen::{CHUNK_SIZE, ProcGenController, ProcGenInit, ProcGenerated, TileData, TileHandle},
-    screens::Screen,
+    screens::{ResInsertGameplay, Screen},
 };
 
 pub(super) fn plugin(app: &mut App) {
     // Insert/Remove resources
-    app.add_systems(OnEnter(Screen::Gameplay), insert_resources);
+    app.add_systems(
+        OnEnter(Screen::Gameplay),
+        insert_resources.in_set(ResInsertGameplay),
+    );
     app.add_systems(OnExit(Screen::Gameplay), remove_resources);
 
     // Update pathfinding

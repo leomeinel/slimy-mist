@@ -41,3 +41,7 @@ pub(crate) enum Screen {
     Title,
     Gameplay,
 }
+
+/// A system set for systems that inserts [`Resource`]s dynamically for [`Screen::Gameplay`]
+#[derive(SystemSet, Copy, Clone, Eq, PartialEq, Hash, Debug)]
+pub(crate) struct ResInsertGameplay;

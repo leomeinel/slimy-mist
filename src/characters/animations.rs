@@ -387,7 +387,6 @@ fn switch_to_new_animation(
 
     if animation.animation != new_animation {
         animation.switch(new_animation);
-    } else {
         controller.sound_frame = None;
     }
 }

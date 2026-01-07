@@ -139,7 +139,7 @@ fn find_path<T>(
             continue;
         }
         // Find path to target
-        let Some((current, next)) = calculate_path(navmesh, origin_pos, target_pos_vec3) else {
+        let Some((current, next)) = next_path_step(navmesh, origin_pos, target_pos_vec3) else {
             continue;
         };
 
@@ -231,7 +231,7 @@ fn refresh_path<T>(
         }
 
         // Find path to target or remove path
-        let Some((current, next)) = calculate_path(navmesh, origin_pos, target_pos_vec3) else {
+        let Some((current, next)) = next_path_step(navmesh, origin_pos, target_pos_vec3) else {
             // NOTE: We are using `try_remove` since it is possible that `entity` has been despawned by `procgen::despawn_procgen`.
             commands.entity(entity).try_remove::<Path>();
             continue;
@@ -251,8 +251,8 @@ fn refresh_path<T>(
     }
 }
 
-/// Calculate path in [`NavMesh`]
-fn calculate_path(navmesh: &mut NavMesh, start: Vec3, end: Vec3) -> Option<(Vec2, Vec<Vec2>)> {
+/// Next step for the [`Path`]
+fn next_path_step(navmesh: &mut NavMesh, start: Vec3, end: Vec3) -> Option<(Vec2, Vec<Vec2>)> {
     let path = navmesh.transformed_path(start, end)?;
     let (first, remaining) = path.path.split_first()?;
     let mut next: Vec<_> = remaining.iter().map(|p| p.xy()).collect();

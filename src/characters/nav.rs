@@ -324,7 +324,7 @@ fn apply_path(
 
 /// Remove [`Path`] and set [`AnimationController`] state to [`AnimationState::Idle`]
 fn stop_apply_path(commands: &mut Commands, entity: Entity, controller: &mut AnimationController) {
-    // NOTE: We are using `try_remove` to avoid use after despawn because of `procgen::despawn``.
+    // NOTE: We are using `try_remove` to avoid use after despawn because of `procgen::despawn`.
     commands.entity(entity).try_remove::<Path>();
     controller.set_new_state(AnimationState::Idle);
 }

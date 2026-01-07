@@ -14,7 +14,7 @@ use rand::{Rng as _, seq::IndexedRandom as _};
 use crate::{
     characters::{
         Character, CollisionData, CollisionHandle, VisualMap,
-        animations::{ANIMATION_DELAY_RANGE, AnimationRng, Animations},
+        animations::{ANIMATION_DELAY_RANGE_SECS, AnimationRng, Animations},
     },
     levels::Level,
     logging::error::{ERR_LOADING_COLLISION_DATA, ERR_LOADING_TILE_DATA},
@@ -124,7 +124,7 @@ fn spawn_character<T>(
         .collect();
 
     for origin in target_origins {
-        let animation_delay = animation_rng.random_range(ANIMATION_DELAY_RANGE);
+        let animation_delay = animation_rng.random_range(ANIMATION_DELAY_RANGE_SECS);
 
         // Set target position in pixels
         let world_pos = chunk_pos.as_vec2() * CHUNK_SIZE.as_vec2() * tile_size;

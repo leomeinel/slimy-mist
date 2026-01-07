@@ -19,7 +19,7 @@ use crate::{
     camera::LEVEL_Z,
     characters::{
         Character as _, CollisionData, CollisionHandle, VisualMap,
-        animations::{ANIMATION_DELAY_RANGE, AnimationRng, Animations},
+        animations::{ANIMATION_DELAY_RANGE_SECS, AnimationRng, Animations},
         player::Player,
     },
     impl_level_assets,
@@ -104,7 +104,7 @@ pub(crate) fn spawn_overworld(
         &data,
         PLAYER_POS,
         &animations,
-        animation_rng.random_range(ANIMATION_DELAY_RANGE),
+        animation_rng.random_range(ANIMATION_DELAY_RANGE_SECS),
     );
     commands.entity(level).add_child(player);
 }

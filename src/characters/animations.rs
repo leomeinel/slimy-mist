@@ -51,8 +51,8 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(Update, tick_animation_timer.in_set(AppSystems::TickTimers));
 }
 
-/// Player animation delay
-pub(crate) const ANIMATION_DELAY_RANGE: Range<f32> = 0.0..10.0;
+/// Animation delay [`Range`] in seconds
+pub(crate) const ANIMATION_DELAY_RANGE_SECS: Range<f32> = 0.0..10.0;
 
 /// Animation data deserialized from a ron file as a generic.
 ///

@@ -25,7 +25,7 @@ use crate::{
     logging::error::{
         ERR_INVALID_NAV_TARGET, ERR_INVALID_NAVMESH, ERR_INVALID_VISUAL_MAP, ERR_LOADING_TILE_DATA,
     },
-    procgen::{ProcGenInit, ProcGenerated, TileData, TileHandle},
+    procgen::{ProcGenDespawning, ProcGenInit, ProcGenerated, TileData, TileHandle},
     screens::{GameplayInsertResSystems, Screen},
 };
 
@@ -45,7 +45,11 @@ pub(super) fn plugin(app: &mut App) {
             refresh_path::<OverworldProcGen>,
             apply_path.in_set(PausableSystems),
         )
-            .run_if(in_state(ProcGenInit(true)).and(in_state(Screen::Gameplay)))
+            .run_if(
+                not(in_state(ProcGenDespawning(true)))
+                    .and(in_state(ProcGenInit(true)))
+                    .and(in_state(Screen::Gameplay)),
+            )
             .in_set(AppSystems::Update),
     );
 }
@@ -144,10 +148,7 @@ fn find_path<T>(
         };
 
         // Insert path
-        // NOTE: We are using `try_insert` since it is possible that `entity` has been despawned by `procgen::despawn_procgen`
-        //       Not calling `updated.insert` conditionally based on success is not desired, but preventing it would be quite ugly.
-        //       If insertion fails, we will just not update a few paths in the following runs while the target has not moved.
-        commands.entity(entity).try_insert(Path {
+        commands.entity(entity).insert(Path {
             current,
             next,
             target,
@@ -225,15 +226,13 @@ fn refresh_path<T>(
         }
         // Remove `Path` if target is outside of navmesh
         if !navmesh.transformed_is_in_mesh(target_pos_vec3) {
-            // NOTE: We are using `try_remove` since it is possible that `entity` has been despawned by `procgen::despawn_procgen`.
-            commands.entity(entity).try_remove::<Path>();
+            commands.entity(entity).remove::<Path>();
             continue;
         }
 
         // Find path to target or remove path
         let Some((current, next)) = next_path_step(navmesh, origin_pos, target_pos_vec3) else {
-            // NOTE: We are using `try_remove` since it is possible that `entity` has been despawned by `procgen::despawn_procgen`.
-            commands.entity(entity).try_remove::<Path>();
+            commands.entity(entity).remove::<Path>();
             continue;
         };
 

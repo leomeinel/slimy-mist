@@ -22,7 +22,7 @@ use vleue_navigator::prelude::*;
 
 use crate::{
     characters::nav::Path,
-    procgen::{ProcGenInit, ProcGenState},
+    procgen::{ProcGenDespawning, ProcGenInit, ProcGenState},
     screens::Screen,
 };
 
@@ -37,9 +37,15 @@ pub(super) fn plugin(app: &mut App) {
     });
 
     // Log state transitions.
-    app.add_systems(Update, log_transitions::<Screen>);
-    app.add_systems(Update, log_transitions::<ProcGenState>);
-    app.add_systems(Update, log_transitions::<ProcGenInit>);
+    app.add_systems(
+        Update,
+        (
+            log_transitions::<Screen>,
+            log_transitions::<ProcGenState>,
+            log_transitions::<ProcGenInit>,
+            log_transitions::<ProcGenDespawning>,
+        ),
+    );
 
     // Toggle debugging state
     app.add_systems(

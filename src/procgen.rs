@@ -38,10 +38,15 @@ pub(super) fn plugin(app: &mut App) {
     // Init states
     app.init_state::<ProcGenState>();
     app.init_state::<ProcGenInit>();
+    app.init_state::<ProcGenDespawning>();
     // Reset states
     app.add_systems(
         OnExit(Screen::Gameplay),
-        (reset_procgen_state, reset_procgen_init),
+        (
+            reset_procgen_state,
+            reset_procgen_init,
+            reset_procgen_despawning,
+        ),
     );
 
     // Insert/Remove resources
@@ -58,13 +63,26 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         (
-            despawn_procgen::<Slime, OverworldProcGen, false>,
-            despawn_procgen::<OverworldProcGen, OverworldProcGen, true>,
+            (
+                collect_to_despawn::<Slime, OverworldProcGen, false>,
+                collect_to_despawn::<OverworldProcGen, OverworldProcGen, true>,
+            )
+                .run_if(in_state(ProcGenState::Despawn)),
+            (set_despawning::<Slime>, set_despawning::<OverworldProcGen>),
         )
-            .run_if(in_state(ProcGenState::Despawn).and(in_state(Screen::Gameplay)))
+            .run_if(in_state(Screen::Gameplay))
             .in_set(AppSystems::Update)
             .in_set(PausableSystems),
     );
+    // NOTE: Since we are running this in `PostUpdate`, the `ProcGenDespawning` is not necessary. It will however allow
+    //       other systems to verify that state in the future.
+    app.add_systems(
+        PostUpdate,
+        (despawn::<Slime>, despawn::<OverworldProcGen>)
+            .chain()
+            .run_if(in_state(ProcGenDespawning(true)).and(in_state(Screen::Gameplay))),
+    );
+
     // Spawn procgen
     app.add_systems(
         OnEnter(ProcGenState::Spawn),
@@ -96,6 +114,10 @@ pub(crate) enum ProcGenState {
     MoveNavMesh,
 }
 
+/// Tracks the current proc gen task
+#[derive(States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
+pub(crate) struct ProcGenDespawning(pub(crate) bool);
+
 /// Tracks the proc gen has been initialized fully at least once
 #[derive(States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
 pub(crate) struct ProcGenInit(pub(crate) bool);
@@ -120,8 +142,9 @@ pub(crate) struct ProcGenController<T>
 where
     T: ProcGenerated,
 {
-    pub(crate) chunk_positions: HashMap<Entity, IVec2>,
     pub(crate) camera_chunk_pos: IVec2,
+    pub(crate) chunk_positions: HashMap<Entity, IVec2>,
+    pub(crate) to_despawn: HashSet<Entity>,
     _phantom: PhantomData<T>,
 }
 impl<T> ProcGenController<T>
@@ -202,16 +225,16 @@ where
 #[derive(Component)]
 pub(crate) struct ProcGenRng;
 
-/// Despawn procedurally generated entities outside of [`PROCGEN_DISTANCE`] and remove entries in controller
+/// Collect procedurally generated entities to despawn outside of [`PROCGEN_DISTANCE`]
 ///
 /// ## Traits
 ///
 /// - `T` must implement [`ProcGenerated`] and is used as the procedurally generated item associated with a [`ProcGenController<T>`].
 /// - `A` must implement [`ProcGenerated`] and is used as a level's procedurally generated item.
-pub(crate) fn despawn_procgen<T, A, const PROCEED: bool>(
+/// - `const PROCEED` determines whether we should proceed to the next state.
+pub(crate) fn collect_to_despawn<T, A, const PROCEED: bool>(
     camera: Single<&Transform, (Changed<Transform>, With<CanvasCamera>, Without<T>)>,
     query: Query<(Entity, &Transform), (With<T>, Without<CanvasCamera>)>,
-    mut commands: Commands,
     mut controller: ResMut<ProcGenController<T>>,
     mut next_state: ResMut<NextState<ProcGenState>>,
     data: Res<Assets<TileData<A>>>,
@@ -237,8 +260,7 @@ pub(crate) fn despawn_procgen<T, A, const PROCEED: bool>(
 
     controller.camera_chunk_pos = (camera.translation.xy() / chunk_size_px).floor().as_ivec2();
 
-    let mut despawned = false;
-    // Despawn entities outside of `DESPAWN_RANGE`
+    // Add entities outside of `PROCGEN_DISTANCE` to `to_despawn`
     for (entity, transform) in query {
         let chunk_pos = (transform.translation.xy() / chunk_size_px)
             .floor()
@@ -246,15 +268,51 @@ pub(crate) fn despawn_procgen<T, A, const PROCEED: bool>(
 
         // NOTE: We are using `chebyshev_distance` because we are spawning in a square.
         if controller.camera_chunk_pos.chebyshev_distance(chunk_pos) > PROCGEN_DISTANCE as u32 {
-            controller.chunk_positions.remove(&entity);
-            commands.entity(entity).despawn();
-            despawned = true;
+            controller.to_despawn.insert(entity);
         }
     }
 
     // Transition state if required
-    if PROCEED && (despawned || query.is_empty()) {
+    if PROCEED && (!controller.to_despawn.is_empty() || query.is_empty()) {
         next_state.set(ProcGenState::Spawn);
+    }
+}
+
+/// Despawn procedurally generated entities from [`ProcGenController<T>::to_despawn`] and remove entries in [`ProcGenController<T>::chunk_positions`]
+///
+/// ## Traits
+///
+/// - `T` must implement [`ProcGenerated`] and is used as the procedurally generated item associated with a [`ProcGenController<T>`].
+fn despawn<T>(
+    mut commands: Commands,
+    mut controller: ResMut<ProcGenController<T>>,
+    mut next_state: ResMut<NextState<ProcGenDespawning>>,
+) where
+    T: ProcGenerated,
+{
+    // Despawn collected entities
+    let entities: Vec<_> = controller.to_despawn.drain().collect();
+    for entity in entities {
+        controller.chunk_positions.remove(&entity);
+        commands.entity(entity).despawn();
+    }
+
+    next_state.set(ProcGenDespawning(false));
+}
+
+/// Set state [`ProcGenDespawning`] to true if [`ProcGenController<T>::to_despawn`] is not empty
+///
+/// ## Traits
+///
+/// - `T` must implement [`ProcGenerated`] and is used as the procedurally generated item associated with a [`ProcGenController<T>`].
+fn set_despawning<T>(
+    mut next_state: ResMut<NextState<ProcGenDespawning>>,
+    controller: Res<ProcGenController<T>>,
+) where
+    T: ProcGenerated,
+{
+    if !controller.to_despawn.is_empty() {
+        next_state.set(ProcGenDespawning(true));
     }
 }
 
@@ -271,6 +329,11 @@ fn reset_procgen_state(mut next_state: ResMut<NextState<ProcGenState>>) {
 /// Reset [`ProcGenInit`]
 fn reset_procgen_init(mut next_state: ResMut<NextState<ProcGenInit>>) {
     next_state.set(ProcGenInit::default());
+}
+
+/// Reset [`ProcGenDespawning`]
+fn reset_procgen_despawning(mut next_state: ResMut<NextState<ProcGenDespawning>>) {
+    next_state.set(ProcGenDespawning::default());
 }
 
 /// Insert resources

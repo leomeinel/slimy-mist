@@ -70,8 +70,8 @@ pub(super) fn plugin(app: &mut App) {
             .in_set(AppSystems::Update)
             .in_set(PausableSystems),
     );
-    // NOTE: Since we are running despawing in `PostUpdate`, the `ProcGenDespawning` is not necessary. It will however allow
-    //       other systems to verify that state in the future.
+    // NOTE: Since we are running despawing in `PostUpdate`, `ProcGenDespawning` is not necessary.
+    //       It will however allow other systems to verify that state in the future.
     app.add_systems(
         PostUpdate,
         (
@@ -114,7 +114,7 @@ pub(crate) enum ProcGenState {
     MoveNavMesh,
 }
 
-/// Tracks the current proc gen task
+/// Tracks whether we are currently despawning
 #[derive(States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
 pub(crate) struct ProcGenDespawning(pub(crate) bool);
 

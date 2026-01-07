@@ -72,7 +72,7 @@ pub(super) fn plugin(app: &mut App) {
 /// Toggle key
 const TOGGLE_KEY: KeyCode = KeyCode::Backquote;
 
-/// Whether or not debugging is active
+/// Tracks whether debugging is active
 #[derive(States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
 struct Debugging(bool);
 

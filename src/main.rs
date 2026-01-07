@@ -116,7 +116,7 @@ enum AppSystems {
     Update,
 }
 
-/// Whether or not the game is paused.
+/// Tracks whether the game is paused.
 #[derive(States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
 struct Pause(pub(crate) bool);
 

@@ -24,6 +24,7 @@ mod dev_tools;
 mod levels;
 mod logging;
 mod menus;
+mod particles;
 mod procgen;
 mod screens;
 mod theme;
@@ -44,7 +45,7 @@ fn main() -> AppExit {
 struct AppPlugin;
 impl Plugin for AppPlugin {
     fn build(&self, app: &mut App) {
-        // Add Bevy plugins.
+        // Add bevy plugins
         app.add_plugins((DefaultPlugins
             .set(AssetPlugin {
                 // Wasm builds will check for meta files (that don't exist) if this isn't set.
@@ -82,6 +83,7 @@ impl Plugin for AppPlugin {
             dev_tools::plugin,
             levels::plugin,
             menus::plugin,
+            particles::plugin,
             screens::plugin,
             theme::plugin,
         ));

@@ -103,11 +103,6 @@ fn find_path<T>(
         .get_mut(*navmesh_handle)
         .expect(ERR_INVALID_NAVMESH);
 
-    // Get target with maximum priority
-    let Some((target, target_pos, _)) = target_query.iter().max_by_key(|q| q.2.0) else {
-        return;
-    };
-
     // Init local values
     let tile_size = tile_size.unwrap_or_else(|| {
         let data = data.get(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
@@ -116,7 +111,11 @@ fn find_path<T>(
         value
     });
 
-    // Save and validate target pos in `NavTargetPosMap`
+    // Get target with maximum priority
+    let Some((target, target_pos, _)) = target_query.iter().max_by_key(|q| q.2.0) else {
+        return;
+    };
+    // Validate target pos in `NavTargetPosMap`
     let target_pos = target_pos.translation.xy();
     if let Some(pos) = target_map.0.get(&target)
         && target_pos.distance_squared(*pos) < tile_size.squared()
@@ -124,7 +123,6 @@ fn find_path<T>(
         return;
     }
     let target_pos_vec3 = target_pos.extend(0.);
-
     // Return if target pos is not in mesh
     if !navmesh.transformed_is_in_mesh(target_pos_vec3) {
         return;
@@ -132,37 +130,30 @@ fn find_path<T>(
 
     let mut updated: HashMap<Entity, Vec2> = HashMap::new();
     for (entity, transform) in &navigator_query {
+        let origin_pos = transform.translation;
+
         // Increase search delta each time the navigator is found to be outside of the navmesh
-        if !navmesh.transformed_is_in_mesh(transform.translation) {
+        if !navmesh.transformed_is_in_mesh(origin_pos) {
             *delta += 0.1;
             navmesh.set_search_delta(*delta);
             continue;
         }
-
-        // FIXME: On wasm, we are often not finding a valid path here. That behavior is quite inconsistent.
-        //        Sometimes it works after reloading the game. Moving does not affect this.
         // Find path to target
-        let Some(path) = navmesh.transformed_path(transform.translation.xyz(), target_pos_vec3)
-        else {
+        let Some((current, next)) = calculate_path(navmesh, origin_pos, target_pos_vec3) else {
             continue;
         };
-        // Get current and first from path
-        let Some((first, remaining)) = path.path.split_first() else {
-            continue;
-        };
-        let mut next: Vec<Vec2> = remaining.iter().map(|p| p.xy()).collect();
-        next.reverse();
 
         // Insert path
         // NOTE: We are using `try_insert` since it is possible that `entity` has been despawned by `procgen::despawn_procgen`
         //       Not calling `updated.insert` conditionally based on success is not desired, but preventing it would be quite ugly.
         //       If insertion fails, we will just not update a few paths in the following runs while the target has not moved.
         commands.entity(entity).try_insert(Path {
-            current: first.xy(),
+            current,
             next,
             target,
         });
         *delta = 0.;
+
         updated.insert(target, target_pos);
     }
 
@@ -217,46 +208,40 @@ fn refresh_path<T>(
             .expect(ERR_INVALID_NAV_TARGET)
             .translation
             .xy();
-
-        // Save and validate target pos in target map
+        // Validate target pos in target map
         if let Some(pos) = target_map.0.get(&path.target)
             && target_pos.distance_squared(*pos) < tile_size.squared()
         {
             continue;
         }
+        let target_pos_vec3 = target_pos.extend(0.);
+        let origin_pos = transform.translation;
 
         // Increase search delta each time the navigator is found to be outside of the navmesh
-        if !navmesh.transformed_is_in_mesh(transform.translation) {
+        if !navmesh.transformed_is_in_mesh(origin_pos) {
             *delta += 0.1;
             navmesh.set_search_delta(*delta);
             continue;
         }
         // Remove `Path` if target is outside of navmesh
-        if !navmesh.transformed_is_in_mesh(target_pos.extend(0.0)) {
+        if !navmesh.transformed_is_in_mesh(target_pos_vec3) {
             // NOTE: We are using `try_remove` since it is possible that `entity` has been despawned by `procgen::despawn_procgen`.
             commands.entity(entity).try_remove::<Path>();
             continue;
         }
 
         // Find path to target or remove path
-        let Some(new_path) =
-            navmesh.transformed_path(transform.translation, target_pos.extend(0.0))
-        else {
+        let Some((current, next)) = calculate_path(navmesh, origin_pos, target_pos_vec3) else {
             // NOTE: We are using `try_remove` since it is possible that `entity` has been despawned by `procgen::despawn_procgen`.
             commands.entity(entity).try_remove::<Path>();
             continue;
         };
-        // Get current and first from path
-        let Some((first, remaining)) = new_path.path.split_first() else {
-            continue;
-        };
-        let mut next = remaining.iter().map(|p| p.xy()).collect::<Vec<_>>();
-        next.reverse();
 
         // Modify path
-        path.current = first.xy();
+        path.current = current;
         path.next = next;
         *delta = 0.0;
+
         updated.insert(path.target, target_pos);
     }
 
@@ -264,6 +249,16 @@ fn refresh_path<T>(
     if !updated.is_empty() {
         target_map.0.extend(updated);
     }
+}
+
+/// Calculate path in [`NavMesh`]
+fn calculate_path(navmesh: &mut NavMesh, start: Vec3, end: Vec3) -> Option<(Vec2, Vec<Vec2>)> {
+    let path = navmesh.transformed_path(start, end)?;
+    let (first, remaining) = path.path.split_first()?;
+    let mut next: Vec<_> = remaining.iter().map(|p| p.xy()).collect();
+    next.reverse();
+
+    Some((first.xy(), next))
 }
 
 /// Number used as divisor for path overshoot threshold

@@ -31,10 +31,7 @@ pub(super) fn plugin(app: &mut App) {
     );
 
     // Open splash screen
-    app.add_systems(
-        OnEnter(Screen::Splash),
-        spawn_splash_screen.run_if(in_state(Screen::LoadingExit)),
-    );
+    app.add_systems(OnEnter(Screen::Splash), spawn_splash_screen);
 
     // Animate splash screen
     app.add_systems(

@@ -30,7 +30,7 @@ pub(super) fn plugin(app: &mut App) {
     // Insert states
     app.init_state::<Debugging>();
 
-    // Add rapier debug render
+    // Add library plugins
     app.add_plugins(RapierDebugRenderPlugin {
         enabled: false,
         ..default()

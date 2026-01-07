@@ -34,16 +34,13 @@ use crate::{
 };
 
 pub(super) fn plugin(app: &mut App) {
-    // Add progress plugin
+    // Add library plugins
     app.add_plugins((
+        // Progress tracking
         ProgressPlugin::<Screen>::new().with_state_transition(Screen::Loading, Screen::Splash),
-    ));
-
-    // Add ron asset plugins
-    app.add_plugins((
-        // levels
+        // Levels
         RonAssetPlugin::<TileData<OverworldProcGen>>::new(&["tiles.ron"]),
-        // characters
+        // Characters
         RonAssetPlugin::<AnimationData<Player>>::new(&["animation.ron"]),
         RonAssetPlugin::<CollisionData<Player>>::new(&["collision.ron"]),
         RonAssetPlugin::<AnimationData<Slime>>::new(&["animation.ron"]),

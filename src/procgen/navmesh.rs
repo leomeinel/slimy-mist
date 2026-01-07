@@ -23,7 +23,7 @@ use crate::{
 };
 
 pub(super) fn plugin(app: &mut App) {
-    // Add north star plugin
+    // Add library plugins
     app.add_plugins((
         VleueNavigatorPlugin,
         NavmeshUpdaterPlugin::<PrimitiveObstacle>::default(),

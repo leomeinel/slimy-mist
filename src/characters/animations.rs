@@ -44,7 +44,7 @@ pub(super) fn plugin(app: &mut App) {
     // Add rng for animations
     app.add_systems(Startup, setup_rng);
 
-    // Add plugin for sprite animation
+    // Add library plugins
     app.add_plugins(SpritesheetAnimationPlugin);
 
     // Tick animation timer

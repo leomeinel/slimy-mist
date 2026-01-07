@@ -40,7 +40,7 @@ pub(super) fn plugin(app: &mut App) {
     // Insert resources
     app.init_resource::<Animations<Player>>();
 
-    // Add enhanced input plugin
+    // Add library plugins
     app.add_plugins(EnhancedInputPlugin);
 
     // Jump or stop jump depending on timer

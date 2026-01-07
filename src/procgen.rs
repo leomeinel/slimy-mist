@@ -32,7 +32,7 @@ use crate::{
 };
 
 pub(super) fn plugin(app: &mut App) {
-    // Child plugins
+    // Add child plugins
     app.add_plugins(navmesh::plugin);
 
     // Init states

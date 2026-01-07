@@ -36,7 +36,7 @@ use crate::{
 pub(super) fn plugin(app: &mut App) {
     // Add progress plugin
     app.add_plugins((
-        ProgressPlugin::<Screen>::new().with_state_transition(Screen::Loading, Screen::LoadingExit),
+        ProgressPlugin::<Screen>::new().with_state_transition(Screen::Loading, Screen::Splash),
     ));
 
     // Add ron asset plugins
@@ -75,7 +75,7 @@ pub(super) fn plugin(app: &mut App) {
         OnEnter(Screen::Loading),
         (
             spawn_loading_screen,
-            // After initial `LoadingState<Screen::Loading>`, run other requirements before switching to `Screen::LoadingExit`
+            // After initial `LoadingState<Screen::Loading>`, run other requirements before switching to `Screen::Splash`
             (setup_overworld, setup_player, setup_slime).after(LoadingStateSet(Screen::Loading)),
         ),
     );

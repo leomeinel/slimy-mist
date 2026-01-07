@@ -36,7 +36,6 @@ pub(super) fn plugin(app: &mut App) {
 pub(crate) enum Screen {
     #[default]
     Loading,
-    LoadingExit,
     Splash,
     Title,
     Gameplay,

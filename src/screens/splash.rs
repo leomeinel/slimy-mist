@@ -20,9 +20,6 @@ pub(super) fn plugin(app: &mut App) {
     // Insert resources
     app.insert_resource(ClearColor(SPLASH_BACKGROUND_COLOR.into()));
 
-    // After loading assets, change state to splash screen
-    app.add_systems(OnEnter(Screen::LoadingExit), enter_splash_screen);
-
     // Exit splash screen early on pressing Escape
     app.add_systems(
         Update,
@@ -167,9 +164,4 @@ fn check_splash_timer(timer: ResMut<SplashTimer>, mut next_state: ResMut<NextSta
 /// Enter title screen
 fn enter_title_screen(mut next_state: ResMut<NextState<Screen>>) {
     next_state.set(Screen::Title);
-}
-
-/// Enter splash screen
-fn enter_splash_screen(mut next_state: ResMut<NextState<Screen>>) {
-    next_state.set(Screen::Splash);
 }

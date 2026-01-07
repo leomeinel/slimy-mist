@@ -63,24 +63,24 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         (
-            (
-                collect_to_despawn::<Slime, OverworldProcGen, false>,
-                collect_to_despawn::<OverworldProcGen, OverworldProcGen, true>,
-            )
-                .run_if(in_state(ProcGenState::Despawn)),
-            (set_despawning::<Slime>, set_despawning::<OverworldProcGen>),
+            collect_to_despawn::<Slime, OverworldProcGen, false>,
+            collect_to_despawn::<OverworldProcGen, OverworldProcGen, true>,
         )
-            .run_if(in_state(Screen::Gameplay))
+            .run_if(in_state(ProcGenState::Despawn).and(in_state(Screen::Gameplay)))
             .in_set(AppSystems::Update)
             .in_set(PausableSystems),
     );
-    // NOTE: Since we are running this in `PostUpdate`, the `ProcGenDespawning` is not necessary. It will however allow
+    // NOTE: Since we are running despawing in `PostUpdate`, the `ProcGenDespawning` is not necessary. It will however allow
     //       other systems to verify that state in the future.
     app.add_systems(
         PostUpdate,
-        (despawn::<Slime>, despawn::<OverworldProcGen>)
-            .chain()
-            .run_if(in_state(ProcGenDespawning(true)).and(in_state(Screen::Gameplay))),
+        (
+            (set_despawning::<Slime>, set_despawning::<OverworldProcGen>),
+            (despawn::<Slime>, despawn::<OverworldProcGen>)
+                .run_if(in_state(ProcGenDespawning(true)))
+                .chain(),
+        )
+            .run_if(in_state(Screen::Gameplay)),
     );
 
     // Spawn procgen

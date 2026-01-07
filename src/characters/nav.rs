@@ -41,15 +41,14 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         (
-            find_path::<OverworldProcGen>,
-            refresh_path::<OverworldProcGen>,
+            (
+                find_path::<OverworldProcGen>,
+                refresh_path::<OverworldProcGen>,
+            )
+                .run_if(in_state(ProcGenDespawning(false))),
             apply_path.in_set(PausableSystems),
         )
-            .run_if(
-                not(in_state(ProcGenDespawning(true)))
-                    .and(in_state(ProcGenInit(true)))
-                    .and(in_state(Screen::Gameplay)),
-            )
+            .run_if(in_state(ProcGenInit(true)).and(in_state(Screen::Gameplay)))
             .in_set(AppSystems::Update),
     );
 }
@@ -325,7 +324,8 @@ fn apply_path(
 
 /// Remove [`Path`] and set [`AnimationController`] state to [`AnimationState::Idle`]
 fn stop_apply_path(commands: &mut Commands, entity: Entity, controller: &mut AnimationController) {
-    commands.entity(entity).remove::<Path>();
+    // NOTE: We are using `try_remove` to avoid use after despawn because of `procgen::despawn``.
+    commands.entity(entity).try_remove::<Path>();
     controller.set_new_state(AnimationState::Idle);
 }
 

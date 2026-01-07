@@ -85,20 +85,23 @@ fn find_path<T>(
         (With<Navigator>, Without<Path>, Without<NavTarget>),
     >,
     mut commands: Commands,
+    mut navmeshes: ResMut<Assets<NavMesh>>,
     mut target_map: ResMut<NavTargetPosMap>,
     data: Res<Assets<TileData<T>>>,
     handle: Res<TileHandle<T>>,
-    navmeshes: Res<Assets<NavMesh>>,
+    mut delta: Local<f32>,
     mut tile_size: Local<Option<f32>>,
 ) where
     T: ProcGenerated,
 {
     let (navmesh_handle, status) = navmesh.deref();
     // Return if navmesh is not built
-    if **status != NavMeshStatus::Built {
+    if **status != NavMeshStatus::Built && *delta == 0.0 {
         return;
     }
-    let navmesh = navmeshes.get(*navmesh_handle).expect(ERR_INVALID_NAVMESH);
+    let navmesh = navmeshes
+        .get_mut(*navmesh_handle)
+        .expect(ERR_INVALID_NAVMESH);
 
     // Get target with maximum priority
     let Some((target, target_pos, _)) = target_query.iter().max_by_key(|q| q.2.0) else {
@@ -129,6 +132,13 @@ fn find_path<T>(
 
     let mut updated: HashMap<Entity, Vec2> = HashMap::new();
     for (entity, transform) in &navigator_query {
+        // Increase search delta each time the navigator is found to be outside of the navmesh
+        if !navmesh.transformed_is_in_mesh(transform.translation) {
+            *delta += 0.1;
+            navmesh.set_search_delta(*delta);
+            continue;
+        }
+
         // FIXME: On wasm, we are often not finding a valid path here. That behavior is quite inconsistent.
         //        Sometimes it works after reloading the game. Moving does not affect this.
         // Find path to target
@@ -152,6 +162,7 @@ fn find_path<T>(
             next,
             target,
         });
+        *delta = 0.;
         updated.insert(target, target_pos);
     }
 

@@ -20,15 +20,15 @@ pub(super) fn plugin(app: &mut App) {
     // Insert resources
     app.insert_resource(ClearColor(SPLASH_BACKGROUND_COLOR.into()));
 
+    // Open splash screen
+    app.add_systems(OnEnter(Screen::Splash), spawn_splash_screen);
+
     // Exit splash screen early on pressing Escape
     app.add_systems(
         Update,
         enter_title_screen
             .run_if(input_just_pressed(KeyCode::Escape).and(in_state(Screen::Splash))),
     );
-
-    // Open splash screen
-    app.add_systems(OnEnter(Screen::Splash), spawn_splash_screen);
 
     // Animate splash screen
     app.add_systems(

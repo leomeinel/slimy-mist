@@ -88,6 +88,10 @@ impl Plugin for AppPlugin {
             theme::plugin,
         ));
 
+        // Set up the `Pause` state.
+        app.init_state::<Pause>();
+        app.configure_sets(Update, PausableSystems.run_if(in_state(Pause(false))));
+
         // Order new `AppSystems` variants by adding them here:
         app.configure_sets(
             Update,
@@ -98,10 +102,6 @@ impl Plugin for AppPlugin {
             )
                 .chain(),
         );
-
-        // Set up the `Pause` state.
-        app.init_state::<Pause>();
-        app.configure_sets(Update, PausableSystems.run_if(in_state(Pause(false))));
     }
 }
 

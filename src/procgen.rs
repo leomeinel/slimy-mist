@@ -28,7 +28,7 @@ use crate::{
     levels::overworld::{Overworld, OverworldAssets, OverworldProcGen},
     logging::error::ERR_INVALID_MINIMUM_CHUNK_POS,
     procgen::{chunks::spawn_chunks, navmesh::move_navmesh, spawn::spawn_characters},
-    screens::{GameplayInsertResSystems, Screen},
+    screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -48,13 +48,6 @@ pub(super) fn plugin(app: &mut App) {
             reset_procgen_despawning,
         ),
     );
-
-    // Insert/Remove resources
-    app.add_systems(
-        OnEnter(Screen::Gameplay),
-        insert_resources.in_set(GameplayInsertResSystems),
-    );
-    app.add_systems(OnExit(Screen::Gameplay), remove_resources);
 
     // Add rng for procedural generation
     app.add_systems(Startup, setup_rng);
@@ -79,23 +72,20 @@ pub(super) fn plugin(app: &mut App) {
             (despawn::<Slime>, despawn::<OverworldProcGen>)
                 .run_if(in_state(ProcGenDespawning(true)))
                 .chain(),
-        )
-            .run_if(in_state(Screen::Gameplay)),
+        ),
     );
-
     // Spawn procgen
     app.add_systems(
         OnEnter(ProcGenState::Spawn),
         (
             spawn_chunks::<OverworldProcGen, OverworldAssets, Overworld>,
             spawn_characters::<Slime, OverworldProcGen, Overworld>,
-        )
-            .run_if(in_state(Screen::Gameplay)),
+        ),
     );
     // Move navmesh
     app.add_systems(
         OnEnter(ProcGenState::MoveNavMesh),
-        move_navmesh::<OverworldProcGen>.run_if(in_state(Screen::Gameplay)),
+        move_navmesh::<OverworldProcGen>,
     );
 }
 
@@ -329,16 +319,4 @@ fn reset_procgen_init(mut next_state: ResMut<NextState<ProcGenInit>>) {
 /// Reset [`ProcGenDespawning`]
 fn reset_procgen_despawning(mut next_state: ResMut<NextState<ProcGenDespawning>>) {
     next_state.set(ProcGenDespawning::default());
-}
-
-/// Insert resources
-fn insert_resources(mut commands: Commands) {
-    commands.init_resource::<ProcGenController<OverworldProcGen>>();
-    commands.init_resource::<ProcGenController<Slime>>();
-}
-
-/// Remove resources
-fn remove_resources(mut commands: Commands) {
-    commands.remove_resource::<ProcGenController<OverworldProcGen>>();
-    commands.remove_resource::<ProcGenController<Slime>>();
 }

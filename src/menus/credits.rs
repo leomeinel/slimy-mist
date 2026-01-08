@@ -2,7 +2,7 @@
  * File: credits.rs
  * Author: Leopold Johannes Meinel (leo@meinel.dev)
  * -----
- * Copyright (c) 2025 Leopold Johannes Meinel & contributors
+ * Copyright (c) 2026 Leopold Johannes Meinel & contributors
  * SPDX ID: Apache-2.0
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  * -----
@@ -17,16 +17,17 @@ use bevy_asset_loader::prelude::*;
 use crate::{audio::music, menus::Menu, theme::prelude::*};
 
 pub(super) fn plugin(app: &mut App) {
-    // Open credits menu
-    app.add_systems(OnEnter(Menu::Credits), spawn_credits_menu);
+    // Open credits menu and start music
+    app.add_systems(
+        OnEnter(Menu::Credits),
+        (spawn_credits_menu, start_credits_music),
+    );
 
     // Exit credits menu on pressing Escape
     app.add_systems(
         Update,
         go_back.run_if(in_state(Menu::Credits).and(input_just_pressed(KeyCode::Escape))),
     );
-    // Start music for credits menu
-    app.add_systems(OnEnter(Menu::Credits), start_credits_music);
 }
 
 /// Assets for credits

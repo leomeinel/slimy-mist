@@ -15,7 +15,6 @@ use crate::{
     characters::{npc::Slime, player::Player},
     levels::overworld::OverworldProcGen,
     procgen::{ProcGenController, ProcGenInit, ProcGenerated, TileDataRelatedCache},
-    screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -27,7 +26,7 @@ pub(super) fn plugin(app: &mut App) {
             y_sort::<Slime, OverworldProcGen>,
         )
             .before(TransformSystems::Propagate)
-            .run_if(in_state(ProcGenInit(true)).and(in_state(Screen::Gameplay))),
+            .run_if(in_state(ProcGenInit(true))),
     );
 }
 

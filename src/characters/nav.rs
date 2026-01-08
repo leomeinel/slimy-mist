@@ -24,17 +24,9 @@ use crate::{
     levels::overworld::OverworldProcGen,
     logging::error::{ERR_INVALID_NAV_TARGET, ERR_INVALID_NAVMESH, ERR_INVALID_VISUAL_MAP},
     procgen::{ProcGenDespawning, ProcGenInit, ProcGenerated, TileDataCache},
-    screens::{GameplayInsertResSystems, Screen},
 };
 
 pub(super) fn plugin(app: &mut App) {
-    // Insert/Remove resources
-    app.add_systems(
-        OnEnter(Screen::Gameplay),
-        insert_resources.in_set(GameplayInsertResSystems),
-    );
-    app.add_systems(OnExit(Screen::Gameplay), remove_resources);
-
     // Update pathfinding
     app.add_systems(
         Update,
@@ -46,7 +38,7 @@ pub(super) fn plugin(app: &mut App) {
                 .run_if(in_state(ProcGenDespawning(false))),
             apply_path.in_set(PausableSystems),
         )
-            .run_if(in_state(ProcGenInit(true)).and(in_state(Screen::Gameplay)))
+            .run_if(in_state(ProcGenInit(true)))
             .in_set(AppSystems::Update),
     );
 }
@@ -305,14 +297,4 @@ fn stop_apply_path(commands: &mut Commands, entity: Entity, controller: &mut Ani
     // NOTE: We are using `try_remove` to avoid use after despawn because of `procgen::despawn`.
     commands.entity(entity).try_remove::<Path>();
     controller.set_new_state(AnimationState::Idle);
-}
-
-/// Insert resources
-fn insert_resources(mut commands: Commands) {
-    commands.init_resource::<NavTargetPosMap>();
-}
-
-/// Remove resources
-fn remove_resources(mut commands: Commands) {
-    commands.remove_resource::<NavTargetPosMap>();
 }

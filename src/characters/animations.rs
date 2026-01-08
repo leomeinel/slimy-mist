@@ -26,10 +26,14 @@ use bevy_spritesheet_animation::prelude::*;
 use rand::seq::IndexedRandom as _;
 
 use crate::{
-    AppSystems,
+    AppSystems, PausableSystems,
     audio::sound_effect,
     camera::ysort::{YSortCache, YSorted},
-    characters::{Character, CharacterAssets, JUMP_DURATION_SECS, Movement, VisualMap},
+    characters::{
+        Character, CharacterAssets, JUMP_DURATION_SECS, Movement, VisualMap,
+        npc::{Slime, SlimeAssets},
+        player::{Player, PlayerAssets},
+    },
     logging::{
         error::{
             ERR_INVALID_REQUIRED_ANIMATION_DATA, ERR_INVALID_TEXTURE_ATLAS, ERR_INVALID_VISUAL_MAP,
@@ -37,14 +41,35 @@ use crate::{
         },
         warn::{WARN_INCOMPLETE_ANIMATION_DATA, WARN_INCOMPLETE_ASSET_DATA},
     },
+    screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {
+    // Add library plugins
+    app.add_plugins(SpritesheetAnimationPlugin);
+
     // Add rng for animations
     app.add_systems(Startup, setup_rng);
 
-    // Add library plugins
-    app.add_plugins(SpritesheetAnimationPlugin);
+    // Animation updates
+    app.add_systems(
+        Update,
+        (
+            (
+                update_animations::<Player>,
+                update_animation_sounds::<Player, PlayerAssets>,
+            )
+                .chain(),
+            (
+                update_animations::<Slime>,
+                update_animation_sounds::<Slime, SlimeAssets>,
+            )
+                .chain(),
+        )
+            .run_if(in_state(Screen::Gameplay))
+            .in_set(AppSystems::Update)
+            .in_set(PausableSystems),
+    );
 
     // Tick animation timer
     app.add_systems(Update, tick_animation_timer.in_set(AppSystems::TickTimers));

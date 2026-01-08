@@ -27,32 +27,20 @@ use crate::{
 };
 
 pub(super) fn plugin(app: &mut App) {
-    // Insert states
-    app.init_state::<Debugging>();
-
     // Add library plugins
     app.add_plugins(RapierDebugRenderPlugin {
         enabled: false,
         ..default()
     });
 
-    // Log state transitions.
-    app.add_systems(
-        Update,
-        (
-            log_transitions::<Screen>,
-            log_transitions::<ProcGenState>,
-            log_transitions::<ProcGenInit>,
-            log_transitions::<ProcGenDespawning>,
-        ),
-    );
+    // Insert states
+    app.init_state::<Debugging>();
 
     // Toggle debugging state
     app.add_systems(
         Update,
         toggle_debugging.run_if(input_just_pressed(TOGGLE_KEY)),
     );
-
     // Toggle debug overlays
     app.add_systems(
         Update,
@@ -66,6 +54,17 @@ pub(super) fn plugin(app: &mut App) {
         Update,
         (display_primitive_obstacles, display_navigator_path)
             .run_if(in_state(Debugging(true)).and(in_state(Screen::Gameplay))),
+    );
+
+    // Log state transitions.
+    app.add_systems(
+        Update,
+        (
+            log_transitions::<Screen>,
+            log_transitions::<ProcGenState>,
+            log_transitions::<ProcGenInit>,
+            log_transitions::<ProcGenDespawning>,
+        ),
     );
 }
 

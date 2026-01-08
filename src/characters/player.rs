@@ -20,20 +20,19 @@ use bevy_enhanced_input::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    AppSystems, PausableSystems, Pause,
+    AppSystems, Pause,
     camera::{
         DEFAULT_Z,
         ysort::{YSort, YSortOffset, YSorted},
     },
     characters::{
         Character, CharacterAssets, JumpTimer, Movement, MovementSpeed, VisualMap,
-        animations::{self, AnimationController, AnimationState, Animations},
+        animations::{AnimationController, AnimationState, Animations},
         character_collider,
         nav::NavTarget,
     },
     impl_character_assets,
     logging::error::ERR_INVALID_VISUAL_MAP,
-    screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -49,19 +48,6 @@ pub(super) fn plugin(app: &mut App) {
         (apply_jump.before(PhysicsSet::SyncBackend), limit_jump)
             .chain()
             .in_set(AppSystems::Update),
-    );
-
-    // Animation updates
-    app.add_systems(
-        Update,
-        (
-            animations::update_animations::<Player>,
-            animations::update_animation_sounds::<Player, PlayerAssets>,
-        )
-            .run_if(in_state(Screen::Gameplay))
-            .chain()
-            .in_set(AppSystems::Update)
-            .in_set(PausableSystems),
     );
 
     // Handle bevy_enhanced_input with input context and observers

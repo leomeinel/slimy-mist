@@ -19,38 +19,21 @@ use bevy_asset_loader::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    AppSystems, PausableSystems,
     camera::{
         DEFAULT_Z,
         ysort::{YSort, YSorted},
     },
     characters::{
-        Character, CharacterAssets, Movement, MovementSpeed,
-        animations::{self, Animations},
-        character_collider, character_obstacle,
-        nav::Navigator,
+        Character, CharacterAssets, Movement, MovementSpeed, animations::Animations,
+        character_collider, character_obstacle, nav::Navigator,
     },
     impl_character_assets,
     procgen::ProcGenerated,
-    screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {
     // Insert resources
     app.init_resource::<Animations<Slime>>();
-
-    // Animation updates
-    app.add_systems(
-        Update,
-        (
-            animations::update_animations::<Slime>,
-            animations::update_animation_sounds::<Slime, SlimeAssets>,
-        )
-            .run_if(in_state(Screen::Gameplay))
-            .chain()
-            .in_set(AppSystems::Update)
-            .in_set(PausableSystems),
-    );
 }
 
 /// Assets that are serialized from a ron file

@@ -27,7 +27,7 @@ pub(super) fn plugin(app: &mut App) {
         pause::plugin,
     ));
 
-    // Initialize menu states
+    // Insert states
     app.init_state::<Menu>();
 }
 

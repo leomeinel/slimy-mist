@@ -68,12 +68,12 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         PostUpdate,
         (
-            (set_despawning::<Slime>, set_despawning::<OverworldProcGen>)
-                .run_if(in_state(Screen::Gameplay)),
+            (set_despawning::<Slime>, set_despawning::<OverworldProcGen>),
             (despawn::<Slime>, despawn::<OverworldProcGen>)
                 .run_if(in_state(ProcGenDespawning(true)))
                 .chain(),
-        ),
+        )
+            .run_if(in_state(Screen::Gameplay)),
     );
     // Spawn procgen
     app.add_systems(
@@ -81,12 +81,13 @@ pub(super) fn plugin(app: &mut App) {
         (
             spawn_chunks::<OverworldProcGen, OverworldAssets, Overworld>,
             spawn_characters::<Slime, OverworldProcGen, Overworld>,
-        ),
+        )
+            .run_if(in_state(Screen::Gameplay)),
     );
     // Move navmesh
     app.add_systems(
         OnEnter(ProcGenState::MoveNavMesh),
-        move_navmesh::<OverworldProcGen>,
+        move_navmesh::<OverworldProcGen>.run_if(in_state(Screen::Gameplay)),
     );
 }
 

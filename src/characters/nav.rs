@@ -24,6 +24,7 @@ use crate::{
     levels::overworld::OverworldProcGen,
     logging::error::{ERR_INVALID_NAV_TARGET, ERR_INVALID_NAVMESH, ERR_INVALID_VISUAL_MAP},
     procgen::{ProcGenDespawning, ProcGenInit, ProcGenerated, TileDataCache},
+    screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -38,7 +39,7 @@ pub(super) fn plugin(app: &mut App) {
                 .run_if(in_state(ProcGenDespawning(false))),
             apply_path.in_set(PausableSystems),
         )
-            .run_if(in_state(ProcGenInit(true)))
+            .run_if(in_state(ProcGenInit(true)).and(in_state(Screen::Gameplay)))
             .in_set(AppSystems::Update),
     );
 }

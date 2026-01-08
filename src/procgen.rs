@@ -68,7 +68,8 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         PostUpdate,
         (
-            (set_despawning::<Slime>, set_despawning::<OverworldProcGen>),
+            (set_despawning::<Slime>, set_despawning::<OverworldProcGen>)
+                .run_if(in_state(Screen::Gameplay)),
             (despawn::<Slime>, despawn::<OverworldProcGen>)
                 .run_if(in_state(ProcGenDespawning(true)))
                 .chain(),

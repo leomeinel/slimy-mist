@@ -40,9 +40,8 @@ pub(super) fn plugin(app: &mut App) {
 pub(crate) const LEVEL_Z: f32 = 1.;
 /// Z-level for any foreground object
 ///
-/// The value is meant to avoid negative z-levels and avoid over-/underflows while y-sorting.
 /// The value is chosen so that there is a very reasonable distance to [`LEVEL_Z`] and to
-/// [`OrthographicProjection::far`].
+/// [`OrthographicProjection::far`] while considering relative y-sorting.
 pub(crate) const DEFAULT_Z: f32 = 5.;
 
 /// Main camera that renders the world to the canvas.

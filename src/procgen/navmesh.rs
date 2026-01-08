@@ -15,10 +15,9 @@ use vleue_navigator::prelude::*;
 
 use crate::{
     levels::Level,
-    logging::error::ERR_LOADING_TILE_DATA,
     procgen::{
         CHUNK_SIZE, PROCGEN_DISTANCE, ProcGenController, ProcGenInit, ProcGenState, ProcGenerated,
-        TileData, TileHandle,
+        TileDataCache,
     },
 };
 
@@ -44,21 +43,12 @@ const NAVMESH_SIZE: UVec2 = UVec2::new(CHUNK_SIZE.x * NUM_CHUNKS, CHUNK_SIZE.y *
 pub(crate) fn spawn_navmesh<T, A>(
     level: Single<Entity, With<A>>,
     mut commands: Commands,
-    data: Res<Assets<TileData<T>>>,
-    handle: Res<TileHandle<T>>,
-    mut tile_size: Local<Option<f32>>,
+    tile_data: Res<TileDataCache<T>>,
 ) where
     T: ProcGenerated,
     A: Level,
 {
-    // Init local values
-    let tile_size = tile_size.unwrap_or_else(|| {
-        let data = data.get(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
-        let value = data.tile_size;
-        *tile_size = Some(value);
-        value
-    });
-
+    let tile_size = tile_data.tile_size;
     // NOTE: This is anchored to the bottom left. This means that we have to offset it by:
     //       (`NAVMESH_SIZE` + (one chunk - 1 tile)) / 2 as world pos.
     //       This seemingly weird calculation is in part due to the chunk spawning at `0,0` having its
@@ -99,20 +89,11 @@ pub(crate) fn move_navmesh<T>(
     mut next_init_state: ResMut<NextState<ProcGenInit>>,
     mut next_state: ResMut<NextState<ProcGenState>>,
     init_state: Res<State<ProcGenInit>>,
-    data: Res<Assets<TileData<T>>>,
-    handle: Res<TileHandle<T>>,
-    mut tile_size: Local<Option<f32>>,
+    tile_data: Res<TileDataCache<T>>,
 ) where
     T: ProcGenerated,
 {
-    // Init local values
-    let tile_size = tile_size.unwrap_or_else(|| {
-        let data = data.get(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
-        let value = data.tile_size;
-        *tile_size = Some(value);
-        value
-    });
-
+    let tile_size = tile_data.tile_size;
     // Change navmesh translation
     let min_world_pos = controller.min_chunk_pos().as_vec2() * CHUNK_SIZE.as_vec2() * tile_size;
     // NOTE: This is anchored to the bottom left. Instead of min world pos, we actually need the minimum tile of the center chunk.

@@ -18,13 +18,13 @@ use crate::{
     audio::music,
     camera::LEVEL_Z,
     characters::{
-        Character as _, CollisionData, CollisionHandle, VisualMap,
+        Character as _, CollisionDataCache, VisualMap,
         animations::{ANIMATION_DELAY_RANGE_SECS, AnimationRng, Animations},
         player::Player,
     },
     impl_level_assets,
     levels::{Level, LevelAssets, LevelRng},
-    logging::{error::ERR_LOADING_COLLISION_DATA, warn::WARN_INCOMPLETE_ASSET_DATA},
+    logging::warn::WARN_INCOMPLETE_ASSET_DATA,
     procgen::ProcGenerated,
     screens::Screen,
 };
@@ -63,14 +63,9 @@ pub(crate) fn spawn_overworld(
     mut commands: Commands,
     mut visual_map: ResMut<VisualMap>,
     animations: Res<Animations<Player>>,
-    data: Res<Assets<CollisionData<Player>>>,
-    handle: Res<CollisionHandle<Player>>,
+    collision_data: Res<CollisionDataCache<Player>>,
     level_assets: Res<OverworldAssets>,
 ) {
-    // Get data from `CollisionData` with `CollisionHandle`
-    let data = data.get(handle.0.id()).expect(ERR_LOADING_COLLISION_DATA);
-    let data = (data.shape.clone(), data.width, data.height);
-
     let level = commands
         .spawn((
             Name::new("Level"),
@@ -98,10 +93,15 @@ pub(crate) fn spawn_overworld(
     }
 
     // Spawn player
+    let collision_set = (
+        collision_data.shape.clone(),
+        collision_data.width,
+        collision_data.height,
+    );
     let player = Player::spawn(
         &mut commands,
         &mut visual_map,
-        &data,
+        &collision_set,
         PLAYER_POS,
         &animations,
         animation_rng.random_range(ANIMATION_DELAY_RANGE_SECS),

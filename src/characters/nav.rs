@@ -22,10 +22,8 @@ use crate::{
         animations::{AnimationController, AnimationState},
     },
     levels::overworld::OverworldProcGen,
-    logging::error::{
-        ERR_INVALID_NAV_TARGET, ERR_INVALID_NAVMESH, ERR_INVALID_VISUAL_MAP, ERR_LOADING_TILE_DATA,
-    },
-    procgen::{ProcGenDespawning, ProcGenInit, ProcGenerated, TileData, TileHandle},
+    logging::error::{ERR_INVALID_NAV_TARGET, ERR_INVALID_NAVMESH, ERR_INVALID_VISUAL_MAP},
+    procgen::{ProcGenDespawning, ProcGenInit, ProcGenerated, TileDataCache},
     screens::{GameplayInsertResSystems, Screen},
 };
 
@@ -90,10 +88,8 @@ fn find_path<T>(
     mut commands: Commands,
     mut navmeshes: ResMut<Assets<NavMesh>>,
     mut target_map: ResMut<NavTargetPosMap>,
-    data: Res<Assets<TileData<T>>>,
-    handle: Res<TileHandle<T>>,
+    tile_data: Res<TileDataCache<T>>,
     mut delta: Local<f32>,
-    mut tile_size: Local<Option<f32>>,
 ) where
     T: ProcGenerated,
 {
@@ -106,14 +102,6 @@ fn find_path<T>(
         .get_mut(*navmesh_handle)
         .expect(ERR_INVALID_NAVMESH);
 
-    // Init local values
-    let tile_size = tile_size.unwrap_or_else(|| {
-        let data = data.get(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
-        let value = data.tile_size;
-        *tile_size = Some(value);
-        value
-    });
-
     // Get target with maximum priority
     let Some((target, target_pos, _)) = target_query.iter().max_by_key(|q| q.2.0) else {
         return;
@@ -121,7 +109,7 @@ fn find_path<T>(
     // Validate target pos in `NavTargetPosMap`
     let target_pos = target_pos.translation.xy();
     if let Some(pos) = target_map.0.get(&target)
-        && target_pos.distance_squared(*pos) < tile_size.squared()
+        && target_pos.distance_squared(*pos) < tile_data.tile_size.squared()
     {
         return;
     }
@@ -171,10 +159,8 @@ fn refresh_path<T>(
     mut commands: Commands,
     mut target_map: ResMut<NavTargetPosMap>,
     mut navmeshes: ResMut<Assets<NavMesh>>,
-    data: Res<Assets<TileData<T>>>,
-    handle: Res<TileHandle<T>>,
+    tile_data: Res<TileDataCache<T>>,
     mut delta: Local<f32>,
-    mut tile_size: Local<Option<f32>>,
 ) where
     T: ProcGenerated,
 {
@@ -192,14 +178,6 @@ fn refresh_path<T>(
         .get_mut(*navmesh_handle)
         .expect(ERR_INVALID_NAVMESH);
 
-    // Init local values
-    let tile_size = tile_size.unwrap_or_else(|| {
-        let data = data.get(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
-        let value = data.tile_size;
-        *tile_size = Some(value);
-        value
-    });
-
     let mut updated: HashMap<Entity, Vec2> = HashMap::new();
     for (entity, transform, mut path) in navigator_query {
         // Get transform for `path.target`
@@ -210,7 +188,7 @@ fn refresh_path<T>(
             .xy();
         // Validate target pos in target map
         if let Some(pos) = target_map.0.get(&path.target)
-            && target_pos.distance_squared(*pos) < tile_size.squared()
+            && target_pos.distance_squared(*pos) < tile_data.tile_size.squared()
         {
             continue;
         }

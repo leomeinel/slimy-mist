@@ -16,5 +16,3 @@ pub(crate) const WARN_INCOMPLETE_ASSET_DATA: &str = "The asset data is incomplet
 /// Warning on incomplete collision data
 pub(crate) const WARN_INCOMPLETE_COLLISION_DATA_FALLBACK: &str =
     "The collision data is incomplete. Using fallback ball collider.";
-/// Warning on incomplete tile data
-pub(crate) const WARN_INCOMPLETE_TILE_DATA: &str = "The tile data is incomplete.";

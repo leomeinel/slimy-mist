@@ -7,7 +7,7 @@
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  */
 
-use bevy::{platform::collections::HashSet, prelude::*};
+use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use bevy_prng::WyRand;
 use rand::Rng as _;
@@ -15,10 +15,9 @@ use rand::Rng as _;
 use crate::{
     camera::LEVEL_Z,
     levels::{Level, LevelAssets},
-    logging::{error::ERR_LOADING_TILE_DATA, warn::WARN_INCOMPLETE_TILE_DATA},
     procgen::{
         CHUNK_SIZE, PROCGEN_DISTANCE, ProcGenController, ProcGenRng, ProcGenState, ProcGenerated,
-        TileData, TileHandle,
+        TileDataCache,
     },
 };
 
@@ -35,43 +34,13 @@ pub(crate) fn spawn_chunks<T, A, B>(
     mut commands: Commands,
     mut controller: ResMut<ProcGenController<T>>,
     mut next_state: ResMut<NextState<ProcGenState>>,
-    data: Res<Assets<TileData<T>>>,
-    handle: Res<TileHandle<T>>,
+    tile_data: Res<TileDataCache<T>>,
     assets: Res<A>,
-    mut tile_size: Local<Option<f32>>,
-    mut tiles: Local<
-        Option<(
-            HashSet<UVec2>,
-            HashSet<UVec2>,
-            HashSet<UVec2>,
-            HashSet<UVec2>,
-            HashSet<UVec2>,
-            HashSet<UVec2>,
-        )>,
-    >,
 ) where
     T: ProcGenerated,
     A: LevelAssets,
     B: Level,
 {
-    // Init local values
-    let tile_size = tile_size.unwrap_or_else(|| {
-        let data = data.get(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
-        let value = data.tile_size;
-        *tile_size = Some(value);
-        value
-    });
-    if tiles.is_none() {
-        let data = data.get(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
-        let Some(value) = data.get_tiles() else {
-            // Return and do not spawn chunks if tiles are not configured correctly
-            warn_once!("{}", WARN_INCOMPLETE_TILE_DATA);
-            return;
-        };
-        *tiles = Some(value);
-    }
-    let _tiles = tiles.as_ref().unwrap();
-
     // Spawn chunk behind and in front of camera chunk position if it does not contain a chunk already
     // NOTE: We are using inclusive range because we might have a movement offset of 1 chunk.
     // NOTE: We are spawning in a square. Since that has only minimal performance overhead.
@@ -100,7 +69,7 @@ pub(crate) fn spawn_chunks<T, A, B>(
                 level.entity(),
                 &assets,
                 IVec2::new(x, y),
-                tile_size,
+                tile_data.tile_size,
                 TileTextureIndex(rand_index),
             );
         }

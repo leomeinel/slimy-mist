@@ -33,8 +33,7 @@ use crate::{
     logging::{
         error::{
             ERR_INVALID_REQUIRED_ANIMATION_DATA, ERR_INVALID_TEXTURE_ATLAS, ERR_INVALID_VISUAL_MAP,
-            ERR_LOADING_ANIMATION_DATA, ERR_NOT_LOADED_SPRITE_IMAGE,
-            ERR_UNINITIALIZED_REQUIRED_ANIMATION,
+            ERR_NOT_LOADED_SPRITE_IMAGE, ERR_UNINITIALIZED_REQUIRED_ANIMATION,
         },
         warn::{WARN_INCOMPLETE_ANIMATION_DATA, WARN_INCOMPLETE_ASSET_DATA},
     },
@@ -64,36 +63,36 @@ pub(crate) struct AnimationData<T>
 where
     T: Character,
 {
-    atlas_columns: usize,
-    atlas_rows: usize,
+    pub(crate) atlas_columns: usize,
+    pub(crate) atlas_rows: usize,
     #[serde(default)]
-    idle_row: Option<usize>,
+    pub(crate) idle_row: Option<usize>,
     #[serde(default)]
-    idle_frames: Option<usize>,
+    pub(crate) idle_frames: Option<usize>,
     #[serde(default)]
-    idle_interval_ms: Option<u32>,
+    pub(crate) idle_interval_ms: Option<u32>,
     #[serde(default)]
-    walk_row: Option<usize>,
+    pub(crate) walk_row: Option<usize>,
     #[serde(default)]
-    walk_frames: Option<usize>,
+    pub(crate) walk_frames: Option<usize>,
     #[serde(default)]
-    walk_interval_ms: Option<u32>,
+    pub(crate) walk_interval_ms: Option<u32>,
     #[serde(default)]
-    walk_sound_frames: Option<Vec<usize>>,
+    pub(crate) walk_sound_frames: Option<Vec<usize>>,
     #[serde(default)]
-    jump_row: Option<usize>,
+    pub(crate) jump_row: Option<usize>,
     #[serde(default)]
-    jump_frames: Option<usize>,
+    pub(crate) jump_frames: Option<usize>,
     #[serde(default)]
-    jump_sound_frames: Option<Vec<usize>>,
+    pub(crate) jump_sound_frames: Option<Vec<usize>>,
     #[serde(default)]
-    fall_row: Option<usize>,
+    pub(crate) fall_row: Option<usize>,
     #[serde(default)]
-    fall_frames: Option<usize>,
+    pub(crate) fall_frames: Option<usize>,
     #[serde(default)]
-    fall_sound_frames: Option<Vec<usize>>,
+    pub(crate) fall_sound_frames: Option<Vec<usize>>,
     #[serde(skip)]
-    _phantom: PhantomData<T>,
+    pub(crate) _phantom: PhantomData<T>,
 }
 
 /// Handle for [`AnimationData`] as a generic
@@ -105,6 +104,36 @@ where
 pub(crate) struct AnimationHandle<T>(pub(crate) Handle<AnimationData<T>>)
 where
     T: Character;
+
+/// Cache for [`AnimationData`]
+///
+/// This is to allow easier access.
+///
+/// ## Traits
+///
+/// - `T` must implement [`Character`].
+#[derive(Resource, Default)]
+pub(crate) struct AnimationDataCache<T>
+where
+    T: Character,
+{
+    pub(crate) atlas_columns: usize,
+    pub(crate) atlas_rows: usize,
+    pub(crate) idle_row: Option<usize>,
+    pub(crate) idle_frames: Option<usize>,
+    pub(crate) idle_interval_ms: Option<u32>,
+    pub(crate) walk_row: Option<usize>,
+    pub(crate) walk_frames: Option<usize>,
+    pub(crate) walk_interval_ms: Option<u32>,
+    pub(crate) walk_sound_frames: Option<Vec<usize>>,
+    pub(crate) jump_row: Option<usize>,
+    pub(crate) jump_frames: Option<usize>,
+    pub(crate) jump_sound_frames: Option<Vec<usize>>,
+    pub(crate) fall_row: Option<usize>,
+    pub(crate) fall_frames: Option<usize>,
+    pub(crate) fall_sound_frames: Option<Vec<usize>>,
+    pub(crate) _phantom: PhantomData<T>,
+}
 
 /// Animations with generics
 ///
@@ -177,19 +206,19 @@ pub(crate) fn setup_animations<T, A>(
     mut commands: Commands,
     mut atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     mut global_animations: ResMut<Assets<Animation>>,
-    data: Res<Assets<AnimationData<T>>>,
-    handle: Res<AnimationHandle<T>>,
+    animation_data: Res<AnimationDataCache<T>>,
     assets: Res<A>,
     images: Res<Assets<Image>>,
 ) where
     T: Character + YSorted,
     A: CharacterAssets,
 {
-    // Get animation from `AnimationData` with `AnimationHandle`
-    let data = data.get(handle.0.id()).expect(ERR_LOADING_ANIMATION_DATA);
-
     // Set sprite sheet and generate sprite from it
-    let sprite_sheet = Spritesheet::new(assets.get_image(), data.atlas_columns, data.atlas_rows);
+    let sprite_sheet = Spritesheet::new(
+        assets.get_image(),
+        animation_data.atlas_columns,
+        animation_data.atlas_rows,
+    );
     let sprite = sprite_sheet
         .with_loaded_image(&images)
         .expect(ERR_NOT_LOADED_SPRITE_IMAGE)
@@ -199,9 +228,9 @@ pub(crate) fn setup_animations<T, A>(
     let idle = animation_handle(
         &mut global_animations,
         &sprite_sheet,
-        data.idle_row,
-        data.idle_frames,
-        data.idle_interval_ms,
+        animation_data.idle_row,
+        animation_data.idle_frames,
+        animation_data.idle_interval_ms,
         AnimationRepeat::Loop,
     )
     .expect(ERR_INVALID_REQUIRED_ANIMATION_DATA);
@@ -210,22 +239,22 @@ pub(crate) fn setup_animations<T, A>(
     let walk = animation_handle(
         &mut global_animations,
         &sprite_sheet,
-        data.walk_row,
-        data.walk_frames,
-        data.walk_interval_ms,
+        animation_data.walk_row,
+        animation_data.walk_frames,
+        animation_data.walk_interval_ms,
         AnimationRepeat::Loop,
     );
 
     // Jump animation
-    let jump = data
+    let jump = animation_data
         .jump_frames
         .map(|frames| {
             let interval_ms = (JUMP_DURATION_SECS * 500. / frames.max(1) as f32) as u32;
             animation_handle(
                 &mut global_animations,
                 &sprite_sheet,
-                data.jump_row,
-                data.jump_frames,
+                animation_data.jump_row,
+                animation_data.jump_frames,
                 Some(interval_ms),
                 AnimationRepeat::Times(1),
             )
@@ -233,15 +262,15 @@ pub(crate) fn setup_animations<T, A>(
         .unwrap_or_else(|| None);
 
     // Fall animation
-    let fall = data
+    let fall = animation_data
         .fall_frames
         .map(|frames| {
             let interval_ms = (JUMP_DURATION_SECS * 500. / frames.max(1) as f32) as u32;
             animation_handle(
                 &mut global_animations,
                 &sprite_sheet,
-                data.fall_row,
-                data.fall_frames,
+                animation_data.fall_row,
+                animation_data.fall_frames,
                 Some(interval_ms),
                 AnimationRepeat::Times(1),
             )
@@ -402,26 +431,18 @@ pub(crate) fn update_animation_sounds<T, A>(
     parent_query: Query<Entity, With<T>>,
     mut child_query: Query<(&mut AnimationController, &mut SpritesheetAnimation), Without<T>>,
     mut commands: Commands,
-    data: Res<Assets<AnimationData<T>>>,
-    handle: Res<AnimationHandle<T>>,
+    animation_data: Res<AnimationDataCache<T>>,
     visual_map: Res<VisualMap>,
     assets: Res<A>,
-    mut frame_set: Local<Option<(Option<Vec<usize>>, Option<Vec<usize>>, Option<Vec<usize>>)>>,
 ) where
     T: Character,
     A: CharacterAssets,
 {
-    // Init local values
-    if frame_set.is_none() {
-        let data = data.get(handle.0.id()).expect(ERR_LOADING_ANIMATION_DATA);
-        let value = (
-            data.walk_sound_frames.clone(),
-            data.jump_sound_frames.clone(),
-            data.fall_sound_frames.clone(),
-        );
-        *frame_set = Some(value);
-    }
-    let frame_set = frame_set.as_ref().unwrap();
+    let frame_set = (
+        animation_data.walk_sound_frames.clone(),
+        animation_data.jump_sound_frames.clone(),
+        animation_data.fall_sound_frames.clone(),
+    );
 
     for entity in &parent_query {
         // Extract `animation_controller` from `child_query`

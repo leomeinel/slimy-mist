@@ -124,7 +124,7 @@ where
     }
 }
 
-/// Animation data deserialized from a ron file as a generic
+/// Collision data deserialized from a ron file as a generic
 ///
 /// ## Traits
 ///
@@ -153,6 +153,24 @@ where
 pub(crate) struct CollisionHandle<T>(pub(crate) Handle<CollisionData<T>>)
 where
     T: Character;
+
+/// Cache for [`CollisionData`]
+///
+/// This is to allow easier access.
+///
+/// ## Traits
+///
+/// - `T` must implement [`Character`].
+#[derive(Resource, Default)]
+pub(crate) struct CollisionDataCache<T>
+where
+    T: Character,
+{
+    pub(crate) shape: Option<String>,
+    pub(crate) width: Option<f32>,
+    pub(crate) height: Option<f32>,
+    pub(crate) _phantom: PhantomData<T>,
+}
 
 /// Current data about movement
 #[derive(Component, Default)]

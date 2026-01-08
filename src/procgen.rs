@@ -26,7 +26,7 @@ use crate::{
     camera::CanvasCamera,
     characters::npc::Slime,
     levels::overworld::{Overworld, OverworldAssets, OverworldProcGen},
-    logging::error::{ERR_INVALID_MINIMUM_CHUNK_POS, ERR_LOADING_TILE_DATA},
+    logging::error::ERR_INVALID_MINIMUM_CHUNK_POS,
     procgen::{chunks::spawn_chunks, navmesh::move_navmesh, spawn::spawn_characters},
     screens::{GameplayInsertResSystems, Screen},
 };
@@ -172,43 +172,19 @@ where
 {
     pub(crate) tile_size: f32,
     #[serde(default)]
-    full_dirt_tiles: Option<HashSet<UVec2>>,
+    pub(crate) _full_dirt_tiles: Option<HashSet<UVec2>>,
     #[serde(default)]
-    full_grass_tiles: Option<HashSet<UVec2>>,
+    pub(crate) _full_grass_tiles: Option<HashSet<UVec2>>,
     #[serde(default)]
-    corner_outer_grass_to_dirt_tiles: Option<HashSet<UVec2>>,
+    pub(crate) _corner_outer_grass_to_dirt_tiles: Option<HashSet<UVec2>>,
     #[serde(default)]
-    corner_outer_dirt_to_grass_tiles: Option<HashSet<UVec2>>,
+    pub(crate) _corner_outer_dirt_to_grass_tiles: Option<HashSet<UVec2>>,
     #[serde(default)]
-    side_dirt_and_grass_tiles: Option<HashSet<UVec2>>,
+    pub(crate) _side_dirt_and_grass_tiles: Option<HashSet<UVec2>>,
     #[serde(default)]
-    diag_stripe_grass_in_dirt_tiles: Option<HashSet<UVec2>>,
+    pub(crate) _diag_stripe_grass_in_dirt_tiles: Option<HashSet<UVec2>>,
     #[serde(skip)]
-    _phantom: PhantomData<T>,
-}
-impl<T> TileData<T>
-where
-    T: ProcGenerated,
-{
-    fn get_tiles(
-        &self,
-    ) -> Option<(
-        HashSet<UVec2>,
-        HashSet<UVec2>,
-        HashSet<UVec2>,
-        HashSet<UVec2>,
-        HashSet<UVec2>,
-        HashSet<UVec2>,
-    )> {
-        Some((
-            self.full_dirt_tiles.as_ref().cloned()?,
-            self.full_grass_tiles.as_ref().cloned()?,
-            self.corner_outer_grass_to_dirt_tiles.as_ref().cloned()?,
-            self.corner_outer_dirt_to_grass_tiles.as_ref().cloned()?,
-            self.side_dirt_and_grass_tiles.as_ref().cloned()?,
-            self.diag_stripe_grass_in_dirt_tiles.as_ref().cloned()?,
-        ))
-    }
+    pub(crate) _phantom: PhantomData<T>,
 }
 
 /// Handle for [`TileData`] as a generic
@@ -220,6 +196,40 @@ where
 pub(crate) struct TileHandle<T>(pub(crate) Handle<TileData<T>>)
 where
     T: ProcGenerated;
+
+/// Cache for [`TileData`]
+///
+/// This is to allow easier access.
+///
+/// ## Traits
+///
+/// - `T` must implement [`ProcGenerated`].
+#[derive(Resource, Default)]
+pub(crate) struct TileDataCache<T>
+where
+    T: ProcGenerated,
+{
+    // FIXME: Add missing fields from `TileData`
+    pub(crate) tile_size: f32,
+    pub(crate) _phantom: PhantomData<T>,
+}
+
+/// Cache for data that is related to [`TileData`]
+///
+/// This is to allow easier access.
+///
+/// ## Traits
+///
+/// - `T` must implement [`ProcGenerated`].
+#[derive(Resource, Default)]
+pub(crate) struct TileDataRelatedCache<T>
+where
+    T: ProcGenerated,
+{
+    pub(crate) chunk_size_px: Vec2,
+    pub(crate) world_height: f32,
+    pub(crate) _phantom: PhantomData<T>,
+}
 
 /// Rng for procedural generation
 #[derive(Component)]
@@ -237,27 +247,12 @@ pub(crate) fn collect_to_despawn<T, A, const PROCEED: bool>(
     query: Query<(Entity, &Transform), (With<T>, Without<CanvasCamera>)>,
     mut controller: ResMut<ProcGenController<T>>,
     mut next_state: ResMut<NextState<ProcGenState>>,
-    data: Res<Assets<TileData<A>>>,
-    handle: Res<TileHandle<A>>,
-    mut chunk_size_px: Local<Option<Vec2>>,
-    mut tile_size: Local<Option<f32>>,
+    tile_data_related: Res<TileDataRelatedCache<A>>,
 ) where
     T: ProcGenerated,
     A: ProcGenerated,
 {
-    // Init local values
-    let tile_size = tile_size.unwrap_or_else(|| {
-        let data = data.get(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
-        let value = data.tile_size;
-        *tile_size = Some(value);
-        value
-    });
-    let chunk_size_px = chunk_size_px.unwrap_or_else(|| {
-        let value = CHUNK_SIZE.as_vec2() * tile_size;
-        *chunk_size_px = Some(value);
-        value
-    });
-
+    let chunk_size_px = tile_data_related.chunk_size_px;
     controller.camera_chunk_pos = (camera.translation.xy() / chunk_size_px).floor().as_ivec2();
 
     // Add entities outside of `PROCGEN_DISTANCE` to `to_despawn`

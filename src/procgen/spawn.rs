@@ -13,12 +13,11 @@ use rand::{Rng as _, seq::IndexedRandom as _};
 
 use crate::{
     characters::{
-        Character, CollisionData, CollisionHandle, VisualMap,
+        Character, CollisionDataCache, VisualMap,
         animations::{ANIMATION_DELAY_RANGE_SECS, AnimationRng, Animations},
     },
     levels::Level,
-    logging::error::{ERR_LOADING_COLLISION_DATA, ERR_LOADING_TILE_DATA},
-    procgen::{CHUNK_SIZE, ProcGenController, ProcGenRng, ProcGenerated, TileData, TileHandle},
+    procgen::{CHUNK_SIZE, ProcGenController, ProcGenRng, ProcGenerated, TileDataCache},
 };
 
 /// Spawn characters in every chunk contained in [`ProcGenController<A>`]
@@ -37,35 +36,13 @@ pub(crate) fn spawn_characters<T, A, B>(
     mut visual_map: ResMut<VisualMap>,
     animations: Res<Animations<T>>,
     chunk_controller: Res<ProcGenController<A>>,
-    collision_data: Res<Assets<CollisionData<T>>>,
-    collision_handle: Res<CollisionHandle<T>>,
-    tile_data: Res<Assets<TileData<A>>>,
-    tile_handle: Res<TileHandle<A>>,
-    mut collision_set: Local<Option<(Option<String>, Option<f32>, Option<f32>)>>,
-    mut tile_size: Local<Option<f32>>,
+    collision_data: Res<CollisionDataCache<T>>,
+    tile_data: Res<TileDataCache<A>>,
 ) where
     T: Character + ProcGenerated,
     A: ProcGenerated,
     B: Level,
 {
-    // Init local values
-    let tile_size = tile_size.unwrap_or_else(|| {
-        let data = tile_data
-            .get(tile_handle.0.id())
-            .expect(ERR_LOADING_TILE_DATA);
-        let value = data.tile_size;
-        *tile_size = Some(value);
-        value
-    });
-    if collision_set.is_none() {
-        let data = collision_data
-            .get(collision_handle.0.id())
-            .expect(ERR_LOADING_COLLISION_DATA);
-        let value = (data.shape.clone(), data.width, data.height);
-        *collision_set = Some(value);
-    }
-    let collision_set = collision_set.as_ref().unwrap();
-
     for (_, chunk_pos) in &chunk_controller.chunk_positions {
         // Continue if chunk has already been stored
         if controller
@@ -77,6 +54,11 @@ pub(crate) fn spawn_characters<T, A, B>(
         }
 
         // Spawn character
+        let collision_set = (
+            collision_data.shape.clone(),
+            collision_data.width,
+            collision_data.height,
+        );
         spawn_character::<T>(
             &mut animation_rng,
             &mut procgen_rng,
@@ -85,9 +67,9 @@ pub(crate) fn spawn_characters<T, A, B>(
             &mut visual_map,
             level.entity(),
             &animations,
-            collision_set,
+            &collision_set,
             chunk_pos,
-            tile_size,
+            tile_data.tile_size,
         );
     }
 }

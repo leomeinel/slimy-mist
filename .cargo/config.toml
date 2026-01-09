@@ -146,7 +146,7 @@ rustflags = [
 # debug = 1
 
 # Custom
-[target.wasm32-unknown-unknown]
+[target.'cfg(all(target_family = "wasm", any(target_os = "unknown", target_os = "none")))']
 runner = "wasm-server-runner"
 
 [build]

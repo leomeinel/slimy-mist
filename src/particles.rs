@@ -11,7 +11,7 @@ use bevy::prelude::*;
 use bevy_enoki::prelude::*;
 
 use crate::{
-    camera::BACKGROUND_Z,
+    camera::BACKGROUND_Z_DELTA,
     characters::player::Player,
     levels::overworld::spawn_overworld,
     screens::Screen,
@@ -56,8 +56,7 @@ pub(crate) fn add_dust_walking<T>(
                 Particle,
                 ParticleSpawner::default(),
                 ParticleEffectHandle(assets.load("data/particles/dust-walking.particle.ron")),
-                // FIXME: `BACKGROUND_Z` does not actually move this behind foreground objects.
-                Transform::from_translation(Vec3::new(0., -texture_offset, BACKGROUND_Z)),
+                Transform::from_translation(Vec3::new(0., -texture_offset, BACKGROUND_Z_DELTA)),
             ))
             .id();
         commands.entity(entity).add_child(child);

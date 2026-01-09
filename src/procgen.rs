@@ -7,6 +7,19 @@
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  */
 
+// FIXME: Find a way to avoid rounding errors by f32 causing problems with the infinite world.
+//        Currently `1 << 20` is the limit where there is almost no visible rounding errors.
+//        This was determined after a visual inspection at that position, no other testing has been done.
+//        Above that, movement becomes more and more imprecise and if you go further, tiles will
+//        scale incorrectly.
+//        As far as I know, until I switch to f64 this will not be fixable.
+//        A workaround is preventing movement beyond that point and adding a visible border or not moving
+//        the player on the world, but scrolling the world below the player.
+//        The second solution would require a lot of changes and I can imagine at least a few drawbacks of
+//        that. Especially pathfinding, storing game data etc. would be a lot harder/impossible.
+//        I'm pretty sure that even for my plans with the infinite open world, a limit of `1 << 20`
+//        will be just fine. That is a world of 4096x4096 chunks with 16 16x16 tiles.
+
 pub(crate) mod chunks;
 pub(crate) mod navmesh;
 pub(crate) mod spawn;

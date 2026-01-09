@@ -17,21 +17,15 @@ use crate::{
     Pause,
     camera::center_camera_on_player,
     characters::{
-        Character, CollisionData, CollisionDataCache, CollisionHandle, VisualMap,
-        animations::{AnimationData, AnimationDataCache, AnimationHandle, setup_animations},
+        VisualMap,
+        animations::setup_animations,
         nav::NavTargetPosMap,
         npc::{Slime, SlimeAssets},
         player::{Player, PlayerAssets},
     },
     levels::overworld::{Overworld, OverworldProcGen, spawn_overworld},
-    logging::error::{
-        ERR_LOADING_ANIMATION_DATA, ERR_LOADING_COLLISION_DATA, ERR_LOADING_TILE_DATA,
-    },
     menus::Menu,
-    procgen::{
-        CHUNK_SIZE, PROCGEN_DISTANCE, ProcGenController, ProcGenerated, TileData, TileDataCache,
-        TileDataRelatedCache, TileHandle, navmesh::spawn_navmesh,
-    },
+    procgen::{ProcGenController, navmesh::spawn_navmesh},
     screens::Screen,
 };
 
@@ -39,15 +33,7 @@ pub(super) fn plugin(app: &mut App) {
     // Insert/Remove resources and cache deserialized data in resources
     app.add_systems(
         OnEnter(Screen::Gameplay),
-        (
-            insert_resources,
-            cache_animation_data::<Player>,
-            cache_animation_data::<Slime>,
-            cache_collision_data::<Player>,
-            cache_collision_data::<Slime>,
-            cache_tile_data_and_related::<OverworldProcGen>,
-        )
-            .in_set(PrepareGameplaySystems),
+        insert_resources.in_set(PrepareGameplaySystems),
     );
     app.add_systems(OnExit(Screen::Gameplay), remove_resources);
 
@@ -145,84 +131,4 @@ fn remove_resources(mut commands: Commands) {
     commands.remove_resource::<ProcGenController<OverworldProcGen>>();
     commands.remove_resource::<ProcGenController<Slime>>();
     commands.remove_resource::<VisualMap>();
-}
-
-/// Cache data from [`TileData`] in [`TileDataCache`] and related data in [`TileDataRelatedCache`]
-fn cache_tile_data_and_related<T>(
-    mut commands: Commands,
-    mut data: ResMut<Assets<TileData<T>>>,
-    handle: Res<TileHandle<T>>,
-) where
-    T: ProcGenerated,
-{
-    let data = data.remove(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
-    // FIXME: Add missing fields from `TileData`
-    let tile_size = data.tile_size;
-    commands.insert_resource(TileDataCache::<T> {
-        tile_size,
-        ..default()
-    });
-    let chunk_size_px = CHUNK_SIZE.as_vec2() * tile_size;
-    let world_height = PROCGEN_DISTANCE as f32 * 2. + 1. * chunk_size_px.y;
-    commands.insert_resource(TileDataRelatedCache::<T> {
-        chunk_size_px,
-        world_height,
-        ..default()
-    });
-
-    commands.remove_resource::<TileHandle<T>>();
-}
-
-/// Cache data from [`CollisionData`] in [`CollisionDataCache`]
-fn cache_collision_data<T>(
-    mut commands: Commands,
-    mut data: ResMut<Assets<CollisionData<T>>>,
-    handle: Res<CollisionHandle<T>>,
-) where
-    T: Character,
-{
-    let data = data
-        .remove(handle.0.id())
-        .expect(ERR_LOADING_COLLISION_DATA);
-    commands.insert_resource(CollisionDataCache::<T> {
-        shape: data.shape,
-        width: data.width,
-        height: data.height,
-        ..default()
-    });
-
-    commands.remove_resource::<CollisionHandle<T>>();
-}
-
-/// Cache data from [`AnimationData`] in [`AnimationDataCache`]
-fn cache_animation_data<T>(
-    mut commands: Commands,
-    mut data: ResMut<Assets<AnimationData<T>>>,
-    handle: Res<AnimationHandle<T>>,
-) where
-    T: Character,
-{
-    let data = data
-        .remove(handle.0.id())
-        .expect(ERR_LOADING_ANIMATION_DATA);
-    commands.insert_resource(AnimationDataCache::<T> {
-        atlas_columns: data.atlas_columns,
-        atlas_rows: data.atlas_rows,
-        idle_row: data.idle_row,
-        idle_frames: data.idle_frames,
-        idle_interval_ms: data.idle_interval_ms,
-        walk_row: data.walk_row,
-        walk_frames: data.walk_frames,
-        walk_interval_ms: data.walk_interval_ms,
-        walk_sound_frames: data.walk_sound_frames,
-        jump_row: data.jump_row,
-        jump_frames: data.jump_frames,
-        jump_sound_frames: data.jump_sound_frames,
-        fall_row: data.fall_row,
-        fall_frames: data.fall_frames,
-        fall_sound_frames: data.fall_sound_frames,
-        ..default()
-    });
-
-    commands.remove_resource::<AnimationHandle<T>>();
 }

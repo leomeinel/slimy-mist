@@ -200,13 +200,17 @@ fn cache_tile_data_and_related<T>(
     T: ProcGenerated,
 {
     let data = data.remove(handle.0.id()).expect(ERR_LOADING_TILE_DATA);
-    // FIXME: Add missing fields from `TileData`
-    let tile_size = data.tile_size;
     commands.insert_resource(TileDataCache::<T> {
-        tile_size,
+        tile_size: data.tile_size,
+        _full_dirt_tiles: data.full_dirt_tiles,
+        _full_grass_tiles: data.full_grass_tiles,
+        _corner_outer_grass_to_dirt_tiles: data.corner_outer_grass_to_dirt_tiles,
+        _corner_outer_dirt_to_grass_tiles: data.corner_outer_dirt_to_grass_tiles,
+        _side_dirt_and_grass_tiles: data.side_dirt_and_grass_tiles,
+        _diag_stripe_grass_in_dirt_tiles: data.diag_stripe_grass_in_dirt_tiles,
         ..default()
     });
-    let chunk_size_px = CHUNK_SIZE.as_vec2() * tile_size;
+    let chunk_size_px = CHUNK_SIZE.as_vec2() * data.tile_size;
     let world_height = PROCGEN_DISTANCE as f32 * 2. + 1. * chunk_size_px.y;
     commands.insert_resource(TileDataRelatedCache::<T> {
         chunk_size_px,

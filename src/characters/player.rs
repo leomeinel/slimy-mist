@@ -22,8 +22,8 @@ use bevy_rapier2d::prelude::*;
 use crate::{
     AppSystems, Pause,
     camera::{
-        DEFAULT_Z,
-        ysort::{YSort, YSortOffset, YSorted},
+        FOREGROUND_Z,
+        ysort::{YSort, YSortOffset},
     },
     characters::{
         Character, CharacterAssets, JumpTimer, Movement, MovementSpeed, VisualMap,
@@ -33,6 +33,7 @@ use crate::{
     },
     impl_character_assets,
     logging::error::ERR_INVALID_VISUAL_MAP,
+    visuals::Visible,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -91,8 +92,8 @@ impl Character for Player {
             (Name::new("Player"), Self),
             // Positioning/Visibility
             (
-                Transform::from_translation(pos.extend(DEFAULT_Z)),
-                YSort(DEFAULT_Z),
+                Transform::from_translation(pos.extend(FOREGROUND_Z)),
+                YSort(FOREGROUND_Z),
                 Visibility::Inherited,
             ),
             // Physics
@@ -134,7 +135,7 @@ impl Character for Player {
         )
     }
 }
-impl YSorted for Player {}
+impl Visible for Player {}
 
 /// Walk marker
 #[derive(Debug, InputAction)]

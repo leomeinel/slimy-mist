@@ -19,16 +19,14 @@ use bevy_asset_loader::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    camera::{
-        DEFAULT_Z,
-        ysort::{YSort, YSorted},
-    },
+    camera::{FOREGROUND_Z, ysort::YSort},
     characters::{
         Character, CharacterAssets, Movement, MovementSpeed, animations::Animations,
         character_collider, character_obstacle, nav::Navigator,
     },
     impl_character_assets,
     procgen::ProcGenerated,
+    visuals::Visible,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -73,8 +71,8 @@ impl Character for Slime {
             (Name::new("Slime"), Npc, Self),
             // Positioning/Visibility
             (
-                Transform::from_translation(pos.extend(DEFAULT_Z)),
-                YSort(DEFAULT_Z),
+                Transform::from_translation(pos.extend(FOREGROUND_Z)),
+                YSort(FOREGROUND_Z),
                 Visibility::Inherited,
             ),
             // Physics
@@ -96,4 +94,4 @@ impl Character for Slime {
     }
 }
 impl ProcGenerated for Slime {}
-impl YSorted for Slime {}
+impl Visible for Slime {}

@@ -28,7 +28,6 @@ use rand::seq::IndexedRandom as _;
 use crate::{
     AppSystems, PausableSystems,
     audio::sound_effect,
-    camera::ysort::{YSortCache, YSorted},
     characters::{
         Character, CharacterAssets, JUMP_DURATION_SECS, Movement, VisualMap,
         npc::{Slime, SlimeAssets},
@@ -42,6 +41,7 @@ use crate::{
         warn::{WARN_INCOMPLETE_ANIMATION_DATA, WARN_INCOMPLETE_ASSET_DATA},
     },
     screens::Screen,
+    visuals::{TextureInfoCache, Visible},
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -225,7 +225,7 @@ fn setup_rng(mut global: Single<&mut WyRand, With<GlobalRng>>, mut commands: Com
 ///
 /// ## Traits
 ///
-/// - `T` must implement [`Character`] and [`YSorted`].
+/// - `T` must implement [`Character`] and [`Visible`].
 /// - `A` must implement [`CharacterAssets`]
 pub(crate) fn setup_animations<T, A>(
     mut commands: Commands,
@@ -235,7 +235,7 @@ pub(crate) fn setup_animations<T, A>(
     assets: Res<A>,
     images: Res<Assets<Image>>,
 ) where
-    T: Character + YSorted,
+    T: Character + Visible,
     A: CharacterAssets,
 {
     // Set sprite sheet and generate sprite from it
@@ -302,7 +302,7 @@ pub(crate) fn setup_animations<T, A>(
         })
         .unwrap_or_else(|| None);
 
-    // Data for `YSortCache`
+    // Data for `SpriteInfoCache`
     let sprite_layout_id = sprite
         .texture_atlas
         .as_ref()
@@ -317,7 +317,7 @@ pub(crate) fn setup_animations<T, A>(
         .expect(ERR_INVALID_TEXTURE_ATLAS)
         .size();
 
-    // Init `Animations`
+    // Init resources
     commands.insert_resource(Animations::<T> {
         sprite,
         idle,
@@ -326,9 +326,8 @@ pub(crate) fn setup_animations<T, A>(
         fall,
         ..default()
     });
-    // Init `YSortCache`
-    commands.insert_resource(YSortCache::<T> {
-        texture_size,
+    commands.insert_resource(TextureInfoCache::<T> {
+        size: texture_size,
         ..default()
     });
 }
@@ -514,7 +513,7 @@ pub(crate) fn update_animation_sounds<T, A>(
     }
 }
 
-/// Choose a random customized via parameters for current frame.
+/// Choose a random sound customized via parameters for current frame.
 ///
 /// Returns [`Some`] if current frame is a fall sound frame.
 /// Returns [`None`] if current frame is not a fall sound frame or on missing data.

@@ -7,15 +7,14 @@
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  */
 
-use std::marker::PhantomData;
-
-use bevy::{prelude::*, reflect::Reflectable};
+use bevy::prelude::*;
 
 use crate::{
     characters::{npc::Slime, player::Player},
     levels::overworld::OverworldProcGen,
     procgen::{ProcGenController, ProcGenInit, ProcGenerated, TileDataRelatedCache},
     screens::Screen,
+    visuals::{TextureInfoCache, Visible},
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -31,13 +30,6 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
-/// Applies to anything that is y-sorted
-pub(crate) trait YSorted
-where
-    Self: Component + Default + Reflectable,
-{
-}
-
 /// Sorts entities by their y position.
 #[derive(Component, Default, Reflect, Debug)]
 #[reflect(Component)]
@@ -50,20 +42,6 @@ pub(crate) struct YSort(pub(crate) f32);
 #[reflect(Component)]
 pub(crate) struct YSortOffset(pub(crate) f32);
 
-/// Cache for [`YSort`]
-///
-/// ## Traits
-///
-/// - `T` must implement [`YSorted`].
-#[derive(Resource, Default)]
-pub(crate) struct YSortCache<T>
-where
-    T: YSorted,
-{
-    pub(crate) texture_size: UVec2,
-    pub(crate) _phantom: PhantomData<T>,
-}
-
 // FIXME: We currently can't use Changed<Transform> because we always need to update z-level based on relative position.
 /// Applies the y-sorting to the entities Z position.
 ///
@@ -71,27 +49,28 @@ where
 ///
 /// ## Traits
 ///
-/// - `T` must implement [`YSorted`].
+/// - `T` must implement [`Visible`].
 /// - `A` must implement [`ProcGenerated`]' and is used as the procedurally generated level.
 fn y_sort<T, A>(
     query: Query<(&mut Transform, &YSort, Option<&YSortOffset>), With<T>>,
     controller: Res<ProcGenController<A>>,
-    texture: Res<YSortCache<T>>,
+    texture_info: Res<TextureInfoCache<T>>,
     tile_data_related: Res<TileDataRelatedCache<A>>,
 ) where
-    T: YSorted,
+    T: Visible,
     A: ProcGenerated,
 {
     let min_world_y = controller.min_chunk_pos().y as f32 * tile_data_related.chunk_size_px.y;
+    // NOTE: We could also just divide by `world_height`, but multiplying `world_height` by 2 ensures that we never
+    //       add/subtract more than 1 to `sort.0`
+    let scale_divisor = tile_data_related.world_height * 2.;
+    let texture_offset = texture_info.size.y as f32 / 2.;
 
     for (mut transform, sort, sort_offset) in query {
         let sort_offset = sort_offset.map_or(0., |offset| offset.0);
         let relative_y = transform.translation.y - min_world_y;
-        let texture_offset = texture.texture_size.y as f32 / 2.;
 
-        // NOTE: We could also just divide by `world_height`, but multiplying `world_height` by 2 ensures that we never
-        //       add more than 1 to `sort.0`
-        transform.translation.z = sort.0
-            + (sort_offset - (relative_y - texture_offset)) / (tile_data_related.world_height * 2.);
+        transform.translation.z =
+            sort.0 + (sort_offset - (relative_y - texture_offset)) / scale_divisor;
     }
 }

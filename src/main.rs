@@ -28,6 +28,7 @@ mod particles;
 mod procgen;
 mod screens;
 mod theme;
+mod visuals;
 
 use bevy::{asset::AssetMetaCheck, prelude::*};
 use bevy_ecs_tilemap::TilemapPlugin;

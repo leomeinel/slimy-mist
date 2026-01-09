@@ -11,8 +11,11 @@ use bevy::prelude::*;
 use bevy_enoki::prelude::*;
 
 use crate::{
-    characters::{Character, player::Player},
-    procgen::ProcGenInit,
+    camera::BACKGROUND_Z,
+    characters::player::Player,
+    levels::overworld::spawn_overworld,
+    screens::Screen,
+    visuals::{TextureInfoCache, Visible},
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -20,34 +23,43 @@ pub(super) fn plugin(app: &mut App) {
     app.add_plugins(EnokiPlugin);
 
     // Add particle systems
-    app.add_systems(OnEnter(ProcGenInit(true)), add_dust_walking::<Player>);
+    // FIXME: Think of using a SystemSet here instead that includes spawn_overworld
+    app.add_systems(
+        OnEnter(Screen::Gameplay),
+        add_dust_walking::<Player>.after(spawn_overworld),
+    );
 }
 
 /// Marker component for particles
 #[derive(Component, Default, Reflect)]
 pub(crate) struct Particle;
 
+// FIXME: Add logic to hide, accelerate particles based on movement.
 /// Add dust particle for walking.
 ///
 /// ## Traits
 ///
-/// - `T` must implement [`Character`].
+/// - `T` must implement [`Visible`].
 pub(crate) fn add_dust_walking<T>(
     query: Query<Entity, With<T>>,
     mut commands: Commands,
     assets: Res<AssetServer>,
+    texture_info: Res<TextureInfoCache<T>>,
 ) where
-    T: Character,
+    T: Visible,
 {
+    let texture_offset = texture_info.size.y as f32 / 2.;
+
     for entity in query {
-        let particle = commands
+        let child = commands
             .spawn((
                 Particle,
                 ParticleSpawner::default(),
                 ParticleEffectHandle(assets.load("data/particles/dust-walking.particle.ron")),
-                Transform::from_translation(Vec3::ZERO),
+                // FIXME: `BACKGROUND_Z` does not actually move this behind foreground objects.
+                Transform::from_translation(Vec3::new(0., -texture_offset, BACKGROUND_Z)),
             ))
             .id();
-        commands.entity(entity).add_child(particle);
+        commands.entity(entity).add_child(child);
     }
 }

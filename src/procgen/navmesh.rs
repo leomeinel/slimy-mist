@@ -59,7 +59,7 @@ pub(crate) fn spawn_navmesh<T, A>(
     let entity = commands
         .spawn((
             NavMeshSettings {
-                simplify: 0.1,
+                simplify: 0.05,
                 merge_steps: 1,
                 fixed: Triangulation::from_outer_edges(&[
                     Vec2::ZERO,
@@ -69,8 +69,8 @@ pub(crate) fn spawn_navmesh<T, A>(
                 ]),
                 ..default()
             },
-            // FIXME: Investigate why `NavMeshUpdateMode::Direct` does not update correctly and prevents pathfinding
-            NavMeshUpdateMode::Debounced(0.1),
+            // NOTE: We have to use `OnDemand` since without any obstacles, the other modes never execute.
+            NavMeshUpdateMode::OnDemand(false),
             Transform::from_translation(target_pos.extend(0.)).with_scale(Vec3::splat(tile_size)),
         ))
         .id();
@@ -84,7 +84,7 @@ pub(crate) fn spawn_navmesh<T, A>(
 ///
 /// - `T` must implement [`ProcGenerated`]' and is used as the procedurally generated level.
 pub(crate) fn move_navmesh<T>(
-    mut navmesh: Single<&mut Transform, With<ManagedNavMesh>>,
+    navmesh: Single<(&mut Transform, &mut NavMeshUpdateMode), With<ManagedNavMesh>>,
     controller: Res<ProcGenController<T>>,
     mut next_init_state: ResMut<NextState<ProcGenInit>>,
     mut next_state: ResMut<NextState<ProcGenState>>,
@@ -104,7 +104,10 @@ pub(crate) fn move_navmesh<T>(
             + CHUNK_SIZE.as_vec2() * PROCGEN_DISTANCE as f32)
             * tile_size)
         .floor();
-    navmesh.translation = target_pos.extend(0.);
+    // Set translation and update navmesh
+    let (mut transform, mut mode) = navmesh.into_inner();
+    transform.translation = target_pos.extend(0.);
+    *mode = NavMeshUpdateMode::OnDemand(true);
 
     // Proceed to next state
     next_state.set(ProcGenState::Despawn);

@@ -20,7 +20,6 @@ use bevy::{platform::collections::HashMap, prelude::*, reflect::Reflectable};
 use bevy_asset_loader::asset_collection::AssetCollection;
 use bevy_rapier2d::prelude::*;
 use bevy_spritesheet_animation::prelude::SpritesheetAnimation;
-use vleue_navigator::prelude::*;
 
 use crate::{
     AppSystems,
@@ -217,26 +216,6 @@ pub(crate) fn character_collider(
         "capsule_x" => Collider::capsule_x((height - width) / 2., height / 2.),
         "capsule_y" => Collider::capsule_y((width - height) / 2., width / 2.),
         _ => Collider::cuboid(width / 2., height / 2.),
-    }
-}
-
-/// [`PrimitiveObstacle`] for different shapes
-pub(crate) fn character_obstacle(
-    collision_set: &(Option<String>, Option<f32>, Option<f32>),
-) -> PrimitiveObstacle {
-    let (Some(shape), Some(width), Some(height)) = collision_set else {
-        // Return default collider if data is not complete
-        warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA_FALLBACK);
-        return PrimitiveObstacle::Circle(Circle::new(FALLBACK_BALL_COLLIDER_RADIUS));
-    };
-
-    // Set correct collider for each shape
-    // NOTE: For capsules, we just assume that the values are correct, meaning that for x: `width < height` and for y: `width > height`
-    match shape.as_str() {
-        "ball" => PrimitiveObstacle::Circle(Circle::new(width / 2.)),
-        "capsule_x" => PrimitiveObstacle::Rectangle(Rectangle::new(*width, *height)),
-        "capsule_y" => PrimitiveObstacle::Rectangle(Rectangle::new(*width, *height)),
-        _ => PrimitiveObstacle::Rectangle(Rectangle::new(*width, *height)),
     }
 }
 

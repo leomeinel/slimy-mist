@@ -22,7 +22,7 @@ use crate::{
     camera::{FOREGROUND_Z, ysort::YSort},
     characters::{
         Character, CharacterAssets, Movement, MovementSpeed, animations::Animations,
-        character_collider, character_obstacle, nav::Navigator,
+        character_collider, nav::Navigator,
     },
     impl_character_assets,
     procgen::ProcGenerated,
@@ -78,7 +78,6 @@ impl Character for Slime {
             // Physics
             (
                 character_collider(collision_set),
-                character_obstacle(collision_set),
                 RigidBody::KinematicPositionBased,
                 GravityScale(0.),
             ),

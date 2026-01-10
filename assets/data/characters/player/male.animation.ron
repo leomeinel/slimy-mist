@@ -6,7 +6,7 @@ AnimationData (
     idle_interval_ms: Some(1200),
     walk_row: Some(1),
     walk_frames: Some(6),
-    walk_interval_ms: Some(160),
+    walk_interval_ms: Some(120),
     walk_sound_frames: Some([2, 6]),
     jump_row: Some(2),
     jump_frames: Some(4),

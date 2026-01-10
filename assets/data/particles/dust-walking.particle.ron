@@ -3,15 +3,15 @@
     spawn_amount: 1,
     emission_shape: Circle(4.),
     lifetime: (0.4, 0.5),
-    linear_speed: Some((80.0, 5.0)),
+    linear_speed: Some((50.0, 5.0)),
     linear_acceleration: None,
     // NOTE: We need to have a baseline to allow randomization
-    direction: Some(((-0.05, 0.05), 5.0)),
+    direction: Some(((-0.05, 0.2), 2.5)),
     angular_speed: Some((1.0, 0.5)),
     angular_acceleration: None,
     scale: None,
     // tailwind::NEUTRAL_200 - rgb(229, 229, 229);
-    color: Some((red: 0.8980392, green: 0.8980392, blue: 0.8980392, alpha: 1.0)),
+    color: Some((red: 0.8980392, green: 0.8980392, blue: 0.8980392, alpha: 0.3)),
     gravity_direction: None,
     gravity_speed: None,
     linear_damp: Some((0.5, 0.5)),

@@ -468,15 +468,16 @@ pub(crate) fn update_animation_sounds<T, A>(
         animation_data.fall_sound_frames.clone(),
     );
 
-    for entity in &parent_query {
+    for entity in parent_query {
         // Extract `animation_controller` from `child_query`
         let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
         let (mut controller, animation) =
             child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
+        let current_frame = animation.progress.frame;
 
         // Continue if sound has already been played
         if let Some(sound_frame) = controller.sound_frame
-            && sound_frame == animation.progress.frame
+            && sound_frame == current_frame
         {
             continue;
         }
@@ -485,19 +486,19 @@ pub(crate) fn update_animation_sounds<T, A>(
         let Some(sound) = (match controller.state {
             AnimationState::Walk => choose_sound(
                 &mut rng,
-                &animation.progress.frame,
+                &current_frame,
                 &frame_set.0,
                 assets.get_walk_sounds(),
             ),
             AnimationState::Jump => choose_sound(
                 &mut rng,
-                &animation.progress.frame,
+                &current_frame,
                 &frame_set.1,
                 assets.get_jump_sounds(),
             ),
             AnimationState::Fall => choose_sound(
                 &mut rng,
-                &animation.progress.frame,
+                &current_frame,
                 &frame_set.2,
                 assets.get_fall_sounds(),
             ),
@@ -509,7 +510,7 @@ pub(crate) fn update_animation_sounds<T, A>(
 
         // Play sound
         commands.spawn(sound_effect(sound));
-        controller.sound_frame = Some(animation.progress.frame);
+        controller.sound_frame = Some(current_frame);
     }
 }
 

@@ -1,10 +1,11 @@
 (
     spawn_rate: 0.2,
     spawn_amount: 2,
-    emission_shape: Circle(8.),
+    emission_shape: Circle(4.),
     lifetime: (0.4, 0.5),
     linear_speed: Some((80.0, 5.0)),
     linear_acceleration: None,
+    // NOTE: We need to have a baseline to allow randomization
     direction: Some(((-0.05, 0.05), 5.0)),
     angular_speed: Some((1.0, 0.5)),
     angular_acceleration: None,

@@ -1,6 +1,6 @@
 (
-    spawn_rate: 0.2,
-    spawn_amount: 2,
+    spawn_rate: 0.1,
+    spawn_amount: 1,
     emission_shape: Circle(4.),
     lifetime: (0.4, 0.5),
     linear_speed: Some((80.0, 5.0)),

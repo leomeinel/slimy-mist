@@ -26,7 +26,7 @@ use crate::{
     },
     impl_character_assets,
     procgen::ProcGenerated,
-    visuals::Visible,
+    visual::Visible,
 };
 
 pub(super) fn plugin(app: &mut App) {

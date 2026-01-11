@@ -24,11 +24,10 @@ mod dev_tools;
 mod levels;
 mod logging;
 mod menus;
-mod particles;
 mod procgen;
 mod screens;
 mod theme;
-mod visuals;
+mod visual;
 
 use bevy::{asset::AssetMetaCheck, prelude::*};
 use bevy_ecs_tilemap::TilemapPlugin;
@@ -84,9 +83,9 @@ impl Plugin for AppPlugin {
             dev_tools::plugin,
             levels::plugin,
             menus::plugin,
-            particles::plugin,
             screens::plugin,
             theme::plugin,
+            visual::plugin,
         ));
 
         // Set up the `Pause` state.

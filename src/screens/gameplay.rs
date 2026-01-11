@@ -25,9 +25,9 @@ use crate::{
     },
     levels::overworld::{Overworld, OverworldProcGen, spawn_overworld},
     menus::Menu,
-    particles::{ParticleDustWalking, ParticleMap},
     procgen::{ProcGenController, navmesh::spawn_navmesh},
     screens::Screen,
+    visual::particles::{ParticleDustWalking, ParticleMap},
 };
 
 pub(super) fn plugin(app: &mut App) {

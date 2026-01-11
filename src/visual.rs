@@ -1,5 +1,5 @@
 /*
- * File: visuals.rs
+ * File: visual.rs
  * Author: Leopold Johannes Meinel (leo@meinel.dev)
  * -----
  * Copyright (c) 2026 Leopold Johannes Meinel & contributors
@@ -7,9 +7,15 @@
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  */
 
+pub(crate) mod particles;
+
 use std::marker::PhantomData;
 
 use bevy::{prelude::*, reflect::Reflectable};
+
+pub(super) fn plugin(app: &mut App) {
+    app.add_plugins(particles::plugin);
+}
 
 /// Can apply to anything that is visible
 pub(crate) trait Visible

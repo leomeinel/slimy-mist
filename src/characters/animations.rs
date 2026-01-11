@@ -41,7 +41,7 @@ use crate::{
         warn::{WARN_INCOMPLETE_ANIMATION_DATA, WARN_INCOMPLETE_ASSET_DATA},
     },
     screens::Screen,
-    visuals::{TextureInfoCache, Visible},
+    visual::{TextureInfoCache, Visible},
 };
 
 pub(super) fn plugin(app: &mut App) {

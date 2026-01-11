@@ -14,7 +14,7 @@ use crate::{
     levels::overworld::OverworldProcGen,
     procgen::{ProcGenController, ProcGenInit, ProcGenerated, TileDataRelatedCache},
     screens::Screen,
-    visuals::{TextureInfoCache, Visible},
+    visual::{TextureInfoCache, Visible},
 };
 
 pub(super) fn plugin(app: &mut App) {

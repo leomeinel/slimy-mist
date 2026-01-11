@@ -30,7 +30,7 @@ use crate::{
     },
     impl_character_assets,
     logging::error::ERR_INVALID_VISUAL_MAP,
-    visuals::Visible,
+    visual::Visible,
 };
 
 pub(super) fn plugin(app: &mut App) {

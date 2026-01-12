@@ -50,9 +50,9 @@ pub(crate) struct NavTargetPosMap(HashMap<Entity, Vec2>);
 
 /// Navigation target
 ///
-/// The [`usize`] field is meant as a priority. The higher it is, the more preferred the target is.
+/// [`NavTarget::0`] is meant as a priority. The higher it is, the more preferred the target is.
 #[derive(Component, Default)]
-pub(crate) struct NavTarget(pub(crate) usize);
+pub(crate) struct NavTarget(pub(crate) u8);
 
 /// Navigator that will pathfind to [`NavTarget`]
 #[derive(Component)]

@@ -10,8 +10,7 @@
     angular_speed: Some((1.0, 0.5)),
     angular_acceleration: None,
     scale: None,
-    // tailwind::NEUTRAL_200 - rgb(229, 229, 229);
-    color: Some((red: 0.8980392, green: 0.8980392, blue: 0.8980392, alpha: 0.3)),
+    color: Some((red: 1., green: 1., blue: 1., alpha: 0.3)),
     gravity_direction: None,
     gravity_speed: None,
     linear_damp: Some((0.5, 0.5)),

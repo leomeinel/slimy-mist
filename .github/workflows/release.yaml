@@ -273,8 +273,8 @@ jobs:
           tar -xzf ./binaryen-version_125-x86_64-linux.tar.gz
 
           # Optimize binary
-          OUTPUT=target/${{ matrix.targets }}/web-release/${{ env.cargo_build_binary_name }}${{ matrix.binary_ext }}
-          tmpfile="$(mktemp /tmp/${{ env.cargo_build_binary_name }}-XXXXXX${{ matrix.binary_ext }})"
+          OUTPUT=target/${{ matrix.targets }}/web-release/${{ env.app_binary_name }}${{ matrix.binary_ext }}
+          tmpfile="$(mktemp /tmp/${{ env.app_binary_name }}-XXXXXX${{ matrix.binary_ext }})"
           mv "${OUTPUT}" "${tmpfile}"
           ./binaryen-version_125/bin/wasm-opt -Os -o "${OUTPUT}" "${tmpfile}" --enable-bulk-memory-opt --enable-nontrapping-float-to-int
 
@@ -287,7 +287,7 @@ jobs:
         run: |
           for target in ${{ matrix.targets }}; do
             cargo build --no-default-features --release --locked --target="${target}" --features='${{ matrix.features }}' -j default
-            mv target/"${target}"/release/'${{ env.cargo_build_binary_name }}${{ matrix.binary_ext }}' tmp/binary/"${target}"'${{ matrix.binary_ext }}'
+            mv target/"${target}"/release/'${{ env.app_binary_name }}${{ matrix.binary_ext }}' tmp/binary/"${target}"'${{ matrix.binary_ext }}'
           done
           if [ '${{ matrix.platform }}' = 'macos' ]; then
             lipo tmp/binary/*'${{ matrix.binary_ext }}' -create -output '${{ env.app }}/${{ env.app_binary_name }}${{ matrix.binary_ext }}'

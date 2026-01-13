@@ -255,7 +255,7 @@ fn apply_path(
         // Set movement direction to normalized vector and apply translation
         let navigator_pos = transform.translation.xy();
         let direction = path.current - navigator_pos;
-        movement.direction = direction.normalize() * navigator.0 * time.delta_secs();
+        movement.direction = direction.normalize_or_zero() * navigator.0 * time.delta_secs();
         controller.translation = Some(movement.direction);
 
         // Extract `animation_controller` from `child_query`

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+File: AndroidManifest.xml
+Author: Leopold Johannes Meinel (leo@meinel.dev)
+
+Copyright (c) 2026 Leopold Johannes Meinel & contributors
+SPDX ID: Apache-2.0
+URL: https://www.apache.org/licenses/LICENSE-2.0
+
+Heavily inspired by:
+- https://developer.android.com/guide/topics/manifest/manifest-intro#example
+- https://github.com/bevyengine/bevy/tree/main/examples/mobile/android_example
+-->
+
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools">
+
+  <application android:allowBackup="true" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:label="Bevy Slime Dodge" android:theme="@style/Theme.AppCompat.NoActionBar" tools:targetApi="33">
+    <activity android:name=".MainActivity" android:exported="true" android:configChanges="layoutDirection|locale|orientation|keyboardHidden|screenSize|smallestScreenSize|density|keyboard|navigation|screenLayout|uiMode" android:theme="@style/Theme.AppCompat.NoActionBar">
+      <meta-data android:name="android.app.lib_name" android:value="bevy-slime-dodge" />
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+    </activity>
+  </application>
+
+</manifest>

@@ -30,6 +30,14 @@ elif [[ "${1}" == "web" ]]; then
 elif [[ "${1}" == "web-dev" ]]; then
     rustup target add wasm32-unknown-unknown
     cargo build --no-default-features --features dev --target wasm32-unknown-unknown --profile web-dev
+elif [[ "${1}" == "android" ]]; then
+    ## FIXME: This has neither been tested, nor is it complete.
+    rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
+    cargo ndk build --no-default-features --target aarch64-linux-android --target armv7-linux-androideabi --target x86_64-linux-android -o "${SCRIPT_DIR}"/../mobile/android/app/src/main/jniLibs --release
+elif [[ "${1}" == "android-dev" ]]; then
+    ## FIXME: This has neither been tested, nor is it complete.
+    rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
+    cargo ndk build --target aarch64-linux-android --target armv7-linux-androideabi --target x86_64-linux-android -o "${SCRIPT_DIR}"/../mobile/android/app/src/main/jniLibs
 else
     cargo build
 fi

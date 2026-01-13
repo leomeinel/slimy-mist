@@ -14,6 +14,10 @@ This repository is not entirely licensed as Apache-2.0. See [Credits](#Credits) 
 
 - [binaryen](https://archlinux.org/packages/extra/x86_64/binaryen/)
 
+#### Android
+
+- [cargo-ndk](https://crates.io/crates/cargo-ndk)
+
 ### Debugging
 
 - [flamegraph](https://crates.io/crates/flamegraph)

@@ -16,6 +16,8 @@
 // Disable console on Windows for non-dev builds.
 #![cfg_attr(not(feature = "dev"), windows_subsystem = "windows")]
 
+#[cfg(target_os = "android")]
+mod android;
 mod audio;
 mod camera;
 mod characters;
@@ -37,6 +39,7 @@ use bevy_rand::plugin::EntropyPlugin;
 use bevy_rapier2d::plugin::RapierPhysicsPlugin;
 
 /// Main function
+#[bevy_main]
 fn main() -> AppExit {
     App::new().add_plugins(AppPlugin).run()
 }
@@ -75,6 +78,8 @@ impl Plugin for AppPlugin {
 
         // Add other plugins.
         app.add_plugins((
+            #[cfg(target_os = "android")]
+            android::plugin,
             audio::plugin,
             camera::plugin,
             characters::plugin,

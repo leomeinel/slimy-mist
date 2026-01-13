@@ -17,7 +17,8 @@ concurrency:
 # Configure the release workflow by editing the following values.
 env:
   # Which platforms to build for or deploy to
-  build_for_linux: true
+  build_for_linux-x86_64: true
+  build_for_linux-aarch64: true
   build_for_macos: true
   build_for_web: true
   build_for_windows: true
@@ -121,10 +122,15 @@ jobs:
             package_ext: .zip
             runner: ubuntu-latest
 
-          - platform: linux
+          - platform: linux-x86_64
             targets: x86_64-unknown-linux-gnu
             package_ext: .zip
             runner: ubuntu-latest
+
+          - platform: linux-aarch64
+            targets: aarch64-unknown-linux-gnu
+            package_ext: .zip
+            runner: ubuntu-24.04-arm
 
           - platform: windows
             targets: x86_64-pc-windows-msvc
@@ -160,7 +166,7 @@ jobs:
 
           # Rustflags:
           # Set up platform library rpaths
-          if [ '${{ matrix.platform }}' = 'linux' ]; then
+          if [ '${{ matrix.platform }}' = 'linux-x86_64' ] || [ '${{ matrix.platform }}' = 'linux-aarch64' ]; then
             RUSTFLAGS="${RUSTFLAGS:+$RUSTFLAGS }"'-C link-arg=-Wl,-rpath,$ORIGIN'
           fi
           if [ '${{ matrix.platform }}' = 'macos' ]; then
@@ -181,7 +187,8 @@ jobs:
           # Check if building for this platform is enabled.
           echo 'is_platform_enabled=${{
             (matrix.platform == 'web' && env.build_for_web) ||
-            (matrix.platform == 'linux' && env.build_for_linux) ||
+            (matrix.platform == 'linux-x86_64' && env.build_for_linux-x86_64) ||
+            (matrix.platform == 'linux-aarch64' && env.build_for_linux-aarch64) ||
             (matrix.platform == 'windows' && env.build_for_windows) ||
             (matrix.platform == 'macos' && env.build_for_macos)
           }}' >> "${GITHUB_ENV}"
@@ -205,8 +212,8 @@ jobs:
           shared-key: release
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
-      - name: Install build dependencies (Linux)
-        if: ${{ env.is_platform_enabled == 'true' && matrix.platform == 'linux' }}
+      - name: Install build dependencies (linux-x86_64/linux-aarch64)
+        if: ${{ env.is_platform_enabled == 'true' && (matrix.platform == 'linux-x86_64' || matrix.platform == 'linux-aarch64') }}
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
 
       - name: Prepare output directories

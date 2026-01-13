@@ -3,7 +3,7 @@
 # File: collider.sh
 # Author: Leopold Johannes Meinel (leo@meinel.dev)
 # -----
-# Copyright (c) 2025 Leopold Johannes Meinel & contributors
+# Copyright (c) 2026 Leopold Johannes Meinel & contributors
 # SPDX ID: Apache-2.0
 # URL: https://www.apache.org/licenses/LICENSE-2.0
 ###
@@ -24,7 +24,7 @@ for file in "${SCRIPT_DIR}"/colliders/*.webp; do
     printf '%s\n' "- capsule_x"
     printf '%s\n' "- capsule_y"
     printf '%s\n' "- cuboid"
-    read -rp "Shape to use for '$(basename ${file})': " SHAPE
+    read -rp "Shape to use for '$(basename "${file}")': " SHAPE
 
     {
         printf '%s\n' "CollisionData ("

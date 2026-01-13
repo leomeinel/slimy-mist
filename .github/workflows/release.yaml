@@ -254,7 +254,9 @@ jobs:
           cargo binstall --locked --no-confirm --force cargo-ndk
 
           # Build package
-          cargo ndk build --no-default-features --release --locked --target=${{ matrix.targets }} -o ./mobile/android/app/src/main/jniLibs -j default
+          for target in ${{ matrix.targets }}; do
+            cargo ndk build --no-default-features --release --locked --target=${{ matrix.targets }} -o ./mobile/android/app/src/main/jniLibs -j default
+          done
           ./mobile/android/gradlew assembleRelease
 
           # DEBUG: Show build output

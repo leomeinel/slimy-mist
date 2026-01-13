@@ -6,6 +6,17 @@ version = "0.11.1"
 edition = "2024"
 license = "Apache-2.0"
 
+# NOTE: lib.rs is required for mobile
+[lib]
+name = "bevy_slime_dodge"
+crate-type = ["lib", "cdylib"]
+path = "src/lib.rs"
+
+[[bin]]
+name = "bevy-slime-dodge"
+path = "src/lib.rs"
+doc = false
+
 [dependencies]
 bevy = { version = "0.17.3", features = ["wayland", "webp", "x11"] }
 bevy_asset_loader = { version = "0.24.0", features = [

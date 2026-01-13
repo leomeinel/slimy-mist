@@ -23,11 +23,11 @@ java {
 
 
 android {
-    namespace = "dev.meinel.leo"
+    namespace = "dev.meinel.leo.bevy_slime_dodge"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "dev.meinel.leo"
+        applicationId = "dev.meinel.leo.bevy_slime_dodge"
         minSdk = 31
         targetSdk = 33
         versionCode = 1

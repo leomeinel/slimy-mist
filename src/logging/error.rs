@@ -17,6 +17,8 @@ pub(crate) const ERR_LOADING_COLLISION_DATA: &str =
 pub(crate) const ERR_LOADING_TILE_DATA: &str =
     "Could not load tile data. The file is probably missing.";
 
+/// Error message if attacker entity is invalid
+pub(crate) const ERR_INVALID_ATTACKER: &str = "The attacker is invalid. This is a bug.";
 /// Error message if an error has been encountered while calculating minimum chunk pos
 pub(crate) const ERR_INVALID_MINIMUM_CHUNK_POS: &str =
     "Could not determine correct minimum chunk position. This is a bug.";
@@ -24,6 +26,8 @@ pub(crate) const ERR_INVALID_MINIMUM_CHUNK_POS: &str =
 pub(crate) const ERR_INVALID_NAVMESH: &str = "The navmesh is invalid. This is a bug.";
 /// Error message if nav target is invalid
 pub(crate) const ERR_INVALID_NAV_TARGET: &str = "The navigation target is invalid. This is a bug.";
+/// Error message if [`bevy_rapier2d::prelude::ReadRapierContext`] is invalid
+pub(crate) const ERR_INVALID_RAPIER_CONTEXT: &str = "ReadRapierContext is invalid. This is a bug.";
 /// Error message if animation data is invalid or incomplete
 ///
 /// Since only the idle animation is required, the error message includes that.

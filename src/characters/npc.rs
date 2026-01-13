@@ -14,15 +14,18 @@
 
 //! Npc-specific behavior.
 
-use bevy::prelude::*;
+use bevy::{platform::collections::HashSet, prelude::*};
 use bevy_asset_loader::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
     camera::{FOREGROUND_Z, ysort::YSort},
     characters::{
-        Character, CharacterAssets, Movement, MovementSpeed, animations::Animations,
-        character_collider, nav::Navigator,
+        Character, CharacterAssets, Health, Movement, MovementSpeed,
+        animations::Animations,
+        character_collider,
+        combat::{CombatController, punch},
+        nav::Navigator,
     },
     impl_character_assets,
     procgen::ProcGenerated,
@@ -88,6 +91,16 @@ impl Character for Slime {
                 Movement::default(),
                 movement_speed,
                 Navigator(movement_speed.0),
+            ),
+            // Combat
+            (
+                Health(5.),
+                CombatController {
+                    _attacks: HashSet::from([punch()]),
+                    damage_factor: 1.,
+                    melee: Some(punch()),
+                    _ranged: None,
+                },
             ),
         )
     }

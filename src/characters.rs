@@ -10,6 +10,7 @@
 //! Characters
 
 pub(crate) mod animations;
+pub(crate) mod combat;
 pub(crate) mod nav;
 pub(crate) mod npc;
 pub(crate) mod player;
@@ -29,7 +30,13 @@ use crate::{
 
 pub(super) fn plugin(app: &mut App) {
     // Add child plugins
-    app.add_plugins((animations::plugin, npc::plugin, nav::plugin, player::plugin));
+    app.add_plugins((
+        animations::plugin,
+        combat::plugin,
+        npc::plugin,
+        nav::plugin,
+        player::plugin,
+    ));
 
     // Tick timers
     app.add_systems(Update, tick_jump_timer.in_set(AppSystems::TickTimers));
@@ -167,6 +174,7 @@ where
 #[derive(Component, Default)]
 pub(crate) struct Movement {
     pub(crate) direction: Vec2,
+    pub(crate) facing: Vec2,
     jump_height: f32,
 }
 
@@ -191,6 +199,10 @@ impl Default for JumpTimer {
         ))
     }
 }
+
+/// Health that determines death of a [`Character`] in combat.
+#[derive(Component, Default)]
+pub(crate) struct Health(f32);
 
 /// Map of characters to their visual representations
 #[derive(Resource, Default)]

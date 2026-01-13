@@ -393,7 +393,7 @@ pub(crate) fn update_animations<T>(
 ) where
     T: Character,
 {
-    for (entity, movement) in &parent_query {
+    for (entity, mut movement) in parent_query {
         // Extract `animation_controller` from `child_query`
         let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
         let (mut controller, mut sprite, mut animation, timer) =
@@ -404,10 +404,14 @@ pub(crate) fn update_animations<T>(
             animation.reset();
         }
 
+        // Store facing direction
+        let direction = movement.direction.normalize_or_zero();
+        if direction != Vec2::ZERO {
+            movement.facing = direction;
+        }
         // Sprite flipping
-        let dx = movement.direction.x;
-        if dx != 0. {
-            sprite.flip_x = dx < 0.;
+        if direction.x != 0. {
+            sprite.flip_x = direction.x < 0.;
         }
 
         // Match to current `AnimationState`

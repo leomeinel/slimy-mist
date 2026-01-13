@@ -14,7 +14,7 @@
 
 //! Player-specific behavior.
 
-use bevy::prelude::*;
+use bevy::{platform::collections::HashSet, prelude::*};
 use bevy_asset_loader::prelude::*;
 use bevy_enhanced_input::prelude::*;
 use bevy_rapier2d::prelude::*;
@@ -23,9 +23,10 @@ use crate::{
     AppSystems, Pause,
     camera::{FOREGROUND_Z, ysort::YSort},
     characters::{
-        Character, CharacterAssets, JumpTimer, Movement, MovementSpeed, VisualMap,
+        Character, CharacterAssets, Health, JumpTimer, Movement, MovementSpeed, VisualMap,
         animations::{AnimationController, AnimationState, Animations},
         character_collider,
+        combat::{AttackTimer, Attacked, CombatController, punch},
         nav::NavTarget,
     },
     impl_character_assets,
@@ -53,6 +54,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_observer(apply_walk);
     app.add_observer(stop_walk);
     app.add_observer(set_jump);
+    app.add_observer(trigger_melee);
 }
 
 /// Assets that are serialized from a ron file
@@ -99,6 +101,32 @@ impl Character for Player {
                 RigidBody::KinematicVelocityBased,
                 GravityScale(0.),
             ),
+            // Controls
+            actions!(
+                Self[
+                    // Movement
+                    (
+                        Action::<Walk>::new(),
+                        DeadZone::default(),
+                        SmoothNudge::default(),
+                        Scale::splat(movement_speed.0),
+                        Bindings::spawn((
+                            Cardinal::arrows(),
+                            Cardinal::wasd_keys(),
+                            Axial::left_stick(),
+                        ))
+                    ),
+                    (
+                        Action::<Jump>::new(),
+                        bindings![KeyCode::Space, GamepadButton::South],
+                    ),
+                    // Combat
+                    (
+                        Action::<MeleeAttack>::new(),
+                        bindings![MouseButton::Left, GamepadButton::RightTrigger],
+                    ),
+                ]
+            ),
             // Movement
             (
                 KinematicCharacterController {
@@ -109,25 +137,16 @@ impl Character for Player {
                 Movement::default(),
                 movement_speed,
                 NavTarget(128),
-                actions!(
-                    Self[
-                        (
-                            Action::<Walk>::new(),
-                            DeadZone::default(),
-                            SmoothNudge::default(),
-                            Scale::splat(movement_speed.0),
-                            Bindings::spawn((
-                                Cardinal::arrows(),
-                                Cardinal::wasd_keys(),
-                                Axial::left_stick(),
-                            ))
-                        ),
-                        (
-                            Action::<Jump>::new(),
-                            bindings![KeyCode::Space, GamepadButton::South],
-                        ),
-                    ]
-                ),
+            ),
+            // Combat
+            (
+                Health(10.),
+                CombatController {
+                    _attacks: HashSet::from([punch()]),
+                    damage_factor: 1.,
+                    melee: Some(punch()),
+                    _ranged: None,
+                },
             ),
         )
     }
@@ -143,6 +162,11 @@ struct Walk;
 #[derive(Debug, InputAction)]
 #[action_output(bool)]
 struct Jump;
+
+/// Jump marker
+#[derive(Debug, InputAction)]
+#[action_output(bool)]
+struct MeleeAttack;
 
 /// On a fired walk, set translation to the given input
 fn apply_walk(
@@ -200,7 +224,7 @@ fn stop_walk(
     }
 }
 
-// On a fired jump, move player up
+/// On a fired jump, add [`JumpTimer`] and switch to [`AnimationState::Jump`]
 fn set_jump(
     _: On<Fire<Jump>>,
     parent: Single<Entity, With<Player>>,
@@ -295,4 +319,27 @@ fn limit_jump(
         AnimationState::Fall => animation_controller.state = AnimationState::Idle,
         _ => (),
     }
+}
+
+/// On a fired [`MeleeAttack`], trigger [`Attacked`]
+fn trigger_melee(
+    _: On<Fire<MeleeAttack>>,
+    parent: Single<(Entity, Option<&AttackTimer>), With<Player>>,
+    mut commands: Commands,
+    pause: Res<State<Pause>>,
+) {
+    // Return if game is paused
+    if pause.get().0 {
+        return;
+    }
+
+    // Return if `timer` has not finished
+    let (entity, timer) = parent.into_inner();
+    if let Some(timer) = timer
+        && !timer.0.is_finished()
+    {
+        return;
+    }
+
+    commands.trigger(Attacked(entity));
 }

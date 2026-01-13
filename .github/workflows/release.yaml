@@ -2,12 +2,11 @@
 # - https://github.com/bevyengine/bevy_github_ci_template
 # - https://github.com/TheBevyFlock/bevy_new_2d
 
-name: Release
+name: Android Testing (Debug)
 
 on:
   push:
-    tags:
-      - "v*.*.*"
+    branches: [android-testing]
 
 # Cancel the release workflow when a more recent workflow begins.
 concurrency:
@@ -17,14 +16,15 @@ concurrency:
 # Configure the release workflow by editing the following values.
 env:
   # Which platforms to build for or deploy to
-  build_for_linux-x86_64: true
-  build_for_linux-aarch64: true
-  build_for_macos: true
-  build_for_web: true
-  build_for_windows: true
-  deploy_to_github_pages: true
+  build_for_android: true
+  build_for_linux-x86_64: false
+  build_for_linux-aarch64: false
+  build_for_macos: false
+  build_for_web: false
+  build_for_windows: false
+  deploy_to_github_pages: false
   deploy_to_itch: false
-  upload_to_github: true
+  upload_to_github: false
 
   # Deny rust warnings
   deny_warnings: false
@@ -196,6 +196,7 @@ jobs:
 
           # Check if building for this platform is enabled.
           echo 'is_platform_enabled=${{
+            (matrix.platform == 'android' && env.build_for_android) ||
             (matrix.platform == 'web' && env.build_for_web) ||
             (matrix.platform == 'linux-x86_64' && env.build_for_linux-x86_64) ||
             (matrix.platform == 'linux-aarch64' && env.build_for_linux-aarch64) ||
@@ -222,6 +223,10 @@ jobs:
           shared-key: release
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
+      - name: Install build dependencies (android)
+        if: ${{ env.is_platform_enabled == 'true' && matrix.platform == 'android' }}
+        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+
       - name: Install build dependencies (linux-x86_64/linux-aarch64)
         if: ${{ env.is_platform_enabled == 'true' && (matrix.platform == 'linux-x86_64' || matrix.platform == 'linux-aarch64') }}
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
@@ -233,6 +238,27 @@ jobs:
       - name: Install cargo-binstall
         if: ${{ env.is_platform_enabled == 'true' }}
         uses: cargo-bins/cargo-binstall@main
+
+      - name: Set up JDK (android)
+        if: ${{ env.is_platform_enabled == 'true' && matrix.platform == 'android' }}
+        uses: actions/setup-java@v5
+        with:
+          distribution: "temurin"
+          java-version: "17"
+          cache: "gradle"
+
+      - name: Build and add web bundle to app (android)
+        if: ${{ env.is_platform_enabled == 'true' && matrix.platform == 'android' }}
+        run: |
+          # Install cargo-ndk
+          cargo binstall --locked --no-confirm --force cargo-ndk
+
+          # Build package
+          cargo ndk build --no-default-features --release --locked --target=${{ matrix.targets }} -o ./mobile/android/app/src/main/jniLibs -j default
+          ./mobile/android/gradlew assembleRelease
+
+          # DEBUG: Show build output
+          tree -a
 
       - name: Build and add web bundle to app (Web)
         if: ${{ env.is_platform_enabled == 'true' && matrix.platform == 'web' }}
@@ -255,7 +281,7 @@ jobs:
           mv ./web/* '${{ env.app }}'
 
       - name: Build and add binaries to app (non-Web)
-        if: ${{ env.is_platform_enabled == 'true' && matrix.platform != 'web' }}
+        if: ${{ env.is_platform_enabled == 'true' && matrix.platform != 'web' && matrix.platform != 'android' && matrix.platform != 'ios' }}
         run: |
           for target in ${{ matrix.targets }}; do
             cargo build --no-default-features --release --locked --target="${target}" --features='${{ matrix.features }}' -j default

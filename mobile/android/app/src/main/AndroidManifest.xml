@@ -1,16 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-File: AndroidManifest.xml
-Author: Leopold Johannes Meinel (leo@meinel.dev)
-
-Copyright (c) 2026 Leopold Johannes Meinel & contributors
-SPDX ID: Apache-2.0
-URL: https://www.apache.org/licenses/LICENSE-2.0
-
-Heavily inspired by:
-- https://developer.android.com/guide/topics/manifest/manifest-intro#example
-- https://github.com/bevyengine/bevy/tree/main/examples/mobile/android_example
--->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:tools="http://schemas.android.com/tools">

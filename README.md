@@ -30,6 +30,12 @@ This repository is not entirely licensed as Apache-2.0. See [Credits](#Credits) 
 
 - [cargo-cache](https://crates.io/crates/cargo-cache)
 
+## Tools
+
+- [pixels2svg](https://github.com/ValentinFrancois/pixels2svg) for creating svgs from pixel art
+- [svgo](https://github.com/svg/svgo) for minifying svgs
+- [svg2vectordrawable](https://www.npmjs.com/package/svg2vectordrawable) for creating android vector drawables from svgs
+
 # Credits
 
 ## Assets

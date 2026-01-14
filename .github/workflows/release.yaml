@@ -122,10 +122,11 @@ jobs:
             package_ext: .zip
             runner: ubuntu-latest
 
-          # FIXME: Implement this
+          # FIXME: Add app signing
           - platform: android
             # FIXME: Readd missing targets: armv7-linux-androideabi x86_64-linux-android
             targets: aarch64-linux-android
+            package_ext: .zip
             runner: ubuntu-latest
 
           - platform: linux-x86_64

@@ -224,10 +224,6 @@ jobs:
           shared-key: release
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
-      - name: Install build dependencies (android)
-        if: ${{ env.is_platform_enabled == 'true' && matrix.platform == 'android' }}
-        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
-
       - name: Install build dependencies (linux-x86_64/linux-aarch64)
         if: ${{ env.is_platform_enabled == 'true' && (matrix.platform == 'linux-x86_64' || matrix.platform == 'linux-aarch64') }}
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev

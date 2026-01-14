@@ -257,15 +257,13 @@ jobs:
             cargo ndk build --no-default-features --release --locked --target="${target}" -o ./mobile/android/app/src/main/jniLibs -j default --link-libcxx-shared
           done
           ## Build apk and sign with signing key
-          printf '%s' '${{ secrets.PROD_SIGN_KEYSTORE_BASE64 }}' | openssl base64 -A -d >./mobile/android/app/prod.keystore
+          KEYSTORE_FILE=./mobile/android/app/prod-sign.keystore
+          printf '%s' '${{ secrets.PROD_SIGN_KEYSTORE_BASE64 }}' | openssl base64 -A -d >"${KEYSTORE_FILE}"
           export PROD_KEYSTORE_PASS='${{ secrets.PROD_SIGN_KEYSTORE_PASS }}'
           export PROD_KEY_ALIAS='${{ secrets.PROD_SIGN_KEY_ALIAS }}'
-          ./mobile/android/gradlew -p ./mobile/android/ app:assembleRelease
-          ## Build aab and sign with upload key
-          printf '%s' '${{ secrets.PROD_UPLOAD_KEYSTORE_BASE64 }}' | openssl base64 -A -d >./mobile/android/app/prod.keystore
-          export PROD_KEYSTORE_PASS='${{ secrets.PROD_UPLOAD_KEYSTORE_PASS }}'
-          export PROD_KEY_ALIAS='${{ secrets.PROD_UPLOAD_KEY_ALIAS }}'
-          ./mobile/android/gradlew -p ./mobile/android/ app:bundleRelease
+          # FIXME: This should instead be signed with the upload key.
+          #        It seems like just running builds one after the other for apk/aab does not achieve that.
+          ./mobile/android/gradlew -p ./mobile/android/ app:assembleRelease app:bundleRelease
 
           # Prepare package
           BUILD_OUTPUT=./mobile/android/app/build/outputs

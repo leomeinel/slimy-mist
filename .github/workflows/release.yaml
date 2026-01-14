@@ -2,11 +2,12 @@
 # - https://github.com/bevyengine/bevy_github_ci_template
 # - https://github.com/TheBevyFlock/bevy_new_2d
 
-name: Android Testing (Debug)
+name: Release
 
 on:
   push:
-    branches: [main]
+    tags:
+      - "v*.*.*"
 
 # Cancel the release workflow when a more recent workflow begins.
 concurrency:
@@ -17,14 +18,14 @@ concurrency:
 env:
   # Which platforms to build for or deploy to
   build_for_android: true
-  build_for_linux-x86_64: false
-  build_for_linux-aarch64: false
-  build_for_macos: false
-  build_for_web: false
-  build_for_windows: false
-  deploy_to_github_pages: false
+  build_for_linux-x86_64: true
+  build_for_linux-aarch64: true
+  build_for_macos: true
+  build_for_web: true
+  build_for_windows: true
+  deploy_to_github_pages: true
   deploy_to_itch: false
-  upload_to_github: false
+  upload_to_github: true
 
   # Deny rust warnings
   deny_warnings: false

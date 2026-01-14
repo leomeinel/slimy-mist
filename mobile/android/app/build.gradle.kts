@@ -26,6 +26,15 @@ android {
     namespace = "dev.meinel.leo.bevy_slime_dodge"
     compileSdk = 34
 
+    // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/dsl/SigningConfig
+    signingConfigs {
+        create("release") {
+            storeFile = file("prod.keystore")
+            storePassword = System.getenv("PROD_KEYSTORE_PASS")
+            keyAlias = System.getenv("PROD_KEY_ALIAS")
+            keyPassword = System.getenv("PROD_KEYSTORE_PASS")
+        }
+    }
     // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/dsl/DefaultConfig
     defaultConfig {
         applicationId = "dev.meinel.leo.bevy_slime_dodge"

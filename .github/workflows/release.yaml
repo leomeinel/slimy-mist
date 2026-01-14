@@ -6,7 +6,7 @@ name: Android Testing (Debug)
 
 on:
   push:
-    branches: [android-testing]
+    branches: [main]
 
 # Cancel the release workflow when a more recent workflow begins.
 concurrency:

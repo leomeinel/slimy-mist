@@ -333,3 +333,4 @@ gradle-app.setting
 /scripts/.venv*
 /scripts/drawables/*
 !/scripts/drawables/*.webp
+/scripts/.keystores

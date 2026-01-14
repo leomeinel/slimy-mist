@@ -29,10 +29,16 @@ android {
     // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/dsl/SigningConfig
     signingConfigs {
         create("release") {
-            storeFile = file("prod.keystore")
-            storePassword = System.getenv("PROD_KEYSTORE_PASS")
-            keyAlias = System.getenv("PROD_KEY_ALIAS")
-            keyPassword = System.getenv("PROD_KEYSTORE_PASS")
+            storeFile = file("prod-sign.keystore")
+            storePassword = System.getenv("PROD_SIGN_KEYSTORE_PASS")
+            keyAlias = System.getenv("PROD_SIGN_KEY_ALIAS")
+            keyPassword = System.getenv("PROD_SIGN_KEYSTORE_PASS")
+        }
+        create("google") {
+            storeFile = file("prod-upload.keystore")
+            storePassword = System.getenv("PROD_UPLOAD_KEYSTORE_PASS")
+            keyAlias = System.getenv("PROD_UPLOAD_KEY_ALIAS")
+            keyPassword = System.getenv("PROD_UPLOAD_KEYSTORE_PASS")
         }
     }
     // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/dsl/DefaultConfig
@@ -42,6 +48,7 @@ android {
         targetSdk = 33
         versionCode = 1
         versionName = "1.0"
+        setProperty("archivesBaseName", "bevy-slime-dodge")
         // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/variant/ExternalNativeBuild
         // NOTE: We need this, otherwise libc++_shared.so will not be inserted
         externalNativeBuild {
@@ -72,6 +79,11 @@ android {
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("release")
+        }
+        // https://developer.android.com/build/build-variants#build-types
+        create("google") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("google")
         }
     }
     // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/dsl/CompileOptions

@@ -248,6 +248,11 @@ jobs:
 
       - name: Build and add binaries to app (Android)
         if: ${{ env.is_platform_enabled == 'true' && matrix.platform == 'android' }}
+        env:
+          PROD_SIGN_KEYSTORE_PASS: ${{ secrets.PROD_SIGN_KEYSTORE_PASS }}
+          PROD_SIGN_KEY_ALIAS: ${{ secrets.PROD_SIGN_KEY_ALIAS }}
+          PROD_UPLOAD_KEYSTORE_PASS: ${{ secrets.PROD_UPLOAD_KEYSTORE_PASS }}
+          PROD_UPLOAD_KEY_ALIAS: ${{ secrets.PROD_UPLOAD_KEY_ALIAS }}
         run: |
           # Install cargo-ndk
           cargo binstall --locked --no-confirm --force cargo-ndk
@@ -256,21 +261,17 @@ jobs:
           for target in ${{ matrix.targets }}; do
             cargo ndk build --no-default-features --release --locked --target="${target}" -o ./mobile/android/app/src/main/jniLibs -j default --link-libcxx-shared
           done
-          ## Build apk and sign with signing key
-          KEYSTORE_FILE=./mobile/android/app/prod-sign.keystore
-          printf '%s' '${{ secrets.PROD_SIGN_KEYSTORE_BASE64 }}' | openssl base64 -A -d >"${KEYSTORE_FILE}"
-          export PROD_KEYSTORE_PASS='${{ secrets.PROD_SIGN_KEYSTORE_PASS }}'
-          export PROD_KEY_ALIAS='${{ secrets.PROD_SIGN_KEY_ALIAS }}'
-          # FIXME: This should instead be signed with the upload key.
-          #        It seems like just running builds one after the other for apk/aab does not achieve that.
-          ./mobile/android/gradlew -p ./mobile/android/ app:assembleRelease app:bundleRelease
+          ## Build and sign with gradle
+          printf '%s' '${{ secrets.PROD_SIGN_KEYSTORE_BASE64 }}' | openssl base64 -A -d >./mobile/android/app/prod-sign.keystore
+          printf '%s' '${{ secrets.PROD_UPLOAD_KEYSTORE_BASE64 }}' | openssl base64 -A -d >./mobile/android/app/prod-upload.keystore
+          ./mobile/android/gradlew -p ./mobile/android/ app:assembleRelease app:assembleGoogle app:bundleRelease app:bundleGoogle
 
           # Prepare package
           BUILD_OUTPUT=./mobile/android/app/build/outputs
-          APK_OUTPUT="${BUILD_OUTPUT}"/apk/release/app-release.apk
-          BUNDLE_OUTPUT="${BUILD_OUTPUT}"/bundle/release/app-release.aab
-          mv "${APK_OUTPUT}" '${{ env.app }}/${{ env.app_binary_name }}.apk'
-          mv "${BUNDLE_OUTPUT}" '${{ env.app }}/${{ env.app_binary_name }}.aab'
+          mv "${BUILD_OUTPUT}"/apk/release/*-release.apk '${{ env.app }}'
+          mv "${BUILD_OUTPUT}"/apk/google/*-google.apk '${{ env.app }}'
+          mv "${BUILD_OUTPUT}"/bundle/release/*-release.aab '${{ env.app }}'
+          mv "${BUILD_OUTPUT}"/bundle/google/*-google.aab '${{ env.app }}'
 
       - name: Build and add web bundle to app (Web)
         if: ${{ env.is_platform_enabled == 'true' && matrix.platform == 'web' }}

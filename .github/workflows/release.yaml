@@ -89,6 +89,7 @@ jobs:
       deploy_to_github_pages: ${{ env.deploy_to_github_pages }}
       deploy_to_itch: ${{ env.deploy_to_itch }}
       itch_page: ${{ env.itch_page }}
+      upload_to_github: ${{ env.upload_to_github }}
 
   # Determine the version number for this workflow.
   get-version:
@@ -374,14 +375,14 @@ jobs:
           retention-days: 1
 
       - name: Upload web bundle to workflow artifacts for GitHub Pages (Web)
-        if: ${{ env.is_platform_enabled == 'true' && matrix.platform == 'web' && env.deploy_to_github_pages }}
+        if: ${{ env.is_platform_enabled == 'true' && matrix.platform == 'web' && needs.forward-env.outputs.deploy_to_github_pages }}
         uses: actions/upload-pages-artifact@v4
         with:
           path: ${{ env.app }}/
           retention-days: 1
 
       - name: Upload package to GitHub release
-        if: ${{ env.is_platform_enabled == 'true' && env.upload_to_github }}
+        if: ${{ env.is_platform_enabled == 'true' && needs.forward-env.outputs.upload_to_github }}
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}

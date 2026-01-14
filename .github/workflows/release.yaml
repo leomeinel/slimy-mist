@@ -261,7 +261,7 @@ jobs:
           ./mobile/android/gradlew -p ./mobile/android/ assembleRelease
 
           # DEBUG: Show build output
-          tree -a
+          tree -a ./mobile/android/app/build
 
       - name: Build and add web bundle to app (Web)
         if: ${{ env.is_platform_enabled == 'true' && matrix.platform == 'web' }}

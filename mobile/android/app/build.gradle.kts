@@ -26,48 +26,59 @@ android {
     namespace = "dev.meinel.leo.bevy_slime_dodge"
     compileSdk = 34
 
+    // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/dsl/DefaultConfig
     defaultConfig {
         applicationId = "dev.meinel.leo.bevy_slime_dodge"
         minSdk = 31
         targetSdk = 33
         versionCode = 1
         versionName = "1.0"
-        // We need this, otherwise libc++_shared.so will not be inserted
+        // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/variant/ExternalNativeBuild
+        // NOTE: We need this, otherwise libc++_shared.so will not be inserted
         externalNativeBuild {
             cmake {
                 arguments("-DANDROID_STL=c++_shared")
             }
         }
-        // Set up targets
+        // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/dsl/Ndk
         ndk {
             abiFilters.addAll(listOf("arm64-v8a", "armeabi-v7a", "x86_64"))
         }
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
+    // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/dsl/ExternalNativeBuild
     externalNativeBuild {
         cmake {
             path = file("CMakeLists.txt")
         }
     }
+    // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/dsl/BuildType
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
+            // https://developer.android.com/topic/performance/app-optimization/enable-app-optimization
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
     }
+    // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/dsl/CompileOptions
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+    // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/dsl/BuildFeatures
     buildFeatures {
         prefab = true
     }
     packaging {
+        // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/dsl/JniLibsPackaging
         jniLibs.excludes.add("lib/*/libdummy.so")
+        jniLibs.pickFirsts.add("lib/*/libc++_shared.so")
     }
+    // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/dsl/AndroidSourceSet
     sourceSets {
         getByName("main") {
             assets {

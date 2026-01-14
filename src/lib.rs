@@ -1,5 +1,5 @@
 /*
- * File: main.rs
+ * File: lib.rs
  * Author: Leopold Johannes Meinel (leo@meinel.dev)
  * -----
  * Copyright (c) 2026 Leopold Johannes Meinel & contributors
@@ -38,9 +38,11 @@ use bevy_prng::WyRand;
 use bevy_rand::plugin::EntropyPlugin;
 use bevy_rapier2d::plugin::RapierPhysicsPlugin;
 
-/// Main function
+/// Main function for library
+///
+/// This structure is needed for mobile support.
 #[bevy_main]
-fn main() -> AppExit {
+pub fn main() -> AppExit {
     App::new().add_plugins(AppPlugin).run()
 }
 

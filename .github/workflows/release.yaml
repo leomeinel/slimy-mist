@@ -236,7 +236,7 @@ jobs:
         if: ${{ env.is_platform_enabled == 'true' }}
         uses: cargo-bins/cargo-binstall@main
 
-      - name: Set up JDK (android)
+      - name: Set up JDK (Android)
         if: ${{ env.is_platform_enabled == 'true' && matrix.platform == 'android' }}
         uses: actions/setup-java@v5
         with:
@@ -244,7 +244,7 @@ jobs:
           java-version: "17"
           cache: "gradle"
 
-      - name: Build and add web bundle to app (android)
+      - name: Build and add web bundle to app (Android)
         if: ${{ env.is_platform_enabled == 'true' && matrix.platform == 'android' }}
         run: |
           # Install cargo-ndk
@@ -254,10 +254,14 @@ jobs:
           for target in ${{ matrix.targets }}; do
             cargo ndk build --no-default-features --release --locked --target="${target}" -o ./mobile/android/app/src/main/jniLibs -j default --link-libcxx-shared
           done
-          ./mobile/android/gradlew -p ./mobile/android/ assembleRelease
+          ./mobile/android/gradlew -p ./mobile/android/ assembleRelease bundleRelease
 
-          # DEBUG: Show build output
-          tree -a ./mobile/android/app/build/outputs
+          # Prepare package
+          BUILD_OUTPUT=./mobile/android/app/build/outputs
+          APK_OUTPUT="${BUILD_OUTPUT}"/apk/release/*.apk
+          BUNDLE_OUTPUT="${BUILD_OUTPUT}"/bundle/release/*.aab
+          mv ${APK_OUTPUT} '${{ env.app }}/${{ env.app_binary_name }}.apk'
+          mv ${BUNDLE_OUTPUT} '${{ env.app }}/${{ env.app_binary_name }}.aab'
 
       - name: Build and add web bundle to app (Web)
         if: ${{ env.is_platform_enabled == 'true' && matrix.platform == 'web' }}
@@ -279,8 +283,8 @@ jobs:
           wasm-bindgen --no-typescript --out-name bevy_game --out-dir ./web --target web "${OUTPUT}"
           mv ./web/* '${{ env.app }}'
 
-      - name: Build and add binaries to app (non-Web)
-        if: ${{ env.is_platform_enabled == 'true' && matrix.platform != 'web' && matrix.platform != 'android' && matrix.platform != 'ios' }}
+      - name: Build and add binaries to app (non-Android/non-Web/non-Ios)
+        if: ${{ env.is_platform_enabled == 'true' && matrix.platform != 'android' && matrix.platform != 'web' && matrix.platform != 'ios' }}
         run: |
           for target in ${{ matrix.targets }}; do
             cargo build --no-default-features --release --locked --target="${target}" --features='${{ matrix.features }}' -j default
@@ -292,12 +296,12 @@ jobs:
             mv tmp/binary/*'${{ matrix.binary_ext }}' '${{ env.app }}/${{ env.app_binary_name }}${{ matrix.binary_ext }}'
           fi
 
-      - name: Add assets to app
-        if: ${{ env.is_platform_enabled == 'true' }}
+      - name: Add assets to app (non-Android/non-Ios)
+        if: ${{ env.is_platform_enabled == 'true' && matrix.platform != 'android' && matrix.platform != 'ios' }}
         run: cp -R ./'${{ env.assets_path }}' '${{ env.app }}' || true # Ignore error if assets folder does not exist.
 
-      - name: Add platform libraries (non-Web)
-        if: ${{ env.is_platform_enabled == 'true' && matrix.platform != 'web' }}
+      - name: Add platform libraries (non-Android/non-Web/non-Ios)
+        if: ${{ env.is_platform_enabled == 'true' && matrix.platform != 'android' && matrix.platform != 'web' && matrix.platform != 'ios' }}
         run: cp -R ./'${{ env.libs_path }}'/'${{ matrix.platform }}'/* '${{ env.app }}' || true
 
       - name: Add metadata to app (macOS)

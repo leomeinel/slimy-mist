@@ -18,7 +18,7 @@ path = "src/main.rs"
 doc = false
 
 [dependencies]
-bevy = { version = "0.17.3", features = ["wayland", "webp", "x11"] }
+bevy = "0.17.3"
 bevy_asset_loader = { version = "0.24.0", features = [
  "2d",
  "standard_dynamic_assets",
@@ -55,6 +55,11 @@ bevy_rapier2d = { version = "0.32.0", features = ["debug-render-2d"] }
 
 [target.'cfg(all(target_family = "wasm", any(target_os = "unknown", target_os = "none")))'.dependencies]
 bevy_rand = { version = "0.12.1", features = ["wasm_js"] }
+
+[target.'cfg(not(target_os = "linux"))'.dependencies]
+bevy = { version = "0.17.3", features = ["webp"] }
+[target.'cfg(target_os = "linux")'.dependencies]
+bevy = { version = "0.17.3", features = ["wayland", "webp", "x11"] }
 
 [features]
 # Default to a native dev build.

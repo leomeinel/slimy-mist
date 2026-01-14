@@ -257,14 +257,14 @@ jobs:
             cargo ndk build --no-default-features --release --locked --target="${target}" -o ./mobile/android/app/src/main/jniLibs -j default --link-libcxx-shared
           done
           ## Build apk and sign with signing key
-          printf "%s" "${{ secrets.PROD_SIGN_KEYSTORE_BASE64 }}" | openssl base64 -A -d >./mobile/android/app/prod.keystore
-          export PROD_KEYSTORE_PASS="${{ secrets.PROD_SIGN_KEYSTORE_PASS }}"
-          export PROD_KEY_ALIAS="${{ secrets.PROD_SIGN_KEY_ALIAS }}"
+          printf '%s' '${{ secrets.PROD_SIGN_KEYSTORE_BASE64 }}' | openssl base64 -A -d >./mobile/android/app/prod.keystore
+          export PROD_KEYSTORE_PASS='${{ secrets.PROD_SIGN_KEYSTORE_PASS }}'
+          export PROD_KEY_ALIAS='${{ secrets.PROD_SIGN_KEY_ALIAS }}'
           ./mobile/android/gradlew -p ./mobile/android/ app:assembleRelease
           ## Build aab and sign with upload key
-          printf "%s" "${{ secrets.PROD_UPLOAD_KEYSTORE_BASE64 }}" | openssl base64 -A -d >./mobile/android/app/prod.keystore
-          export PROD_KEYSTORE_PASS="${{ secrets.PROD_UPLOAD_KEYSTORE_PASS }}"
-          export PROD_KEY_ALIAS="${{ secrets.PROD_UPLOAD_KEY_ALIAS }}"
+          printf '%s' '${{ secrets.PROD_UPLOAD_KEYSTORE_BASE64 }}' | openssl base64 -A -d >./mobile/android/app/prod.keystore
+          export PROD_KEYSTORE_PASS='${{ secrets.PROD_UPLOAD_KEYSTORE_PASS }}'
+          export PROD_KEY_ALIAS='${{ secrets.PROD_UPLOAD_KEY_ALIAS }}'
           ./mobile/android/gradlew -p ./mobile/android/ app:bundleRelease
 
           # Prepare package

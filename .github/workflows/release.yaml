@@ -268,8 +268,6 @@ jobs:
           # Prepare package
           BUILD_OUTPUT=./mobile/android/app/build/outputs
           mv "${BUILD_OUTPUT}"/apk/release/*-release.apk '${{ env.app }}'
-          mv "${BUILD_OUTPUT}"/apk/google/*-google.apk '${{ env.app }}'
-          mv "${BUILD_OUTPUT}"/bundle/release/*-release.aab '${{ env.app }}'
           mv "${BUILD_OUTPUT}"/bundle/google/*-google.aab '${{ env.app }}'
 
       - name: Build and add web bundle to app (Web)

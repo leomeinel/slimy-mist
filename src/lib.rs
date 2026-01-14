@@ -47,7 +47,7 @@ pub fn main() -> AppExit {
 }
 
 /// AppPlugin that adds everything this app needs to run
-struct AppPlugin;
+pub struct AppPlugin;
 impl Plugin for AppPlugin {
     fn build(&self, app: &mut App) {
         // Add bevy plugins

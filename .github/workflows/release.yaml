@@ -269,10 +269,10 @@ jobs:
 
           # Prepare package
           BUILD_OUTPUT=./mobile/android/app/build/outputs
-          APK_OUTPUT="${BUILD_OUTPUT}"/apk/release/*.apk
-          BUNDLE_OUTPUT="${BUILD_OUTPUT}"/bundle/release/*.aab
-          mv ${APK_OUTPUT} '${{ env.app }}/${{ env.app_binary_name }}.apk'
-          mv ${BUNDLE_OUTPUT} '${{ env.app }}/${{ env.app_binary_name }}.aab'
+          APK_OUTPUT="${BUILD_OUTPUT}"/apk/release/app-release.apk
+          BUNDLE_OUTPUT="${BUILD_OUTPUT}"/bundle/release/app-release.aab
+          mv "${APK_OUTPUT}" '${{ env.app }}/${{ env.app_binary_name }}.apk'
+          mv "${BUNDLE_OUTPUT}" '${{ env.app }}/${{ env.app_binary_name }}.aab'
 
       - name: Build and add web bundle to app (Web)
         if: ${{ env.is_platform_enabled == 'true' && matrix.platform == 'web' }}

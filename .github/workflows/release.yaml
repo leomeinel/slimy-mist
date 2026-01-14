@@ -124,7 +124,8 @@ jobs:
 
           # FIXME: Implement this
           - platform: android
-            targets: aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
+            # FIXME: Readd missing targets: armv7-linux-androideabi x86_64-linux-android
+            targets: aarch64-linux-android
             runner: ubuntu-latest
 
           - platform: linux-x86_64

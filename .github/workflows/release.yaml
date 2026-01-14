@@ -101,7 +101,7 @@ jobs:
           ref=${{ github.ref }}
           ref=${ref#refs/*/}
           ref=${ref#v}
-          echo "ref=$ref" >> ${GITHUB_OUTPUT}
+          printf "%s\n" "ref=$ref" >> ${GITHUB_OUTPUT}
     outputs:
       # Use the input from workflow dispatch, or fall back to the git ref.
       version: ${{ steps.tag.outputs.ref }}
@@ -168,14 +168,14 @@ jobs:
       - name: Set up environment
         run: |
           # Default values:
-          echo "app_binary_name=${app_binary_name:=${{ env.cargo_build_binary_name }}}" >> "${GITHUB_ENV}"
-          echo "app_package_name=${app_package_name:=${app_binary_name}}" >> "${GITHUB_ENV}"
-          echo "app_display_name=${app_display_name:=${app_package_name}}" >> "${GITHUB_ENV}"
-          echo "app_short_name=${app_short_name:=${app_display_name}}" >> "${GITHUB_ENV}"
+          printf "%s\n" "app_binary_name=${app_binary_name:=${{ env.cargo_build_binary_name }}}" >> "${GITHUB_ENV}"
+          printf "%s\n" "app_package_name=${app_package_name:=${app_binary_name}}" >> "${GITHUB_ENV}"
+          printf "%s\n" "app_display_name=${app_display_name:=${app_package_name}}" >> "${GITHUB_ENV}"
+          printf "%s\n" "app_short_name=${app_short_name:=${app_display_name}}" >> "${GITHUB_ENV}"
 
           # File paths:
-          echo "app=tmp/app/${app_package_name}"'${{ matrix.app_suffix }}' >> "${GITHUB_ENV}"
-          echo "package=${app_package_name}-"'${{ matrix.platform }}${{ matrix.package_ext }}' >> "${GITHUB_ENV}"
+          printf "%s\n" "app=tmp/app/${app_package_name}"'${{ matrix.app_suffix }}' >> "${GITHUB_ENV}"
+          printf "%s\n" "package=${app_package_name}-"'${{ matrix.platform }}${{ matrix.package_ext }}' >> "${GITHUB_ENV}"
 
           # Rustflags:
           # Set up platform library rpaths
@@ -189,16 +189,16 @@ jobs:
           if [ '${{ env.deny_warnings }}' = 'true' ]; then
             RUSTFLAGS="${RUSTFLAGS:+$RUSTFLAGS }"'-Dwarnings'
           fi
-          echo "RUSTFLAGS=${RUSTFLAGS}" >> "${GITHUB_ENV}"
+          printf "%s\n" "RUSTFLAGS=${RUSTFLAGS}" >> "${GITHUB_ENV}"
 
           # macOS environment:
           if [ '${{ matrix.platform }}' = 'macos' ]; then
-            echo 'MACOSX_DEPLOYMENT_TARGET=11.0' >> "${GITHUB_ENV}" # macOS 11.0 Big Sur is the first version to support universal binaries.
-            echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> "${GITHUB_ENV}"
+            printf "%s\n" 'MACOSX_DEPLOYMENT_TARGET=11.0' >> "${GITHUB_ENV}" # macOS 11.0 Big Sur is the first version to support universal binaries.
+            printf "%s\n" "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> "${GITHUB_ENV}"
           fi
 
           # Check if building for this platform is enabled.
-          echo 'is_platform_enabled=${{
+          printf "%s\n" 'is_platform_enabled=${{
             (matrix.platform == 'android' && env.build_for_android) ||
             (matrix.platform == 'web' && env.build_for_web) ||
             (matrix.platform == 'linux-x86_64' && env.build_for_linux-x86_64) ||
@@ -246,7 +246,7 @@ jobs:
           java-version: "17"
           cache: "gradle"
 
-      - name: Build and add web bundle to app (Android)
+      - name: Build and add binaries to app (Android)
         if: ${{ env.is_platform_enabled == 'true' && matrix.platform == 'android' }}
         run: |
           # Install cargo-ndk
@@ -257,12 +257,12 @@ jobs:
             cargo ndk build --no-default-features --release --locked --target="${target}" -o ./mobile/android/app/src/main/jniLibs -j default --link-libcxx-shared
           done
           ## Build apk and sign with signing key
-          echo "${{ secrets.PROD_SIGN_KEYSTORE_BASE64 }}" | base64 -d >./mobile/android/app/prod.keystore
+          printf "%s" "${{ secrets.PROD_SIGN_KEYSTORE_BASE64 }}" | openssl base64 -A -d >./mobile/android/app/prod.keystore
           export PROD_KEYSTORE_PASS="${{ secrets.PROD_SIGN_KEYSTORE_PASS }}"
           export PROD_KEY_ALIAS="${{ secrets.PROD_SIGN_KEY_ALIAS }}"
           ./mobile/android/gradlew -p ./mobile/android/ app:assembleRelease
           ## Build aab and sign with upload key
-          echo "${{ secrets.PROD_UPLOAD_KEYSTORE_BASE64 }}" | base64 -d >./mobile/android/app/prod.keystore
+          printf "%s" "${{ secrets.PROD_UPLOAD_KEYSTORE_BASE64 }}" | openssl base64 -A -d >./mobile/android/app/prod.keystore
           export PROD_KEYSTORE_PASS="${{ secrets.PROD_UPLOAD_KEYSTORE_PASS }}"
           export PROD_KEY_ALIAS="${{ secrets.PROD_UPLOAD_KEY_ALIAS }}"
           ./mobile/android/gradlew -p ./mobile/android/ app:bundleRelease

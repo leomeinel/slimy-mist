@@ -71,6 +71,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/dsl/CompileOptions

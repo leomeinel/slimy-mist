@@ -263,7 +263,7 @@ jobs:
           ## Build and sign with gradle
           printf '%s' '${{ secrets.PROD_SIGN_KEYSTORE_BASE64 }}' | openssl base64 -A -d >./mobile/android/app/prod-sign.keystore
           printf '%s' '${{ secrets.PROD_UPLOAD_KEYSTORE_BASE64 }}' | openssl base64 -A -d >./mobile/android/app/prod-upload.keystore
-          ./mobile/android/gradlew -p ./mobile/android/ app:assembleRelease app:assembleGoogle app:bundleRelease app:bundleGoogle
+          ./mobile/android/gradlew -p ./mobile/android/ app:assembleRelease app:bundleGoogle
 
           # Prepare package
           BUILD_OUTPUT=./mobile/android/app/build/outputs

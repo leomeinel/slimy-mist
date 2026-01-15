@@ -286,7 +286,8 @@ jobs:
           mv "${OUTPUT}" "${tmpfile}"
           ./binaryen-version_125/bin/wasm-opt -Os -o "${OUTPUT}" "${tmpfile}" --enable-bulk-memory-opt --enable-nontrapping-float-to-int
 
-          cargo binstall --locked --no-confirm --force wasm-bindgen-cli
+          # FIXME: Do not use locked version after upgrade to bevy 0.18
+          cargo binstall --version 0.2.106 --locked --no-confirm --force wasm-bindgen-cli
           wasm-bindgen --no-typescript --out-name bevy_game --out-dir ./web --target web "${OUTPUT}"
           mv ./web/* '${{ env.app }}'
 

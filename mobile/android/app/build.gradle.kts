@@ -73,9 +73,11 @@ android {
     buildTypes {
         getByName("release") {
             // https://developer.android.com/topic/performance/app-optimization/enable-app-optimization
-            // FIXME: Enable this after having configured proguard correctly.
+            // FIXME: Enable the following two after having configured proguard properly.
+            //        This is due to the following crash and resulting error:
+            //        Abort message: 'RegisterNatives failed for 'com/google/androidgamesdk/GameActivity'; aborting...'
             isMinifyEnabled = false
-            isShrinkResources = true
+            isShrinkResources = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

@@ -73,7 +73,8 @@ android {
     buildTypes {
         getByName("release") {
             // https://developer.android.com/topic/performance/app-optimization/enable-app-optimization
-            isMinifyEnabled = true
+            // FIXME: Enable this after having configured proguard correctly.
+            isMinifyEnabled = false
             isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

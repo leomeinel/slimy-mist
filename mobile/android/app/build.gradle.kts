@@ -24,7 +24,7 @@ java {
 
 android {
     namespace = "dev.meinel.slimymist"
-    compileSdk = 34
+    compileSdk = 36
 
     // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/dsl/SigningConfig
     signingConfigs {
@@ -45,7 +45,7 @@ android {
     defaultConfig {
         applicationId = "dev.meinel.slimymist"
         minSdk = 31
-        targetSdk = 33
+        targetSdk = 36
         // NOTE: Increase by 1 on each release
         versionCode = 1
         // NOTE: Update with full semantic version on each release

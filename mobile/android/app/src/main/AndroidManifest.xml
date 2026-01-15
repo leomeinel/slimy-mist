@@ -3,7 +3,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:tools="http://schemas.android.com/tools">
 
-  <application android:allowBackup="true" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:label="Slimy Mist" android:theme="@style/Theme.AppCompat.NoActionBar" tools:targetApi="33">
+  <application android:allowBackup="true" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:label="Slimy Mist" android:theme="@style/Theme.AppCompat.NoActionBar" tools:targetApi="36">
     <activity android:name=".MainActivity" android:exported="true" android:configChanges="layoutDirection|locale|orientation|keyboardHidden|screenSize|smallestScreenSize|density|keyboard|navigation|screenLayout|uiMode" android:theme="@style/Theme.AppCompat.NoActionBar">
       <meta-data android:name="android.app.lib_name" android:value="slimy_mist" />
       <intent-filter>

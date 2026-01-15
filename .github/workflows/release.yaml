@@ -110,6 +110,7 @@ jobs:
   # Build and package a release for each platform.
   build:
     needs:
+      - forward-env
       - get-version
     env:
       version: ${{ needs.get-version.outputs.version }}

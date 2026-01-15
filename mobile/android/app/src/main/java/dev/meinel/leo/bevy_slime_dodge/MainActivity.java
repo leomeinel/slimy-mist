@@ -13,8 +13,9 @@
 
 package dev.meinel.slimymist;
 
-import android.view.View;
-
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import com.google.androidgamesdk.GameActivity;
 
 /**

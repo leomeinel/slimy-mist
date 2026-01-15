@@ -337,30 +337,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy-slime-dodge"
-version = "0.11.2"
-dependencies = [
- "bevy",
- "bevy_asset_loader",
- "bevy_common_assets",
- "bevy_ecs_tilemap",
- "bevy_enhanced_input",
- "bevy_enoki",
- "bevy_light_2d",
- "bevy_prng",
- "bevy_rand",
- "bevy_rapier2d",
- "bevy_spritesheet_animation",
- "iyes_progress",
- "ordered-float 5.1.0",
- "polyanya",
- "rand",
- "serde",
- "tracing",
- "vleue_navigator",
-]
-
-[[package]]
 name = "bevy_a11y"
 version = "0.17.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5024,6 +5000,30 @@ name = "slab"
 version = "0.4.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a2ae44ef20feb57a68b23d846850f861394c2e02dc425a50098ae8c90267589"
+
+[[package]]
+name = "slimy-mist"
+version = "0.11.2"
+dependencies = [
+ "bevy",
+ "bevy_asset_loader",
+ "bevy_common_assets",
+ "bevy_ecs_tilemap",
+ "bevy_enhanced_input",
+ "bevy_enoki",
+ "bevy_light_2d",
+ "bevy_prng",
+ "bevy_rand",
+ "bevy_rapier2d",
+ "bevy_spritesheet_animation",
+ "iyes_progress",
+ "ordered-float 5.1.0",
+ "polyanya",
+ "rand",
+ "serde",
+ "tracing",
+ "vleue_navigator",
+]
 
 [[package]]
 name = "slotmap"

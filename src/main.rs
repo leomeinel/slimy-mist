@@ -11,5 +11,5 @@ use bevy::prelude::*;
 
 /// Main function for binary
 fn main() -> AppExit {
-    bevy_slime_dodge::main()
+    slimy_mist::main()
 }

@@ -36,5 +36,5 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
-rootProject.name = "bevy-slime-dodge"
+rootProject.name = "slimy-mist"
 include(":app")

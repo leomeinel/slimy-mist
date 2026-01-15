@@ -23,7 +23,7 @@ java {
 
 
 android {
-    namespace = "dev.meinel.leo.bevy_slime_dodge"
+    namespace = "dev.meinel.slimymist"
     compileSdk = 34
 
     // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/dsl/SigningConfig
@@ -43,12 +43,13 @@ android {
     }
     // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/dsl/DefaultConfig
     defaultConfig {
-        applicationId = "dev.meinel.leo.bevy_slime_dodge"
+        applicationId = "dev.meinel.slimymist"
         minSdk = 31
         targetSdk = 33
+        // NOTE: Increase by 1 on each release
         versionCode = 1
-        versionName = "1.0"
-        setProperty("archivesBaseName", "bevy-slime-dodge")
+        // NOTE: Update with full semantic version on each release
+        versionName = "0.11.2"
         // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/variant/ExternalNativeBuild
         // NOTE: We need this, otherwise libc++_shared.so will not be inserted
         externalNativeBuild {

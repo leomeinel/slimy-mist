@@ -1,8 +1,8 @@
-# Bevy - Slime Dodge
+# Slimy Mist
 
 This is a learning project.
 
-You can play the game [here](https://leomeinel.github.io/bevy-slime-dodge) or download a [release](https://github.com/leomeinel/bevy-slime-dodge/releases).
+You can play the game [here](https://leomeinel.github.io/slimy-mist) or download a [release](https://github.com/leomeinel/slimy-mist/releases).
 
 ## Mixed license
 

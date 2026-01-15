@@ -1,19 +1,20 @@
 # Heavily inspired by: https://github.com/TheBevyFlock/bevy_new_2d
 
 [package]
-name = "bevy-slime-dodge"
+name = "slimy-mist"
+# Update with full semantic version on each release
 version = "0.11.2"
 edition = "2024"
 license = "Apache-2.0"
 
 # NOTE: lib.rs is required for mobile
 [lib]
-name = "bevy_slime_dodge"
+name = "slimy_mist"
 crate-type = ["lib", "cdylib"]
 path = "src/lib.rs"
 
 [[bin]]
-name = "bevy-slime-dodge"
+name = "slimy-mist"
 path = "src/main.rs"
 doc = false
 

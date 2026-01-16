@@ -29,6 +29,7 @@ mod mobile;
 mod procgen;
 mod screens;
 mod theme;
+mod utils;
 mod visual;
 
 #[cfg(not(any(target_os = "android", target_os = "ios")))]

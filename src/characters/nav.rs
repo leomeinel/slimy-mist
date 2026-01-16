@@ -88,7 +88,7 @@ fn find_path<T>(
 {
     let (navmesh_handle, status) = navmesh.deref();
     // Return if navmesh is not built
-    if **status != NavMeshStatus::Built && *delta == 0.0 {
+    if **status != NavMeshStatus::Built && *delta == 0. {
         return;
     }
     let navmesh = navmeshes
@@ -164,7 +164,7 @@ fn refresh_path<T>(
 
     let (navmesh_handle, status) = navmesh.deref();
     // Return if navmesh is not built
-    if **status != NavMeshStatus::Built && *delta == 0.0 {
+    if **status != NavMeshStatus::Built && *delta == 0. {
         return;
     }
     let navmesh = navmeshes

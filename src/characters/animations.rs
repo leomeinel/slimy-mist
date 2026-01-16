@@ -41,6 +41,7 @@ use crate::{
         warn::{WARN_INCOMPLETE_ANIMATION_DATA, WARN_INCOMPLETE_ASSET_DATA},
     },
     screens::Screen,
+    utils::math::ApproxEq,
     visual::{TextureInfoCache, Visible},
 };
 
@@ -406,7 +407,7 @@ pub(crate) fn update_animations<T>(
 
         // Sprite flipping
         let direction = movement.direction;
-        if direction.x != 0. {
+        if !direction.x.is_near_zero(0.1) {
             sprite.flip_x = direction.x < 0.;
         }
 

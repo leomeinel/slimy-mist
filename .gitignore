@@ -337,3 +337,4 @@ gradle-app.setting
 **/.idea
 local.properties
 **/Debug
+/mobile/android/app/.cxx/

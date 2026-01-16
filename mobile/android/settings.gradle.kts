@@ -7,7 +7,7 @@
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  * -----
  * - https://kotlinlang.org/docs/gradle.html
- * - https://github.com/bevyengine/bevy/tree/main/examples/mobile/android_example
+ * - https://github.com/bevyengine/bevy/tree/main/examples/mobile
  */
 
 pluginManagement {

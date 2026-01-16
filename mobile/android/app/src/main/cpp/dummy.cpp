@@ -7,7 +7,7 @@
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  * -----
  * Heavily inspired by:
- * https://github.com/bevyengine/bevy/tree/main/examples/mobile/android_example
+ * https://github.com/bevyengine/bevy/tree/main/examples/mobile
  */
 
 // Intentionally blank -- this is a dummy code!

@@ -1,4 +1,4 @@
-# Heavily inspired by: https://github.com/bevyengine/bevy/tree/main/examples/mobile/android_example
+# Heavily inspired by: https://github.com/bevyengine/bevy/tree/main/examples/mobile
 
 # This is part of a hack to convince gradle to insert libc++_shared.so
 cmake_minimum_required(VERSION 3.4.1)

@@ -40,6 +40,9 @@ pub(super) fn plugin(app: &mut App) {
 
     // Tick timers
     app.add_systems(Update, tick_jump_timer.in_set(AppSystems::TickTimers));
+
+    // Update movement facing
+    app.add_systems(PostUpdate, update_movement_facing);
 }
 
 /// Jumping duration in seconds
@@ -237,6 +240,16 @@ pub(crate) fn character_collider(
         "capsule_x" => Collider::capsule_x((height - width) / 2., height / 2.),
         "capsule_y" => Collider::capsule_y((width - height) / 2., width / 2.),
         _ => Collider::cuboid(width / 2., height / 2.),
+    }
+}
+
+/// Update [`Movement::facing`] from [`Movement::direction`]
+fn update_movement_facing(query: Query<&mut Movement>) {
+    for mut movement in query {
+        let direction = movement.direction.normalize_or_zero();
+        if direction != Vec2::ZERO {
+            movement.facing = direction;
+        }
     }
 }
 

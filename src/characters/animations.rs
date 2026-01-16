@@ -378,7 +378,7 @@ pub(crate) fn tick_animation_timer(mut query: Query<&mut AnimationTimer>, time: 
 ///
 /// - `T` must implement [`Character`].
 pub(crate) fn update_animations<T>(
-    parent_query: Query<(Entity, &mut Movement), With<T>>,
+    parent_query: Query<(Entity, &Movement), With<T>>,
     mut child_query: Query<
         (
             &mut AnimationController,
@@ -393,7 +393,7 @@ pub(crate) fn update_animations<T>(
 ) where
     T: Character,
 {
-    for (entity, mut movement) in parent_query {
+    for (entity, movement) in parent_query {
         // Extract `animation_controller` from `child_query`
         let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
         let (mut controller, mut sprite, mut animation, timer) =
@@ -404,12 +404,8 @@ pub(crate) fn update_animations<T>(
             animation.reset();
         }
 
-        // Store facing direction
-        let direction = movement.direction.normalize_or_zero();
-        if direction != Vec2::ZERO {
-            movement.facing = direction;
-        }
         // Sprite flipping
+        let direction = movement.direction;
         if direction.x != 0. {
             sprite.flip_x = direction.x < 0.;
         }

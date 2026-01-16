@@ -32,6 +32,7 @@ bevy_ecs_tilemap = "0.17.0"
 #        Also see: https://github.com/Lommix/bevy_enoki/issues/34
 bevy_enoki = { git = "https://github.com/leomeinel/bevy_enoki.git", branch = "update-dependencies" }
 bevy_enhanced_input = "0.20.1"
+bevy_light_2d = "0.8.0"
 bevy_prng = { version = "0.12.1", features = ["rand_chacha", "wyrand"] }
 bevy_rand = "0.12.1"
 bevy_rapier2d = "0.32.0"
@@ -60,11 +61,6 @@ bevy_rand = { version = "0.12.1", features = ["wasm_js"] }
 bevy = { version = "0.17.3", features = ["webp"] }
 [target.'cfg(target_os = "linux")'.dependencies]
 bevy = { version = "0.17.3", features = ["wayland", "webp", "x11"] }
-
-# FIXME: This is currently not supported on android.
-#        Also see: https://github.com/jgayfer/bevy_light_2d/issues/59
-[target.'cfg(not(target_os = "android"))'.dependencies]
-bevy_light_2d = "0.8.0"
 
 [features]
 # Default to a native dev build.

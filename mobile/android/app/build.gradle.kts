@@ -12,15 +12,15 @@
 
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
 }
 
-// Apply a specific Java toolchain to ease working on different environments.
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+kotlin {
+    compilerOptions {
+        languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_3
+        jvmToolchain(17)
     }
 }
-
 
 android {
     namespace = "dev.meinel.slimymist"
@@ -52,6 +52,7 @@ android {
         versionName = "0.11.10"
         // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/variant/ExternalNativeBuild
         // NOTE: We need this, otherwise libc++_shared.so will not be inserted
+        @Suppress("UnstableApiUsage")
         externalNativeBuild {
             cmake {
                 arguments("-DANDROID_STL=c++_shared")
@@ -108,7 +109,7 @@ android {
                 srcDir("../../../assets")
             }
             res {
-                srcDir("../../../assets/android-res")
+                srcDir("../res")
             }
         }
     }
@@ -119,4 +120,5 @@ dependencies {
     implementation(libs.core)
     implementation(libs.material)
     implementation(libs.games.activity)
+    implementation(libs.core.ktx)
 }

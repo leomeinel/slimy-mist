@@ -49,7 +49,7 @@ android {
         // NOTE: Increase by 1 on each release after publishing
         versionCode = 1
         // NOTE: Update with full semantic version on each release
-        versionName = "0.11.7"
+        versionName = "0.11.8"
         // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/variant/ExternalNativeBuild
         // NOTE: We need this, otherwise libc++_shared.so will not be inserted
         externalNativeBuild {

@@ -31,7 +31,9 @@ mod screens;
 mod theme;
 mod visual;
 
-use bevy::{asset::AssetMetaCheck, prelude::*};
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+use bevy::asset::AssetMetaCheck;
+use bevy::prelude::*;
 use bevy_ecs_tilemap::TilemapPlugin;
 use bevy_light_2d::prelude::*;
 use bevy_prng::WyRand;

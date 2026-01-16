@@ -108,9 +108,6 @@ android {
             assets {
                 srcDir("../../../assets")
             }
-            res {
-                srcDir("../res")
-            }
         }
     }
 }

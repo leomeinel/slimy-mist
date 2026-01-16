@@ -57,7 +57,6 @@ pub struct AppPlugin;
 impl Plugin for AppPlugin {
     fn build(&self, app: &mut App) {
         // Add bevy plugins
-        #[cfg(not(any(target_os = "android", target_os = "ios")))]
         app.add_plugins(
             DefaultPlugins
                 .set(AssetPlugin {

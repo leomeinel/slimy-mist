@@ -1,7 +1,7 @@
 # Heavily inspired by: https://github.com/TheBevyFlock/bevy_new_2d
 
 [package]
-name = "slimy-mist"
+name = "slimy_mist"
 # NOTE: Update with full semantic version on each release
 version = "0.11.6"
 edition = "2024"
@@ -14,7 +14,7 @@ crate-type = ["lib", "cdylib"]
 path = "src/lib.rs"
 
 [[bin]]
-name = "slimy-mist"
+name = "slimymist"
 path = "src/main.rs"
 doc = false
 

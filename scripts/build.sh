@@ -13,7 +13,7 @@ set -e
 
 # Set env variables
 SCRIPT_DIR="$(dirname -- "$(readlink -f -- "${0}")")"
-BINARY_NAME="slimy-mist"
+BINARY_NAME="slimymist"
 
 # Build specific build for given argument
 if [[ -z "${1}" ]]; then

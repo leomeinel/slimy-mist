@@ -13,7 +13,7 @@ set -e
 
 # Set env variables
 SCRIPT_DIR="$(dirname -- "$(readlink -f -- "${0}")")"
-BINARY_NAME="slimy-mist"
+BINARY_NAME="slimymist"
 
 # Define functions
 run_web() {

@@ -31,7 +31,7 @@ env:
   deny_warnings: false
 
   # The base filename of the binary produced by `cargo build`.
-  cargo_build_binary_name: slimy-mist
+  cargo_build_binary_name: slimymist
 
   # The path to the assets directory.
   assets_path: assets

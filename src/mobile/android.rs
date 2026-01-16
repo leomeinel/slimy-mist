@@ -6,7 +6,7 @@
  * SPDX ID: Apache-2.0
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  * -----
- * Heavily inspired by: https://github.com/bevyengine/bevy/tree/main/examples/mobile/android_example
+ * Heavily inspired by: https://github.com/bevyengine/bevy/tree/main/examples/mobile
  */
 
 use bevy::{prelude::*, window::AppLifecycle};

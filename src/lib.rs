@@ -16,8 +16,6 @@
 // Disable console on Windows for non-dev builds.
 #![cfg_attr(not(feature = "dev"), windows_subsystem = "windows")]
 
-#[cfg(target_os = "android")]
-mod android;
 mod audio;
 mod camera;
 mod characters;
@@ -26,6 +24,8 @@ mod dev_tools;
 mod levels;
 mod logging;
 mod menus;
+#[cfg(any(target_os = "android", target_os = "ios"))]
+mod mobile;
 mod procgen;
 mod screens;
 mod theme;
@@ -51,24 +51,27 @@ pub struct AppPlugin;
 impl Plugin for AppPlugin {
     fn build(&self, app: &mut App) {
         // Add bevy plugins
-        app.add_plugins((DefaultPlugins
-            .set(AssetPlugin {
-                // Wasm builds will check for meta files (that don't exist) if this isn't set.
-                // This causes errors and even panics on web build on itch.
-                // See https://github.com/bevyengine/bevy_github_ci_template/issues/48.
-                meta_check: AssetMetaCheck::Never,
-                ..default()
-            })
-            .set(WindowPlugin {
-                primary_window: Window {
-                    title: "Slimy Mist".to_string(),
-                    fit_canvas_to_parent: true,
+        #[cfg(not(any(target_os = "android", target_os = "ios")))]
+        app.add_plugins(
+            DefaultPlugins
+                .set(AssetPlugin {
+                    // Wasm builds will check for meta files (that don't exist) if this isn't set.
+                    // This causes errors and even panics on web build on itch.
+                    // See https://github.com/bevyengine/bevy_github_ci_template/issues/48.
+                    meta_check: AssetMetaCheck::Never,
                     ..default()
-                }
-                .into(),
-                ..default()
-            })
-            .set(ImagePlugin::default_nearest()),));
+                })
+                .set(WindowPlugin {
+                    primary_window: Window {
+                        title: "Slimy Mist".to_string(),
+                        fit_canvas_to_parent: true,
+                        ..default()
+                    }
+                    .into(),
+                    ..default()
+                })
+                .set(ImagePlugin::default_nearest()),
+        );
 
         // Add library plugins
         app.add_plugins((
@@ -80,16 +83,16 @@ impl Plugin for AppPlugin {
 
         // Add other plugins.
         app.add_plugins((
-            #[cfg(target_os = "android")]
-            android::plugin,
             audio::plugin,
             camera::plugin,
             characters::plugin,
-            procgen::plugin,
             #[cfg(feature = "dev")]
             dev_tools::plugin,
             levels::plugin,
             menus::plugin,
+            #[cfg(any(target_os = "android", target_os = "ios"))]
+            mobile::plugin,
+            procgen::plugin,
             screens::plugin,
             theme::plugin,
             visual::plugin,

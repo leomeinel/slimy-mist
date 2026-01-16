@@ -32,9 +32,9 @@ fn handle_lifetime(
 ) {
     for app_lifecycle in app_lifecycle_reader.read() {
         match app_lifecycle {
-            AppLifecycle::Idle | AppLifecycle::WillSuspend | AppLifecycle::WillResume => {}
             AppLifecycle::Suspended => music_controller.pause(),
             AppLifecycle::Running => music_controller.play(),
+            AppLifecycle::Idle | AppLifecycle::WillSuspend | AppLifecycle::WillResume => (),
         }
     }
 }

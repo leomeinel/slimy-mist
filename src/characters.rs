@@ -26,6 +26,8 @@ use crate::{
     AppSystems,
     characters::animations::{AnimationController, AnimationTimer, Animations},
     logging::warn::WARN_INCOMPLETE_COLLISION_DATA_FALLBACK,
+    screens::Screen,
+    utils::math::ApproxEq,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -42,7 +44,10 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(Update, tick_jump_timer.in_set(AppSystems::TickTimers));
 
     // Update movement facing
-    app.add_systems(PostUpdate, update_movement_facing);
+    app.add_systems(
+        PostUpdate,
+        update_movement_facing.run_if(in_state(Screen::Gameplay)),
+    );
 }
 
 /// Jumping duration in seconds
@@ -177,6 +182,7 @@ where
 #[derive(Component)]
 pub(crate) struct Movement {
     pub(crate) direction: Vec2,
+    old_direction: Vec2,
     pub(crate) facing: Vec2,
     jump_height: f32,
 }
@@ -184,6 +190,7 @@ impl Default for Movement {
     fn default() -> Self {
         Self {
             direction: Vec2::default(),
+            old_direction: Vec2::default(),
             facing: Vec2::X,
             jump_height: f32::default(),
         }
@@ -212,7 +219,7 @@ impl Default for JumpTimer {
     }
 }
 
-/// Health that determines death of a [`Character`] in combat.
+/// Health that determines if a [`Character`] is living.
 #[derive(Component, Default)]
 pub(crate) struct Health(f32);
 
@@ -243,13 +250,18 @@ pub(crate) fn character_collider(
     }
 }
 
-/// Update [`Movement::facing`] from [`Movement::direction`]
-fn update_movement_facing(query: Query<&mut Movement>) {
-    for mut movement in query {
-        let direction = movement.direction.normalize_or_zero();
-        if direction != Vec2::ZERO {
-            movement.facing = direction;
+/// Update [`Movement::facing`] from [`Movement::direction`].
+///
+/// This will only set a new [`Movement::facing`] if effective_translation is not near zero.
+/// This also sets a new [`Movement::old_direction`] from [`Movement::direction`].
+fn update_movement_facing(query: Query<(&mut Movement, &KinematicCharacterControllerOutput)>) {
+    for (mut movement, output) in query {
+        if movement.direction != movement.old_direction
+            && !output.effective_translation.is_near_zero(0.1)
+        {
+            movement.facing = movement.direction.normalize_or_zero();
         }
+        movement.old_direction = movement.direction;
     }
 }
 

@@ -10,6 +10,9 @@
 pub(crate) mod ysort;
 
 use bevy::{color::palettes::tailwind, prelude::*, window::WindowResized};
+// FIXME: This is currently not supported on android.
+//        Also see: https://github.com/jgayfer/bevy_light_2d/issues/59
+#[cfg(not(target_os = "android"))]
 use bevy_light_2d::prelude::*;
 
 use crate::{AppSystems, PausableSystems, characters::player::Player, screens::Screen};
@@ -72,6 +75,9 @@ fn spawn_camera(mut commands: Commands) {
         Camera2d,
         Msaa::Off,
         CanvasCamera,
+        // FIXME: This is currently not supported on android.
+        //        Also see: https://github.com/jgayfer/bevy_light_2d/issues/59
+        #[cfg(not(target_os = "android"))]
         Light2d {
             ambient_light: AmbientLight2d {
                 color: AMBIENT_LIGHT_COLOR.into(),

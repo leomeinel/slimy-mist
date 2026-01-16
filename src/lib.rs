@@ -36,6 +36,9 @@ mod visual;
 use bevy::asset::AssetMetaCheck;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::TilemapPlugin;
+// FIXME: This is currently not supported on android.
+//        Also see: https://github.com/jgayfer/bevy_light_2d/issues/59
+#[cfg(not(target_os = "android"))]
 use bevy_light_2d::prelude::*;
 use bevy_prng::WyRand;
 use bevy_rand::plugin::EntropyPlugin;
@@ -79,6 +82,9 @@ impl Plugin for AppPlugin {
         // Add library plugins
         app.add_plugins((
             EntropyPlugin::<WyRand>::default(),
+            // FIXME: This is currently not supported on android.
+            //        Also see: https://github.com/jgayfer/bevy_light_2d/issues/59
+            #[cfg(not(target_os = "android"))]
             Light2dPlugin,
             RapierPhysicsPlugin::<()>::default(),
             TilemapPlugin,

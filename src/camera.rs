@@ -65,7 +65,10 @@ pub(crate) fn center_camera_on_player(
     camera.translation = target_pos;
 }
 
+// FIXME: This is currently not supported on android.
+//        Also see: https://github.com/jgayfer/bevy_light_2d/issues/59
 /// Color for the ambient light: rgb(254, 243, 199)
+#[cfg(not(target_os = "android"))]
 const AMBIENT_LIGHT_COLOR: Srgba = tailwind::AMBER_100;
 
 /// Spawn [`Camera2d`]

@@ -90,43 +90,37 @@ fn apply_melee<T>(
         return;
     };
 
-    let entity = event.0;
-    let (transform, movement, controller) = origin_query.get(entity).expect(ERR_INVALID_ATTACKER);
+    let origin = event.0;
+    let (transform, movement, controller) = origin_query.get(origin).expect(ERR_INVALID_ATTACKER);
     let Some(melee) = &controller.melee else {
         warn_once!(WARN_INVALID_ATTACK);
         return;
     };
 
-    // Store positional information on attack origin
-    let facing = if movement.facing == Vec2::ZERO {
-        Vec2::X
-    } else {
-        movement.facing
-    };
-    let pos = transform.translation.xy();
-
     // Cast ray to determine boundary of `Collider`
     // NOTE: We have to add an offset to max_toi to ensure that the ray reaches the boundary.
     let max_toi = (width / 2.).max(height / 2.) + 1.;
     // Filter for `entity` itself
-    let filter = &|e| e == entity;
+    let filter = &|e| e == origin;
     let filter = QueryFilter::exclude_dynamic()
         .exclude_sensors()
         .predicate(filter);
-    let Some((_, extent)) = rapier_context.cast_ray(pos, facing, max_toi, false, filter) else {
+    let pos: Vec2 = transform.translation.xy();
+    let Some((_, extent)) = rapier_context.cast_ray(pos, movement.facing, max_toi, false, filter)
+    else {
         return;
     };
 
     // Collect all entities within out attack range
     let shape_half_size = Vec2::new(melee.range.0.into_inner(), melee.range.1.into_inner()) / 2.;
     let offset = extent + shape_half_size.x;
-    let shape_pos = pos + facing * offset;
-    let shape_rot = facing.to_angle();
+    let shape_pos = pos + movement.facing * offset;
+    let shape_rot = movement.facing.to_angle();
     let shape = shape::Cuboid::new(shape_half_size.into());
     // Filter for anything that is not `entity`
     let filter = QueryFilter::exclude_dynamic()
         .exclude_sensors()
-        .exclude_rigid_body(entity);
+        .exclude_rigid_body(origin);
     let mut targets = Vec::new();
     rapier_context.intersect_shape(shape_pos, shape_rot, &shape, filter, |e| {
         if target_query.contains(e) {
@@ -135,8 +129,29 @@ fn apply_melee<T>(
         true
     });
 
-    // Apply `damage` and despawn entity if it is dead.
+    // Apply attack
     let damage = controller.damage_factor * melee.damage.into_inner();
+    let cooldown_secs = melee.cooldown_secs.into_inner();
+    apply_attack(
+        &mut target_query,
+        &mut commands,
+        origin,
+        targets,
+        damage,
+        cooldown_secs,
+    );
+}
+
+/// Apply damage to [`Health`], handle despawning and insert [`AttackTimer`].
+fn apply_attack(
+    target_query: &mut Query<&mut Health>,
+    commands: &mut Commands,
+    origin: Entity,
+    targets: Vec<Entity>,
+    damage: f32,
+    cooldown_secs: f32,
+) {
+    // Apply damage to health and handle despawning.
     for entity in targets {
         let Ok(mut health) = target_query.get_mut(entity) else {
             continue;
@@ -147,11 +162,11 @@ fn apply_melee<T>(
         }
     }
 
-    // Insert `AttackTimer`
+    // Insert `AttackTimer`.
     commands
-        .entity(entity)
+        .entity(origin)
         .insert(AttackTimer(Timer::from_seconds(
-            melee.cooldown_secs.into_inner(),
+            cooldown_secs,
             TimerMode::Once,
         )));
 }

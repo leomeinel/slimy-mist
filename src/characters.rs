@@ -171,11 +171,20 @@ where
 }
 
 /// Current data about movement
-#[derive(Component, Default)]
+#[derive(Component)]
 pub(crate) struct Movement {
     pub(crate) direction: Vec2,
     pub(crate) facing: Vec2,
     jump_height: f32,
+}
+impl Default for Movement {
+    fn default() -> Self {
+        Self {
+            direction: Vec2::default(),
+            facing: Vec2::X,
+            jump_height: f32::default(),
+        }
+    }
 }
 
 /// Current data about movement

@@ -32,9 +32,12 @@ mod theme;
 mod utils;
 mod visual;
 
-#[cfg(not(any(target_os = "android", target_os = "ios")))]
 use bevy::asset::AssetMetaCheck;
 use bevy::prelude::*;
+#[cfg(target_os = "ios")]
+use bevy::window::ScreenEdge;
+#[cfg(any(target_os = "android", target_os = "ios"))]
+use bevy::window::WindowMode;
 use bevy_ecs_tilemap::TilemapPlugin;
 use bevy_light_2d::prelude::*;
 use bevy_prng::WyRand;
@@ -68,6 +71,20 @@ impl Plugin for AppPlugin {
                     primary_window: Window {
                         title: "Slimy Mist".to_string(),
                         fit_canvas_to_parent: true,
+                        // android/ios only
+                        #[cfg(any(target_os = "android", target_os = "ios"))]
+                        resizable: false,
+                        #[cfg(any(target_os = "android", target_os = "ios"))]
+                        mode: WindowMode::BorderlessFullscreen(MonitorSelection::Primary),
+                        // ios only
+                        #[cfg(target_os = "ios")]
+                        recognize_rotation_gesture: true,
+                        #[cfg(target_os = "ios")]
+                        prefers_home_indicator_hidden: true,
+                        #[cfg(target_os = "ios")]
+                        prefers_status_bar_hidden: true,
+                        #[cfg(target_os = "ios")]
+                        preferred_screen_edges_deferring_system_gestures: ScreenEdge::Bottom,
                         ..default()
                     }
                     .into(),

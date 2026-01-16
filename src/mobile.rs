@@ -12,33 +12,9 @@
 #[cfg(target_os = "android")]
 mod android;
 
-use bevy::{
-    prelude::*,
-    window::{ScreenEdge, WindowMode},
-    winit::WinitSettings,
-};
+use bevy::{prelude::*, winit::WinitSettings};
 
 pub(super) fn plugin(app: &mut App) {
-    // Add bevy plugins
-    app.add_plugins(
-        DefaultPlugins
-            .set(WindowPlugin {
-                primary_window: Window {
-                    title: "Slimy Mist".to_string(),
-                    resizable: false,
-                    mode: WindowMode::BorderlessFullscreen(MonitorSelection::Primary),
-                    recognize_rotation_gesture: true,
-                    prefers_home_indicator_hidden: true,
-                    prefers_status_bar_hidden: true,
-                    preferred_screen_edges_deferring_system_gestures: ScreenEdge::Bottom,
-                    ..default()
-                }
-                .into(),
-                ..default()
-            })
-            .set(ImagePlugin::default_nearest()),
-    );
-
     // Add child plugins
     #[cfg(target_os = "android")]
     app.add_plugins(android::plugin);

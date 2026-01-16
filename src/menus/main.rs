@@ -2,7 +2,7 @@
  * File: main.rs
  * Author: Leopold Johannes Meinel (leo@meinel.dev)
  * -----
- * Copyright (c) 2025 Leopold Johannes Meinel & contributors
+ * Copyright (c) 2026 Leopold Johannes Meinel & contributors
  * SPDX ID: Apache-2.0
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  * -----
@@ -26,15 +26,15 @@ fn spawn_main_menu(mut commands: Commands) {
         widgets::common::ui_root("Main Menu"),
         GlobalZIndex(2),
         DespawnOnExit(Menu::Main),
-        #[cfg(not(target_family = "wasm"))]
+        #[cfg(not(any(target_family = "wasm", target_os = "android", target_os = "ios")))]
         children![
             widgets::common::button("Play", enter_gameplay_screen),
             widgets::common::button("Settings", open_settings_menu),
             widgets::common::button("Credits", open_credits_menu),
             widgets::common::button("Exit", exit_app),
         ],
-        // Do not add exit button for wasm
-        #[cfg(target_family = "wasm")]
+        // Do not add exit button for wasm, android and ios
+        #[cfg(any(target_family = "wasm", target_os = "android", target_os = "ios"))]
         children![
             widgets::common::button("Play", enter_gameplay_screen),
             widgets::common::button("Settings", open_settings_menu),
@@ -59,7 +59,7 @@ fn open_credits_menu(_: On<Pointer<Click>>, mut next_state: ResMut<NextState<Men
 }
 
 /// Exit the app
-#[cfg(not(target_family = "wasm"))]
+#[cfg(not(any(target_family = "wasm", target_os = "android", target_os = "ios")))]
 fn exit_app(_: On<Pointer<Click>>, mut app_exit_msg: MessageWriter<AppExit>) {
     app_exit_msg.write(AppExit::Success);
 }

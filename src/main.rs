@@ -10,6 +10,7 @@
 use bevy::prelude::*;
 
 /// Main function for binary
+#[bevy_main]
 fn main() -> AppExit {
     slimy_mist::main()
 }

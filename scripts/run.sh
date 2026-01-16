@@ -3,7 +3,7 @@
 # File: run.sh
 # Author: Leopold Johannes Meinel (leo@meinel.dev)
 # -----
-# Copyright (c) 2025 Leopold Johannes Meinel & contributors
+# Copyright (c) 2026 Leopold Johannes Meinel & contributors
 # SPDX ID: Apache-2.0
 # URL: https://www.apache.org/licenses/LICENSE-2.0
 ###
@@ -11,8 +11,9 @@
 # Fail on error
 set -e
 
-# Set ${SCRIPT_DIR}
+# Set env variables
 SCRIPT_DIR="$(dirname -- "$(readlink -f -- "${0}")")"
+BINARY_NAME="slimy-mist"
 
 # Define functions
 run_web() {
@@ -34,7 +35,7 @@ run_web() {
 
 # Run specific build for given argument
 if [[ -z "${1}" ]]; then
-    cargo run --no-default-features --release
+    cargo run --bin "${BINARY_NAME}" --no-default-features --release
 elif [[ "${1}" == "web" ]]; then
     "${SCRIPT_DIR}"/build.sh "${1}"
     run_web "${1}"
@@ -43,8 +44,8 @@ elif [[ "${1}" == "web-dev" ]]; then
     run_web "${1}"
 else
     if command -v mangohud >/dev/null 2>&1; then
-        mangohud cargo run
+        mangohud cargo run --bin "${BINARY_NAME}"
     else
-        cargo run
+        cargo run --bin "${BINARY_NAME}"
     fi
 fi

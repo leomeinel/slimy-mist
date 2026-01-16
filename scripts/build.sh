@@ -11,15 +11,16 @@
 # Fail on error
 set -e
 
-# Set ${SCRIPT_DIR}
+# Set env variables
 SCRIPT_DIR="$(dirname -- "$(readlink -f -- "${0}")")"
+BINARY_NAME="slimy-mist"
 
 # Build specific build for given argument
 if [[ -z "${1}" ]]; then
-    cargo build --no-default-features --release
+    cargo build --bin "${BINARY_NAME}" --no-default-features --release
 elif [[ "${1}" == "web" ]]; then
     rustup target add wasm32-unknown-unknown
-    cargo build --no-default-features --target wasm32-unknown-unknown --profile web-release
+    cargo build --bin "${BINARY_NAME}" --no-default-features --target wasm32-unknown-unknown --profile web-release
     ## Optimize binary
     PACKAGE_NAME="$(tomlq -r '.package.name' "${SCRIPT_DIR}"/../Cargo.toml)"
     OUTPUT="${SCRIPT_DIR}"/../target/wasm32-unknown-unknown/web-release/"${PACKAGE_NAME}".wasm
@@ -29,7 +30,7 @@ elif [[ "${1}" == "web" ]]; then
     rm -f "${tmpfile}"
 elif [[ "${1}" == "web-dev" ]]; then
     rustup target add wasm32-unknown-unknown
-    cargo build --no-default-features --features dev --target wasm32-unknown-unknown --profile web-dev
+    cargo build --bin "${BINARY_NAME}" --no-default-features --features dev --target wasm32-unknown-unknown --profile web-dev
 else
-    cargo build
+    cargo build --bin "${BINARY_NAME}"
 fi

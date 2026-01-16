@@ -4,7 +4,11 @@
 agp = "8.13.2"
 appcompat = "1.7.1"
 core = "1.17.0"
-gamesActivity = "4.0.0"
+# FIXME: This is now 4.0.0, but android-activity 0.6.0 is only compatible with major version 2.
+#        Also see:
+#        - https://github.com/rust-mobile/android-activity/discussions/208
+#        - https://github.com/rust-mobile/android-activity/issues/210
+gamesActivity = "2.0.2"
 material = "1.13.0"
 
 [libraries]

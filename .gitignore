@@ -334,3 +334,4 @@ gradle-app.setting
 /scripts/drawables/*
 !/scripts/drawables/*.webp
 /scripts/.keystores
+/.idea

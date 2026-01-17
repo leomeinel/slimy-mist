@@ -19,6 +19,8 @@ use bevy_asset_loader::prelude::*;
 use bevy_common_assets::ron::RonAssetPlugin;
 use iyes_progress::ProgressPlugin;
 
+#[cfg(any(target_os = "android", target_os = "ios"))]
+use crate::mobile::JoystickAssets;
 use crate::{
     characters::{
         Character, CollisionData, CollisionDataCache, CollisionHandle,
@@ -56,24 +58,25 @@ pub(super) fn plugin(app: &mut App) {
     ));
 
     // Add loading states via bevy_asset_loader
-    app.add_loading_state(
-        LoadingState::new(Screen::Loading)
-            .load_collection::<InteractionAssets>()
-            .load_collection::<SplashAssets>()
-            .load_collection::<CreditsAssets>()
-            .with_dynamic_assets_file::<StandardDynamicAssetCollection>(
-                "data/levels/overworld.assets.ron",
-            )
-            .load_collection::<OverworldAssets>()
-            .with_dynamic_assets_file::<StandardDynamicAssetCollection>(
-                "data/characters/player/male.assets.ron",
-            )
-            .load_collection::<PlayerAssets>()
-            .with_dynamic_assets_file::<StandardDynamicAssetCollection>(
-                "data/characters/npc/slime.assets.ron",
-            )
-            .load_collection::<SlimeAssets>(),
-    );
+    let loading_state = LoadingState::new(Screen::Loading)
+        .load_collection::<InteractionAssets>()
+        .load_collection::<SplashAssets>()
+        .load_collection::<CreditsAssets>()
+        .with_dynamic_assets_file::<StandardDynamicAssetCollection>(
+            "data/levels/overworld.assets.ron",
+        )
+        .load_collection::<OverworldAssets>()
+        .with_dynamic_assets_file::<StandardDynamicAssetCollection>(
+            "data/characters/player/male.assets.ron",
+        )
+        .load_collection::<PlayerAssets>()
+        .with_dynamic_assets_file::<StandardDynamicAssetCollection>(
+            "data/characters/npc/slime.assets.ron",
+        )
+        .load_collection::<SlimeAssets>();
+    #[cfg(any(target_os = "android", target_os = "ios"))]
+    let loading_state = loading_state.load_collection::<JoystickAssets>();
+    app.add_loading_state(loading_state);
 
     // Spawn loading screen and load custom resources
     app.add_systems(

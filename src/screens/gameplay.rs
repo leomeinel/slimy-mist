@@ -13,6 +13,8 @@
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
+#[cfg(any(target_os = "android", target_os = "ios"))]
+use crate::mobile::spawn_joystick;
 use crate::{
     Pause,
     camera::center_camera_on_player,
@@ -57,6 +59,8 @@ pub(super) fn plugin(app: &mut App) {
             spawn_overworld,
             center_camera_on_player,
             spawn_navmesh::<OverworldProcGen, Overworld>,
+            #[cfg(any(target_os = "android", target_os = "ios"))]
+            spawn_joystick,
         )
             .after(PrepareGameplaySystems)
             .chain(),

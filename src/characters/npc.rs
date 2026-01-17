@@ -21,7 +21,7 @@ use bevy_rapier2d::prelude::*;
 use crate::{
     camera::{FOREGROUND_Z, ysort::YSort},
     characters::{
-        Character, CharacterAssets, Health, Movement, MovementSpeed,
+        Character, CharacterAssets, Health, Movement,
         animations::Animations,
         character_collider,
         combat::{CombatController, punch},
@@ -58,6 +58,9 @@ impl_character_assets!(SlimeAssets);
 #[derive(Component, Default, Reflect)]
 pub(crate) struct Npc;
 
+/// Walk speed of a [`Slime`]
+const SLIME_WALK_SPEED: f32 = 80.;
+
 /// Slime marker
 #[derive(Component, Default, Reflect)]
 pub(crate) struct Slime;
@@ -67,8 +70,6 @@ impl Character for Slime {
         collision_set: &(Option<String>, Option<f32>, Option<f32>),
         pos: Vec2,
     ) -> impl Bundle {
-        let movement_speed = MovementSpeed::default();
-
         (
             // Identity
             (Name::new("Slime"), Npc, Self),
@@ -89,8 +90,7 @@ impl Character for Slime {
                 KinematicCharacterController::default(),
                 LockedAxes::ROTATION_LOCKED,
                 Movement::default(),
-                movement_speed,
-                Navigator(movement_speed.0),
+                Navigator(SLIME_WALK_SPEED),
             ),
             // Combat
             (

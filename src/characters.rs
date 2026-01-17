@@ -197,15 +197,6 @@ impl Default for Movement {
     }
 }
 
-/// Current data about movement
-#[derive(Component, Copy, Clone)]
-pub(crate) struct MovementSpeed(f32);
-impl Default for MovementSpeed {
-    fn default() -> Self {
-        Self(80.)
-    }
-}
-
 /// Timer that tracks jumping
 #[derive(Component, Debug, Clone, PartialEq, Reflect)]
 #[reflect(Component)]

@@ -18,12 +18,14 @@ use bevy::{platform::collections::HashSet, prelude::*};
 use bevy_asset_loader::prelude::*;
 use bevy_enhanced_input::prelude::*;
 use bevy_rapier2d::prelude::*;
+#[cfg(any(target_os = "android", target_os = "ios"))]
+use virtual_joystick::VirtualJoystickMessage;
 
 use crate::{
     AppSystems, Pause,
     camera::{FOREGROUND_Z, ysort::YSort},
     characters::{
-        Character, CharacterAssets, Health, JumpTimer, Movement, MovementSpeed, VisualMap,
+        Character, CharacterAssets, Health, JumpTimer, Movement, VisualMap,
         animations::{AnimationController, AnimationState, Animations},
         character_collider,
         combat::{AttackTimer, Attacked, CombatController, punch},
@@ -33,6 +35,8 @@ use crate::{
     logging::error::ERR_INVALID_VISUAL_MAP,
     visual::Visible,
 };
+#[cfg(any(target_os = "android", target_os = "ios"))]
+use crate::{mobile::VirtualJoystick, screens::Screen};
 
 pub(super) fn plugin(app: &mut App) {
     // Insert resources
@@ -40,6 +44,15 @@ pub(super) fn plugin(app: &mut App) {
 
     // Add library plugins
     app.add_plugins(EnhancedInputPlugin);
+
+    // Mock movement with virtual joystick if on mobile
+    #[cfg(any(target_os = "android", target_os = "ios"))]
+    app.add_systems(
+        PreUpdate,
+        virtual_walk
+            .before(EnhancedInputSystems::Update)
+            .run_if(in_state(Screen::Gameplay)),
+    );
 
     // Jump or stop jump depending on timer
     app.add_systems(
@@ -74,6 +87,9 @@ pub(crate) struct PlayerAssets {
 }
 impl_character_assets!(PlayerAssets);
 
+/// Walk speed of a [`Player`]
+const PLAYER_WALK_SPEED: f32 = 80.;
+
 /// Player marker
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
 #[reflect(Component)]
@@ -84,8 +100,6 @@ impl Character for Player {
         collision_set: &(Option<String>, Option<f32>, Option<f32>),
         pos: Vec2,
     ) -> impl Bundle {
-        let movement_speed = MovementSpeed::default();
-
         (
             // Identity
             (Name::new("Player"), Self),
@@ -109,7 +123,7 @@ impl Character for Player {
                         Action::<Walk>::new(),
                         DeadZone::default(),
                         SmoothNudge::default(),
-                        Scale::splat(movement_speed.0),
+                        Scale::splat(PLAYER_WALK_SPEED),
                         Bindings::spawn((
                             Cardinal::arrows(),
                             Cardinal::wasd_keys(),
@@ -135,7 +149,6 @@ impl Character for Player {
                 },
                 LockedAxes::ROTATION_LOCKED,
                 Movement::default(),
-                movement_speed,
                 NavTarget(128),
             ),
             // Combat
@@ -167,6 +180,28 @@ struct Jump;
 #[derive(Debug, InputAction)]
 #[action_output(bool)]
 struct MeleeAttack;
+
+/// Use [`ActionMock`] to mock movement from the virtual joystick
+#[cfg(any(target_os = "android", target_os = "ios"))]
+fn virtual_walk(
+    mut reader: MessageReader<VirtualJoystickMessage<VirtualJoystick>>,
+    walk_action: Single<Entity, With<Action<Walk>>>,
+    mut commands: Commands,
+) {
+    for joystick in reader.read() {
+        let input = joystick.axis();
+        if input == &Vec2::ZERO {
+            continue;
+        }
+        commands
+            .entity(walk_action.entity())
+            .insert(ActionMock::new(
+                ActionState::Fired,
+                ActionValue::from(*input * PLAYER_WALK_SPEED),
+                MockSpan::Updates(1),
+            ));
+    }
+}
 
 /// On a fired walk, set translation to the given input
 fn apply_walk(

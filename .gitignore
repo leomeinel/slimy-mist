@@ -365,10 +365,14 @@ gradle-app.setting
 # Custom rules (everything added below won't be overriden by 'Generate .gitignore File' if you use 'Update' option)
 
 **/jniLibs
-/graphics/*.webp
+/graphics/**/*.png
+/graphics/**/*.webp
 /scripts/.keystores
 /scripts/.venv*
 /scripts/colliders/*.ron
 /scripts/drawables/*
-!/scripts/drawables/*.webp
+/scripts/svg2webp/*
 !Cargo.lock
+!/scripts/drawables/*.webp
+!/scripts/svg2webp/*.svg
+

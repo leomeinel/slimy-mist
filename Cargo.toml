@@ -54,6 +54,9 @@ vleue_navigator = "0.14.0"
 [dev-dependencies]
 bevy_rapier2d = { version = "0.32.0", features = ["debug-render-2d"] }
 
+[target.'cfg(any(target_os = "android", target_os = "ios"))'.dependencies]
+virtual_joystick = { git = "https://github.com/leomeinel/virtual_joystick.git", branch = "update-bevy-0-17" }
+
 [target.'cfg(all(target_family = "wasm", any(target_os = "unknown", target_os = "none")))'.dependencies]
 bevy_rand = { version = "0.12.1", features = ["wasm_js"] }
 

@@ -5028,7 +5028,7 @@ checksum = "7a2ae44ef20feb57a68b23d846850f861394c2e02dc425a50098ae8c90267589"
 
 [[package]]
 name = "slimy_mist"
-version = "0.11.10"
+version = "0.11.11"
 dependencies = [
  "bevy",
  "bevy_asset_loader",
@@ -5047,6 +5047,7 @@ dependencies = [
  "rand",
  "serde",
  "tracing",
+ "virtual_joystick",
  "vleue_navigator",
 ]
 
@@ -5573,6 +5574,16 @@ name = "version_check"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
+
+[[package]]
+name = "virtual_joystick"
+version = "2.6.0"
+source = "git+https://github.com/leomeinel/virtual_joystick.git?branch=update-bevy-0-17#05d938e74aa9ba4d635797856e7bc81f9962c155"
+dependencies = [
+ "bevy",
+ "serde",
+ "variadics_please",
+]
 
 [[package]]
 name = "vleue_navigator"

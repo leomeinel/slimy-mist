@@ -10,6 +10,7 @@
  * - https://github.com/bevyengine/bevy/tree/main/examples/mobile
  * - https://developer.android.com/develop/ui/views/layout/immersive#java
  */
+
 package dev.meinel.slimymist
 
 import androidx.core.view.WindowCompat
@@ -29,7 +30,7 @@ class MainActivity : GameActivity() {
      *
      *
      * This just hides the system UI if the app window is focused.
-    ) */
+     */
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         // Call parent class implementation of onWindowFocusChanged to make sure that we are updating correctly.
         super.onWindowFocusChanged(hasFocus)

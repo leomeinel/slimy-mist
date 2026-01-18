@@ -12,7 +12,6 @@
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
 }
 
 kotlin {
@@ -106,7 +105,7 @@ android {
     sourceSets {
         getByName("main") {
             assets {
-                srcDir("../../../assets")
+                directories += "../../../assets"
             }
         }
     }

@@ -1,18 +1,11 @@
 # Heavily inspired by: https://github.com/bevyengine/bevy/tree/main/examples/mobile
 
 [versions]
-#noinspection AndroidGradlePluginVersion
-agp = "8.13.2"
+agp = "9.0.0"
 appcompat = "1.7.1"
 core = "1.17.0"
-# FIXME: This is now 4.0.0, but android-activity 0.6.0 is only compatible with major version 2.
-#        Also see:
-#        - https://github.com/rust-mobile/android-activity/discussions/208
-#        - https://github.com/rust-mobile/android-activity/issues/210
-#noinspection GradleDependency
-gamesActivity = "2.0.2"
+gamesActivity = "4.0.0"
 material = "1.13.0"
-kotlin = "2.3.0"
 coreKtx = "1.17.0"
 
 [libraries]
@@ -24,4 +17,3 @@ core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

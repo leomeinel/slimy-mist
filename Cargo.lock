@@ -5577,7 +5577,7 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 [[package]]
 name = "virtual_joystick"
 version = "2.6.0"
-source = "git+https://github.com/leomeinel/virtual_joystick.git?branch=update-bevy-0-17#05d938e74aa9ba4d635797856e7bc81f9962c155"
+source = "git+https://github.com/leomeinel/virtual_joystick.git?branch=update-bevy-0-17#92b6c16f9330a0ce6703b43ba90a49c45167720b"
 dependencies = [
  "bevy",
  "serde",

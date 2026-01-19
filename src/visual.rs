@@ -11,7 +11,7 @@
 //        Also see:
 //        - https://github.com/bevyengine/bevy/issues/1738
 //        - https://github.com/bevyengine/bevy/issues/7131
-//        - https://github.com/bevyengine/bevy/pull/10845
+//        - https://github.com/bevyengine/bevy/pull/22484
 
 pub(crate) mod particles;
 

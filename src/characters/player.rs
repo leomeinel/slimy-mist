@@ -45,11 +45,16 @@ pub(super) fn plugin(app: &mut App) {
     // Add library plugins
     app.add_plugins(EnhancedInputPlugin);
 
+    // FIXME: Currently when walking, melee is also triggered. We will have to
+    //        Determine whether the touch was on the joystick or somewhere else.
+    //        Using states to not allow melee while using the joystick will prohibit
+    //        the player from attacking while waling and is not easily implemented
+    //        because of scheduling.
     // Mock movement with virtual joystick if on mobile
     #[cfg(any(target_os = "android", target_os = "ios"))]
     app.add_systems(
         PreUpdate,
-        virtual_walk
+        (touch_melee, touch_walk)
             .before(EnhancedInputSystems::Update)
             .run_if(in_state(Screen::Gameplay)),
     );
@@ -87,7 +92,10 @@ pub(crate) struct PlayerAssets {
 }
 impl_character_assets!(PlayerAssets);
 
-/// Walk speed of a [`Player`]
+/// Max duration for a tap to be recognized.
+const TAP_MAX_DURATION_SECS: f32 = 0.5;
+
+/// Walk speed of [`Player`].
 const PLAYER_WALK_SPEED: f32 = 80.;
 
 /// Player marker
@@ -137,6 +145,7 @@ impl Character for Player {
                     // Combat
                     (
                         Action::<MeleeAttack>::new(),
+                        Tap::new(TAP_MAX_DURATION_SECS),
                         bindings![MouseButton::Left, GamepadButton::RightTrigger],
                     ),
                 ]
@@ -181,24 +190,45 @@ struct Jump;
 #[action_output(bool)]
 struct MeleeAttack;
 
-/// Use [`ActionMock`] to mock movement from the virtual joystick
+/// Use [`ActionMock`] to mock [Walk] from the virtual joystick
 #[cfg(any(target_os = "android", target_os = "ios"))]
-fn virtual_walk(
+fn touch_walk(
     mut reader: MessageReader<VirtualJoystickMessage<VirtualJoystick>>,
     walk_action: Single<Entity, With<Action<Walk>>>,
     mut commands: Commands,
 ) {
     for joystick in reader.read() {
+        if joystick.id() != VirtualJoystick::Movement {
+            continue;
+        }
+
         let input = joystick.axis();
         if input == &Vec2::ZERO {
             continue;
         }
         commands
             .entity(walk_action.entity())
-            .insert(ActionMock::new(
+            .insert(ActionMock::once(
                 ActionState::Fired,
                 ActionValue::from(*input * PLAYER_WALK_SPEED),
-                MockSpan::Updates(1),
+            ));
+    }
+}
+
+/// Use [`ActionMock`] to mock [MeleeAttack] from touch inputs
+#[cfg(any(target_os = "android", target_os = "ios"))]
+fn touch_melee(
+    melee_action: Single<Entity, With<Action<MeleeAttack>>>,
+    mut commands: Commands,
+    touches: Res<Touches>,
+) {
+    // FIXME: We should check for taps within TAP_MAX_DURATION_SECS instead.
+    if touches.any_just_released() {
+        commands
+            .entity(melee_action.entity())
+            .insert(ActionMock::once(
+                ActionState::Fired,
+                ActionValue::Bool(true),
             ));
     }
 }

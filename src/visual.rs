@@ -7,6 +7,12 @@
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  */
 
+// FIXME: I'd like to have an easy way to use shaders for my sprites. This does currently not seem possible.
+//        Also see:
+//        - https://github.com/bevyengine/bevy/issues/1738
+//        - https://github.com/bevyengine/bevy/issues/7131
+//        - https://github.com/bevyengine/bevy/pull/10845
+
 pub(crate) mod particles;
 
 use std::marker::PhantomData;

@@ -258,7 +258,6 @@ fn apply_path(
         movement.direction = direction.normalize_or_zero() * navigator.0 * time.delta_secs();
         controller.translation = Some(movement.direction);
 
-        // Extract `animation_controller` from `child_query`
         let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
         let mut animation_controller = child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
 

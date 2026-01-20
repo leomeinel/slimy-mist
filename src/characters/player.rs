@@ -253,7 +253,6 @@ fn apply_walk(
     movement.direction = event.value * time.delta_secs();
     character_controller.translation = Some(movement.direction);
 
-    // Extract `animation_controller` from `child_query`
     let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
     let mut animation_controller = child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
 
@@ -275,7 +274,6 @@ fn stop_walk(
     // Reset movement diretion
     movement.direction = Vec2::ZERO;
 
-    // Extract `animation_controller` from `child_query`
     let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
     let mut animation_controller = child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
 
@@ -305,7 +303,6 @@ fn set_jump(
 
     let entity = parent.entity();
 
-    // Extract `animation_controller` from `child_query`
     let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
     let mut animation_controller = child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
 
@@ -330,7 +327,6 @@ fn apply_jump(
 ) {
     let (entity, mut movement, timer) = parent.into_inner();
 
-    // Extract `animation_controller` from `child_query`
     let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
     let (animation_controller, mut transform) =
         child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
@@ -371,7 +367,6 @@ fn limit_jump(
     // Reset jump height
     movement.jump_height = 0.;
 
-    // Extract `animation_controller` from `child_query`
     let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
     let mut animation_controller = child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
 

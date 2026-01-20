@@ -395,7 +395,6 @@ pub(crate) fn update_animations<T>(
     T: Character,
 {
     for (entity, movement) in parent_query {
-        // Extract `animation_controller` from `child_query`
         let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
         let (mut controller, mut sprite, mut animation, timer) =
             child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
@@ -470,7 +469,6 @@ pub(crate) fn update_animation_sounds<T, A>(
     );
 
     for entity in parent_query {
-        // Extract `animation_controller` from `child_query`
         let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
         let (mut controller, animation) =
             child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);

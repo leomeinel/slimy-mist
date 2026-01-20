@@ -120,6 +120,7 @@ pub(crate) fn add_dust_walking<T>(
 /// ## Traits
 ///
 /// - `T` must implement [`Character`] and [`Visible`].
+/// - `A` must implement [`Particle`].
 pub(crate) fn update_character<T, A>(
     parent_query: Query<Entity, With<T>>,
     mut child_particle_query: Query<
@@ -148,7 +149,6 @@ pub(crate) fn update_character<T, A>(
     };
 
     for container in parent_query {
-        // Extract `animation_controller` from `child_query`
         let particle = particle_map
             .map
             .get(&container)

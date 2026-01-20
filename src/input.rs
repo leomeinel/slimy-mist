@@ -326,10 +326,10 @@ fn trigger_melee(
         return;
     }
 
-    // FIXME: Fall back to movement in certain scenarios. It feels weird if the player is moving
-    //        in a different direction but their attack stays at the last aim_direction.
-    //        The exact scenarios are quite hard to get right in my opinion, but this should be
-    //        considered.
+    // FIXME: If using gamepad input, we get very unexpected results for the aim direction.
+    //        It seems like it sometimes just falls back to a random position. This
+    //        may be because of us also interpreting inwards movement of the stick?
+    //        Also if the player is moving, we should initially fall back to that.
     //        I have already tried to set the direction in a system externally and some other
     //        approaches but none of them worked reliably. I'm not sure if this is worth
     //        fixing for now, but later it has to be done.

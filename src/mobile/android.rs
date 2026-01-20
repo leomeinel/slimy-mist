@@ -27,10 +27,10 @@ pub(super) fn plugin(app: &mut App) {
 ///
 /// This is necessary for android
 fn handle_lifetime(
-    mut app_lifecycle_reader: MessageReader<AppLifecycle>,
+    mut reader: MessageReader<AppLifecycle>,
     music_controller: Single<&AudioSink>,
 ) {
-    for app_lifecycle in app_lifecycle_reader.read() {
+    for app_lifecycle in reader.read() {
         match app_lifecycle {
             AppLifecycle::Suspended => music_controller.pause(),
             AppLifecycle::Running => music_controller.play(),

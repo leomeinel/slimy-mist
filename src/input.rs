@@ -182,7 +182,7 @@ fn mock_aim_from_touch(
 
 /// Use [`ActionMock`] to mock [`Aim`] from clicks.
 fn mock_aim_from_click(
-    mut clicks: MessageReader<MouseButtonInput>,
+    mut reader: MessageReader<MouseButtonInput>,
     aim_direction: Single<Entity, With<Action<Aim>>>,
     camera: Single<(&Camera, &GlobalTransform), With<CanvasCamera>>,
     player_transform: Single<&Transform, With<Player>>,
@@ -192,7 +192,7 @@ fn mock_aim_from_click(
     let (camera, camera_transform) = *camera;
 
     // FIXME: We should check for taps within `TAP_MAX_DURATION_SECS` instead.
-    for click in clicks.read() {
+    for click in reader.read() {
         if click.button != MouseButton::Left {
             continue;
         }

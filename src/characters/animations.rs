@@ -182,7 +182,7 @@ where
 }
 
 /// Current state of animation
-#[derive(Default, Clone, Copy, PartialEq, Debug)]
+#[derive(Default, Clone, Copy, PartialEq, Reflect, Debug)]
 pub(crate) enum AnimationState {
     #[default]
     Idle,
@@ -366,13 +366,6 @@ fn animation_handle(
     )
 }
 
-/// Tick animation timer
-pub(crate) fn tick_animation_timer(mut query: Query<&mut AnimationTimer>, time: Res<Time>) {
-    for mut timer in &mut query {
-        timer.0.tick(time.delta());
-    }
-}
-
 /// Update animations
 ///
 /// ## Traits
@@ -539,4 +532,11 @@ fn choose_sound(
     };
 
     sounds.choose(rng).cloned()
+}
+
+/// Tick [`AnimationTimer`]
+fn tick_animation_timer(mut query: Query<&mut AnimationTimer>, time: Res<Time>) {
+    for mut timer in &mut query {
+        timer.0.tick(time.delta());
+    }
 }

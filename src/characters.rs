@@ -259,7 +259,7 @@ fn update_movement_facing(query: Query<&mut Movement>) {
     }
 }
 
-/// Tick jump timer
+/// Tick [`JumpTimer`]
 fn tick_jump_timer(mut query: Query<&mut JumpTimer>, time: Res<Time>) {
     for mut timer in &mut query {
         timer.0.tick(time.delta());

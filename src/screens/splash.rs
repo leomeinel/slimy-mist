@@ -125,17 +125,22 @@ fn spawn_splash_screen(mut commands: Commands, splash_assets: Res<SplashAssets>)
     ));
 }
 
-/// Start ticking fade in/out
-fn tick_fade_in_out(mut query: Query<&mut ImageNodeFadeInOut>, time: Res<Time>) {
-    for mut anim in &mut query {
-        anim.t += time.delta_secs();
-    }
-}
-
-/// Apply fade in/out
+/// Apply [`ImageNodeFadeInOut`]
 fn apply_fade_in_out(mut query: Query<(&ImageNodeFadeInOut, &mut ImageNode)>) {
     for (anim, mut image) in &mut query {
         image.color.set_alpha(anim.alpha())
+    }
+}
+
+/// Enter title screen
+fn enter_title_screen(mut next_state: ResMut<NextState<Screen>>) {
+    next_state.set(Screen::Title);
+}
+
+/// Check status of [`SplashTimer`]
+fn check_splash_timer(timer: ResMut<SplashTimer>, mut next_state: ResMut<NextState<Screen>>) {
+    if timer.0.just_finished() {
+        next_state.set(Screen::Title);
     }
 }
 
@@ -149,19 +154,14 @@ fn remove_splash_timer(mut commands: Commands) {
     commands.remove_resource::<SplashTimer>();
 }
 
-/// Start ticking [`SplashTimer`]
-fn tick_splash_timer(time: Res<Time>, mut timer: ResMut<SplashTimer>) {
-    timer.0.tick(time.delta());
-}
-
-/// Check status of [`SplashTimer`]
-fn check_splash_timer(timer: ResMut<SplashTimer>, mut next_state: ResMut<NextState<Screen>>) {
-    if timer.0.just_finished() {
-        next_state.set(Screen::Title);
+/// Tick [`ImageNodeFadeInOut`]
+fn tick_fade_in_out(mut query: Query<&mut ImageNodeFadeInOut>, time: Res<Time>) {
+    for mut anim in &mut query {
+        anim.t += time.delta_secs();
     }
 }
 
-/// Enter title screen
-fn enter_title_screen(mut next_state: ResMut<NextState<Screen>>) {
-    next_state.set(Screen::Title);
+/// Tick [`SplashTimer`]
+fn tick_splash_timer(time: Res<Time>, mut timer: ResMut<SplashTimer>) {
+    timer.0.tick(time.delta());
 }

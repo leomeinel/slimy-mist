@@ -102,7 +102,6 @@ fn apply_melee<T>(
         return;
     };
     let direction = if aim_direction.0 == Vec2::ZERO {
-        info!("RESET");
         movement.facing
     } else {
         aim_direction.0

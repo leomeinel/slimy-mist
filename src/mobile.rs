@@ -57,12 +57,12 @@ pub(crate) enum VirtualJoystick {
 /// Color of the joystick knob
 const JOYSTICK_KNOB_COLOR: Color = Color::WHITE;
 /// Size of the joystick knob in pixels
-const JOYSTICK_KNOB_SIZE: Vec2 = Vec2::new(75., 75.);
+const JOYSTICK_KNOB_SIZE: Vec2 = Vec2::splat(50.);
 
 /// Color of the joystick background
 const JOYSTICK_BACKGROUND_COLOR: Color = Color::WHITE;
 /// Size of the joystick background in pixels
-const JOYSTICK_BACKGROUND_SIZE: Vec2 = Vec2::new(150., 150.);
+const JOYSTICK_BACKGROUND_SIZE: Vec2 = Vec2::splat(100.);
 
 /// Spawn default joystick of type [`VirtualJoystick::Movement`]
 pub(crate) fn spawn_joystick(mut commands: Commands, joystick_assets: Res<JoystickAssets>) {
@@ -70,8 +70,8 @@ pub(crate) fn spawn_joystick(mut commands: Commands, joystick_assets: Res<Joysti
         position_type: PositionType::Absolute,
         width: Val::Px(JOYSTICK_BACKGROUND_SIZE.x),
         height: Val::Px(JOYSTICK_BACKGROUND_SIZE.y),
-        left: Val::VMin(5.),
-        bottom: Val::VMin(5.),
+        left: Val::VMin(10.),
+        bottom: Val::VMin(10.),
         ..default()
     };
     commands.spawn((

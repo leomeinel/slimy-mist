@@ -56,6 +56,8 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         (
+            flip_sprites::<Player>,
+            flip_sprites::<Slime>,
             (
                 update_animations::<Player>,
                 update_animation_sounds::<Player, PlayerAssets>,
@@ -366,17 +368,41 @@ fn animation_handle(
     )
 }
 
+// FIXME: We should also follow the aim direction in some scenarios.
+/// Flip [`Sprite`]s
+///
+/// ## Traits
+///
+/// - `T` must implement [`Character`].
+fn flip_sprites<T>(
+    parent_query: Query<(Entity, &Movement), With<T>>,
+    mut child_query: Query<&mut Sprite, Without<T>>,
+    visual_map: Res<VisualMap>,
+) where
+    T: Character,
+{
+    for (entity, movement) in parent_query {
+        let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
+        let mut sprite = child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
+
+        // Sprite flipping
+        let direction = movement.direction;
+        if !direction.x.is_near_zero(0.1) {
+            sprite.flip_x = direction.x < 0.;
+        }
+    }
+}
+
 /// Update animations
 ///
 /// ## Traits
 ///
 /// - `T` must implement [`Character`].
-pub(crate) fn update_animations<T>(
-    parent_query: Query<(Entity, &Movement), With<T>>,
+fn update_animations<T>(
+    parent_query: Query<Entity, With<T>>,
     mut child_query: Query<
         (
             &mut AnimationController,
-            &mut Sprite,
             &mut SpritesheetAnimation,
             &AnimationTimer,
         ),
@@ -387,20 +413,14 @@ pub(crate) fn update_animations<T>(
 ) where
     T: Character,
 {
-    for (entity, movement) in parent_query {
+    for entity in parent_query {
         let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
-        let (mut controller, mut sprite, mut animation, timer) =
+        let (mut controller, mut animation, timer) =
             child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
 
         // Reset animation after timer has finished
         if timer.0.just_finished() {
             animation.reset();
-        }
-
-        // Sprite flipping
-        let direction = movement.direction;
-        if !direction.x.is_near_zero(0.1) {
-            sprite.flip_x = direction.x < 0.;
         }
 
         // Match to current `AnimationState`

@@ -21,6 +21,7 @@ mod camera;
 mod characters;
 #[cfg(feature = "dev")]
 mod dev_tools;
+mod input;
 mod levels;
 mod logging;
 mod menus;
@@ -107,6 +108,7 @@ impl Plugin for AppPlugin {
             characters::plugin,
             #[cfg(feature = "dev")]
             dev_tools::plugin,
+            input::plugin,
             levels::plugin,
             menus::plugin,
             #[cfg(any(target_os = "android", target_os = "ios"))]

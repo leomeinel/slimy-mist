@@ -200,7 +200,7 @@ impl Default for Movement {
 /// Timer that tracks jumping
 #[derive(Component, Debug, Clone, PartialEq, Reflect)]
 #[reflect(Component)]
-struct JumpTimer(Timer);
+pub(crate) struct JumpTimer(Timer);
 impl Default for JumpTimer {
     fn default() -> Self {
         Self(Timer::from_seconds(

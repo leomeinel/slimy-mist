@@ -9,22 +9,19 @@
 
 use std::marker::PhantomData;
 
-use bevy::{platform::collections::HashMap, prelude::*, reflect::Reflectable};
+use bevy::{platform::collections::HashMap, prelude::*};
 use bevy_enoki::prelude::*;
-use bevy_spritesheet_animation::prelude::SpritesheetAnimation;
 
 use crate::{
+    AppSystems,
     camera::BACKGROUND_Z_DELTA,
     characters::{
         Character, VisualMap,
-        animations::{AnimationController, AnimationDataCache, AnimationState},
+        animations::{AnimationController, AnimationState},
         player::Player,
     },
     levels::overworld::spawn_overworld,
-    logging::{
-        error::{ERR_INVALID_PARTICLE_MAP, ERR_INVALID_VISUAL_MAP},
-        warn::WARN_INCOMPLETE_ANIMATION_DATA,
-    },
+    logging::error::{ERR_INVALID_PARTICLE_MAP, ERR_INVALID_VISUAL_MAP},
     screens::Screen,
     visual::{TextureInfoCache, Visible},
 };
@@ -43,22 +40,42 @@ pub(super) fn plugin(app: &mut App) {
     // Update particles for character
     app.add_systems(
         Update,
-        update_character::<Player, ParticleDustWalking>
+        update_character_particles::<Player, ParticleDustWalking>
             .after(spawn_overworld)
             .run_if(in_state(Screen::Gameplay)),
     );
+
+    // Tick timers
+    app.add_systems(Update, tick_particle_timer.in_set(AppSystems::TickTimers));
 }
 
+/// Applies to anything that is considered a particle.
 pub(crate) trait Particle
 where
-    Self: Component + Default + Reflectable,
+    Self: Component + Default,
 {
+    fn is_active(&self, state: AnimationState) -> bool;
+}
+
+trait ParticleSpawnerExt {
+    fn set_new_active(&mut self, new_active: bool);
+}
+impl ParticleSpawnerExt for ParticleSpawnerState {
+    fn set_new_active(&mut self, new_active: bool) {
+        if self.active != new_active {
+            self.active = new_active;
+        }
+    }
 }
 
 /// Marker component for dust walking particles
-#[derive(Component, Default, Reflect)]
-pub(crate) struct ParticleDustWalking;
-impl Particle for ParticleDustWalking {}
+#[derive(Component, Default)]
+pub(crate) struct ParticleDustWalking(AnimationState);
+impl Particle for ParticleDustWalking {
+    fn is_active(&self, animation_state: AnimationState) -> bool {
+        self.0 == animation_state
+    }
+}
 
 /// Map of characters to their particles
 #[derive(Resource, Default)]
@@ -70,19 +87,20 @@ where
     _phantom: PhantomData<T>,
 }
 
-/// Controller for [Particle]s
-#[derive(Component, Default)]
-pub(crate) struct ParticleController {
-    /// Used to determine if we should send particle again
-    pub(crate) frame: Option<usize>,
-}
+/// Timer that tracks particles
+#[derive(Component, Debug, Clone, PartialEq, Reflect)]
+#[reflect(Component)]
+struct ParticleTimer(Timer);
 
-/// Add dust particle for walking.
+/// Interval for [`ParticleDustWalking`].
+const DUST_WALKING_INTERVAL_SECS: f32 = 0.5;
+
+/// Add [`ParticleDustWalking`].
 ///
 /// ## Traits
 ///
 /// - `T` must implement [`Visible`].
-pub(crate) fn add_dust_walking<T>(
+fn add_dust_walking<T>(
     query: Query<Entity, With<T>>,
     mut commands: Commands,
     mut particle_map: ResMut<ParticleMap<ParticleDustWalking>>,
@@ -96,8 +114,11 @@ pub(crate) fn add_dust_walking<T>(
     for container in query {
         let particle = commands
             .spawn((
-                ParticleDustWalking,
-                ParticleController::default(),
+                ParticleDustWalking(AnimationState::Walk),
+                ParticleTimer(Timer::from_seconds(
+                    DUST_WALKING_INTERVAL_SECS,
+                    TimerMode::Repeating,
+                )),
                 ParticleSpawner::default(),
                 NoAutoAabb,
                 ParticleSpawnerState {
@@ -113,71 +134,55 @@ pub(crate) fn add_dust_walking<T>(
     }
 }
 
-// FIXME: Generics are currently somewhat useless here
-// FIXME: Refactor for readability, this is ugly.
-/// Update particle effect for [`Character`]s
+/// Update particle for [`Character`]s
 ///
 /// ## Traits
 ///
 /// - `T` must implement [`Character`] and [`Visible`].
 /// - `A` must implement [`Particle`].
-pub(crate) fn update_character<T, A>(
+fn update_character_particles<T, A>(
     parent_query: Query<Entity, With<T>>,
     mut child_particle_query: Query<
-        (&mut ParticleController, &mut ParticleSpawnerState),
+        (
+            &ParticleDustWalking,
+            &ParticleTimer,
+            &mut ParticleSpawnerState,
+        ),
         (With<A>, Without<T>),
     >,
-    mut child_animation_query: Query<
-        (&mut AnimationController, &mut SpritesheetAnimation),
-        Without<T>,
-    >,
-    animation_data: Res<AnimationDataCache<T>>,
+    mut child_visual_query: Query<&mut AnimationController, Without<T>>,
     particle_map: Res<ParticleMap<A>>,
     visual_map: Res<VisualMap>,
 ) where
     T: Character + Visible,
     A: Particle,
 {
-    let frame_set = (
-        animation_data.walk_sound_frames.clone(),
-        animation_data.jump_sound_frames.clone(),
-        animation_data.fall_sound_frames.clone(),
-    );
-    let Some(frames) = frame_set.0 else {
-        warn_once!("{}", WARN_INCOMPLETE_ANIMATION_DATA);
-        return;
-    };
-
     for container in parent_query {
         let particle = particle_map
             .map
             .get(&container)
             .expect(ERR_INVALID_PARTICLE_MAP);
-        let (mut particle_controller, mut state) = child_particle_query
+        let (particle, timer, mut state) = child_particle_query
             .get_mut(*particle)
             .expect(ERR_INVALID_PARTICLE_MAP);
-        let visual = visual_map.0.get(&container).expect(ERR_INVALID_VISUAL_MAP);
-        let (animation_controller, animation) = child_animation_query
-            .get_mut(*visual)
-            .expect(ERR_INVALID_VISUAL_MAP);
-        let current_frame = animation.progress.frame;
 
-        // Continue if particle has already been sent
-        if let Some(frame) = particle_controller.frame
-            && frame == current_frame
-        {
+        // Continue if timer has not finished
+        if !timer.0.just_finished() {
             continue;
         }
 
-        if animation_controller.state == AnimationState::Walk {
-            if !frames.contains(&current_frame) {
-                continue;
-            }
-            state.active = true;
-            particle_controller.frame = Some(current_frame);
-        } else {
-            state.active = false;
-            particle_controller.frame = None;
-        }
+        let visual = visual_map.0.get(&container).expect(ERR_INVALID_VISUAL_MAP);
+        let animation_controller = child_visual_query
+            .get_mut(*visual)
+            .expect(ERR_INVALID_VISUAL_MAP);
+
+        state.set_new_active(particle.is_active(animation_controller.state));
+    }
+}
+
+/// Tick [`ParticleTimer`]
+fn tick_particle_timer(mut query: Query<&mut ParticleTimer>, time: Res<Time>) {
+    for mut timer in &mut query {
+        timer.0.tick(time.delta());
     }
 }

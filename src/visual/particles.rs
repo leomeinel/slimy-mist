@@ -34,13 +34,13 @@ pub(super) fn plugin(app: &mut App) {
     // FIXME: Think of using a SystemSet here instead that includes spawn_overworld
     app.add_systems(
         OnEnter(Screen::Gameplay),
-        add_dust_walking::<Player>.after(spawn_overworld),
+        add_walking_dust::<Player>.after(spawn_overworld),
     );
 
     // Update particles for character
     app.add_systems(
         Update,
-        update_character_particles::<Player, ParticleDustWalking>
+        update_character_particles::<Player, ParticleWalkingDust>
             .after(spawn_overworld)
             .run_if(in_state(Screen::Gameplay)),
     );
@@ -54,7 +54,9 @@ pub(crate) trait Particle
 where
     Self: Component + Default,
 {
-    fn is_active(&self, state: AnimationState) -> bool;
+    fn is_active(&self, _state: AnimationState) -> bool {
+        true
+    }
 }
 
 trait ParticleSpawnerExt {
@@ -68,14 +70,19 @@ impl ParticleSpawnerExt for ParticleSpawnerState {
     }
 }
 
-/// Marker component for dust walking particles
+/// Marker component for walking dust particles
 #[derive(Component, Default)]
-pub(crate) struct ParticleDustWalking(AnimationState);
-impl Particle for ParticleDustWalking {
+pub(crate) struct ParticleWalkingDust(AnimationState);
+impl Particle for ParticleWalkingDust {
     fn is_active(&self, animation_state: AnimationState) -> bool {
         self.0 == animation_state
     }
 }
+
+/// Marker component for combat hit particles
+#[derive(Component, Default)]
+pub(crate) struct ParticleCombatHit;
+impl Particle for ParticleCombatHit {}
 
 /// Map of characters to their particles
 #[derive(Resource, Default)]
@@ -87,25 +94,58 @@ where
     _phantom: PhantomData<T>,
 }
 
+/// Handle for [`Particle2dEffect`] as a generic.
+///
+/// ## Traits
+///
+/// - `T` must implement [`Particle`] and is used as the associated particle type.
+#[derive(Resource, Default)]
+pub(crate) struct ParticleHandle<T>
+where
+    T: Particle,
+{
+    pub(crate) handle: Handle<Particle2dEffect>,
+    pub(crate) _phantom: PhantomData<T>,
+}
+
 /// Timer that tracks particles
 #[derive(Component, Debug, Clone, PartialEq, Reflect)]
 #[reflect(Component)]
 struct ParticleTimer(Timer);
 
-/// Interval for [`ParticleDustWalking`].
-const DUST_WALKING_INTERVAL_SECS: f32 = 0.5;
+/// Spawn and despawn a particle once.
+///
+/// ## Traits
+///
+/// - `T` must implement [`Particle`] and is used as the associated particle type.
+pub(crate) fn spawn_particle_once<T>(commands: &mut Commands, pos: Vec3, handle: &ParticleHandle<T>)
+where
+    T: Particle,
+{
+    commands.spawn((
+        T::default(),
+        OneShot::Despawn,
+        ParticleSpawner::default(),
+        NoAutoAabb,
+        Transform::from_translation(pos),
+        ParticleEffectHandle(handle.handle.clone()),
+    ));
+}
 
-/// Add [`ParticleDustWalking`].
+/// Interval for [`ParticleWalkingDust`].
+const WALKING_DUST_INTERVAL_SECS: f32 = 0.5;
+
+/// Add [`ParticleWalkingDust`].
 ///
 /// ## Traits
 ///
 /// - `T` must implement [`Visible`].
-fn add_dust_walking<T>(
+fn add_walking_dust<T>(
     query: Query<Entity, With<T>>,
     mut commands: Commands,
-    mut particle_map: ResMut<ParticleMap<ParticleDustWalking>>,
-    assets: Res<AssetServer>,
+    mut particle_map: ResMut<ParticleMap<ParticleWalkingDust>>,
     texture_info: Res<TextureInfoCache<T>>,
+    handle: Res<ParticleHandle<ParticleWalkingDust>>,
 ) where
     T: Visible,
 {
@@ -114,9 +154,9 @@ fn add_dust_walking<T>(
     for container in query {
         let particle = commands
             .spawn((
-                ParticleDustWalking(AnimationState::Walk),
+                ParticleWalkingDust(AnimationState::Walk),
                 ParticleTimer(Timer::from_seconds(
-                    DUST_WALKING_INTERVAL_SECS,
+                    WALKING_DUST_INTERVAL_SECS,
                     TimerMode::Repeating,
                 )),
                 ParticleSpawner::default(),
@@ -125,7 +165,7 @@ fn add_dust_walking<T>(
                     active: false,
                     ..default()
                 },
-                ParticleEffectHandle(assets.load("data/particles/dust-walking.particle.ron")),
+                ParticleEffectHandle(handle.handle.clone()),
                 Transform::from_translation(Vec3::new(0., -texture_offset, BACKGROUND_Z_DELTA)),
             ))
             .id();
@@ -144,7 +184,7 @@ fn update_character_particles<T, A>(
     parent_query: Query<Entity, With<T>>,
     mut child_particle_query: Query<
         (
-            &ParticleDustWalking,
+            &ParticleWalkingDust,
             &ParticleTimer,
             &mut ParticleSpawnerState,
         ),

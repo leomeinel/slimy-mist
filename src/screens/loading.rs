@@ -39,6 +39,7 @@ use crate::{
     },
     screens::{Screen, splash::SplashAssets},
     theme::{interaction::InteractionAssets, prelude::*},
+    visual::particles::{ParticleCombatHit, ParticleHandle, ParticleWalkingDust},
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -84,7 +85,7 @@ pub(super) fn plugin(app: &mut App) {
         (
             spawn_loading_screen,
             // After initial `LoadingState<Screen::Loading>` insert resources with handles for data
-            insert_resources.after(LoadingStateSet(Screen::Loading)),
+            insert_handle_resources.after(LoadingStateSet(Screen::Loading)),
         ),
     );
     app.add_systems(
@@ -112,10 +113,10 @@ fn spawn_loading_screen(mut commands: Commands) {
     ));
 }
 
-/// Insert [`Resource`]s for deserialized data from assets.
+/// Insert handle [`Resource`]s for deserialized data.
 ///
-/// These serve as handles for the actual data structs.
-fn insert_resources(mut commands: Commands, assets: Res<AssetServer>) {
+/// These serve as handles for the actual data.
+fn insert_handle_resources(mut commands: Commands, assets: Res<AssetServer>) {
     // `AnimationData`
     commands.insert_resource(AnimationHandle::<Player>(
         assets.load("data/characters/player/male.animation.ron"),
@@ -136,6 +137,16 @@ fn insert_resources(mut commands: Commands, assets: Res<AssetServer>) {
     commands.insert_resource(TileHandle::<OverworldProcGen>(
         assets.load("data/levels/overworld.tiles.ron"),
     ));
+
+    // `ParticleHandle` not needing a custom data struct
+    commands.insert_resource(ParticleHandle::<ParticleWalkingDust> {
+        handle: assets.load("data/particles/walking-dust.particle.ron"),
+        ..default()
+    });
+    commands.insert_resource(ParticleHandle::<ParticleCombatHit> {
+        handle: assets.load("data/particles/combat-hit.particle.ron"),
+        ..default()
+    });
 }
 
 /// Cache data from [`AnimationData`] in [`AnimationDataCache`]

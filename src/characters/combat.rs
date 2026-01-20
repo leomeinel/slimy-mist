@@ -13,11 +13,13 @@ use ordered_float::OrderedFloat;
 
 use crate::{
     AppSystems,
+    camera::OVERLAY_Z,
     characters::{Character, CollisionDataCache, Health, Movement, player::Player},
     logging::{
         error::{ERR_INVALID_ATTACKER, ERR_INVALID_RAPIER_CONTEXT},
         warn::{WARN_INCOMPLETE_COLLISION_DATA, WARN_INVALID_ATTACK},
     },
+    visual::particles::{ParticleCombatHit, ParticleHandle, spawn_particle_once},
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -81,6 +83,7 @@ fn apply_melee<T>(
     mut commands: Commands,
     collision_data: Res<CollisionDataCache<T>>,
     rapier_context: ReadRapierContext,
+    particle_handle: Res<ParticleHandle<ParticleCombatHit>>,
 ) where
     T: Character,
 {
@@ -111,7 +114,7 @@ fn apply_melee<T>(
         return;
     };
 
-    // Collect all entities within out attack range
+    // Collect all entities within attack range
     let shape_half_size = Vec2::new(melee.range.0.into_inner(), melee.range.1.into_inner()) / 2.;
     let offset = extent + shape_half_size.x;
     let shape_pos = pos + movement.facing * offset;
@@ -139,6 +142,11 @@ fn apply_melee<T>(
         targets,
         damage,
         cooldown_secs,
+    );
+    spawn_particle_once(
+        &mut commands,
+        shape_pos.extend(OVERLAY_Z),
+        &*particle_handle,
     );
 }
 

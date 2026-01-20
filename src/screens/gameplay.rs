@@ -29,7 +29,7 @@ use crate::{
     menus::Menu,
     procgen::{ProcGenController, navmesh::spawn_navmesh},
     screens::Screen,
-    visual::particles::{ParticleDustWalking, ParticleMap},
+    visual::particles::{ParticleMap, ParticleWalkingDust},
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -127,7 +127,7 @@ fn insert_resources(mut commands: Commands) {
     commands.init_resource::<NavTargetPosMap>();
     commands.init_resource::<ProcGenController<OverworldProcGen>>();
     commands.init_resource::<ProcGenController<Slime>>();
-    commands.init_resource::<ParticleMap<ParticleDustWalking>>();
+    commands.init_resource::<ParticleMap<ParticleWalkingDust>>();
     commands.init_resource::<VisualMap>();
 }
 
@@ -136,6 +136,6 @@ fn remove_resources(mut commands: Commands) {
     commands.remove_resource::<NavTargetPosMap>();
     commands.remove_resource::<ProcGenController<OverworldProcGen>>();
     commands.remove_resource::<ProcGenController<Slime>>();
-    commands.remove_resource::<ParticleMap<ParticleDustWalking>>();
+    commands.remove_resource::<ParticleMap<ParticleWalkingDust>>();
     commands.remove_resource::<VisualMap>();
 }

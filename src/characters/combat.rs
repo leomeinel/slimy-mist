@@ -15,6 +15,7 @@ use crate::{
     AppSystems,
     camera::OVERLAY_Z,
     characters::{Character, CollisionDataCache, Health, Movement, player::Player},
+    input::AimDirection,
     logging::{
         error::{ERR_INVALID_ATTACKER, ERR_INVALID_RAPIER_CONTEXT},
         warn::{WARN_INCOMPLETE_COLLISION_DATA, WARN_INVALID_ATTACK},
@@ -45,10 +46,7 @@ pub(crate) struct Attack {
 
 /// [`EntityEvent`] that is triggered if the contained [`Entity`] has attacked.
 #[derive(EntityEvent)]
-pub(crate) struct Attacked {
-    pub(crate) entity: Entity,
-    pub(crate) direction: Vec2,
-}
+pub(crate) struct Attacked(pub(crate) Entity);
 
 /// Controller for combat
 #[derive(Component, Default)]
@@ -84,6 +82,7 @@ fn apply_melee<T>(
     mut target_query: Query<&mut Health>,
     origin_query: Query<(&Transform, &Movement, &CombatController), With<T>>,
     mut commands: Commands,
+    aim_direction: Res<AimDirection>,
     collision_data: Res<CollisionDataCache<T>>,
     rapier_context: ReadRapierContext,
     particle_handle: Res<ParticleHandle<ParticleCombatHit>>,
@@ -96,23 +95,24 @@ fn apply_melee<T>(
         return;
     };
 
-    let (transform, movement, controller) =
-        origin_query.get(event.entity).expect(ERR_INVALID_ATTACKER);
+    let origin = event.0;
+    let (transform, movement, controller) = origin_query.get(origin).expect(ERR_INVALID_ATTACKER);
     let Some(melee) = &controller.melee else {
         warn_once!(WARN_INVALID_ATTACK);
         return;
     };
-    let direction = if event.direction == Vec2::ZERO {
+    let direction = if aim_direction.0 == Vec2::ZERO {
+        info!("RESET");
         movement.facing
     } else {
-        event.direction
+        aim_direction.0
     };
 
     // Cast ray to determine boundary of `Collider`
     // NOTE: We have to add an offset to max_toi to ensure that the ray reaches the boundary.
     let max_toi = (width / 2.).max(height / 2.) + 1.;
     // Filter for `entity` itself
-    let filter = &|e| e == event.entity;
+    let filter = &|e| e == origin;
     let filter = QueryFilter::exclude_dynamic()
         .exclude_sensors()
         .predicate(filter);
@@ -130,7 +130,7 @@ fn apply_melee<T>(
     // Filter for anything that is not `entity`
     let filter = QueryFilter::exclude_dynamic()
         .exclude_sensors()
-        .exclude_rigid_body(event.entity);
+        .exclude_rigid_body(origin);
     let mut targets = Vec::new();
     rapier_context.intersect_shape(shape_pos, shape_rot, &shape, filter, |e| {
         if target_query.contains(e) {
@@ -145,7 +145,7 @@ fn apply_melee<T>(
     apply_attack(
         &mut target_query,
         &mut commands,
-        event.entity,
+        origin,
         targets,
         damage,
         cooldown_secs,

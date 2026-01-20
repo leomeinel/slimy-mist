@@ -29,6 +29,9 @@ use crate::{
 };
 
 pub(super) fn plugin(app: &mut App) {
+    // Insert resources
+    app.init_resource::<AimDirection>();
+
     // Add library plugins
     app.add_plugins(EnhancedInputPlugin);
 
@@ -73,10 +76,22 @@ pub(crate) struct Jump;
 #[action_output(bool)]
 pub(crate) struct Melee;
 
-/// Attack diretion [`InputAction`]
+/// Aim direction [`InputAction`]
 #[derive(InputAction)]
 #[action_output(Vec2)]
 pub(crate) struct Aim;
+
+/// Aim direction
+#[derive(Resource, Default)]
+pub(crate) struct AimDirection(pub(crate) Vec2);
+impl AimDirection {
+    /// Sets a new [`AimDirection::0`] if it has not already been set.
+    pub(crate) fn set_new(&mut self, new: Vec2) {
+        if self.0 != new {
+            self.0 = new;
+        }
+    }
+}
 
 /// Max duration for a tap to be recognized.
 const TAP_MAX_DURATION_SECS: f32 = 0.5;
@@ -158,7 +173,7 @@ fn mock_melee_from_touch(
 
 /// Use [`ActionMock`] to mock [`Aim`] from touch inputs.
 fn mock_aim_from_touch(
-    aim_direction: Single<Entity, With<Action<Aim>>>,
+    aim: Single<Entity, With<Action<Aim>>>,
     camera: Single<(&Camera, &GlobalTransform), With<CanvasCamera>>,
     player_transform: Single<&Transform, With<Player>>,
     mut commands: Commands,
@@ -170,12 +185,10 @@ fn mock_aim_from_touch(
     for touch in touches.iter_just_released() {
         if let Ok(pos) = camera.viewport_to_world_2d(camera_transform, touch.position()) {
             let direction = pos - player_transform.translation.xy();
-            commands
-                .entity(aim_direction.entity())
-                .insert(ActionMock::once(
-                    ActionState::Fired,
-                    ActionValue::from(direction),
-                ));
+            commands.entity(aim.entity()).insert(ActionMock::once(
+                ActionState::Fired,
+                ActionValue::from(direction),
+            ));
         }
     }
 }
@@ -183,7 +196,7 @@ fn mock_aim_from_touch(
 /// Use [`ActionMock`] to mock [`Aim`] from clicks.
 fn mock_aim_from_click(
     mut reader: MessageReader<MouseButtonInput>,
-    aim_direction: Single<Entity, With<Action<Aim>>>,
+    aim: Single<Entity, With<Action<Aim>>>,
     camera: Single<(&Camera, &GlobalTransform), With<CanvasCamera>>,
     player_transform: Single<&Transform, With<Player>>,
     window: Single<&Window, With<PrimaryWindow>>,
@@ -201,12 +214,10 @@ fn mock_aim_from_click(
             && let Ok(pos) = camera.viewport_to_world_2d(camera_transform, pos)
         {
             let direction = pos - player_transform.translation.xy();
-            commands
-                .entity(aim_direction.entity())
-                .insert(ActionMock::once(
-                    ActionState::Fired,
-                    ActionValue::from(direction),
-                ));
+            commands.entity(aim.entity()).insert(ActionMock::once(
+                ActionState::Fired,
+                ActionValue::from(direction),
+            ));
         }
     }
 }
@@ -298,15 +309,15 @@ fn set_jump(
 fn trigger_melee(
     _: On<Fire<Melee>>,
     parent: Single<(Entity, Option<&AttackTimer>), With<Player>>,
-    aim_direction: Single<&Action<Aim>>,
+    aim: Single<&Action<Aim>>,
     mut commands: Commands,
+    mut aim_direction: ResMut<AimDirection>,
     pause: Res<State<Pause>>,
 ) {
     // Return if game is paused
     if pause.get().0 {
         return;
     }
-
     // Return if `timer` has not finished
     let (entity, timer) = parent.into_inner();
     if let Some(timer) = timer
@@ -319,8 +330,15 @@ fn trigger_melee(
     //        in a different direction but their attack stays at the last aim_direction.
     //        The exact scenarios are quite hard to get right in my opinion, but this should be
     //        considered.
-    commands.trigger(Attacked {
-        entity,
-        direction: (***aim_direction).normalize_or_zero(),
-    });
+    //        I have already tried to set the direction in a system externally and some other
+    //        approaches but none of them worked reliably. I'm not sure if this is worth
+    //        fixing for now, but later it has to be done.
+    //        I have already decoupled `AimDirection` to be able to access/change it externally.
+    let direction = if (***aim).is_normalized() {
+        ***aim
+    } else {
+        (***aim).normalize_or_zero()
+    };
+    aim_direction.set_new(direction);
+    commands.trigger(Attacked(entity));
 }

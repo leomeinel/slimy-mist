@@ -26,10 +26,7 @@ pub(super) fn plugin(app: &mut App) {
 /// Pause audio when app goes into background and resume when it returns.
 ///
 /// This is necessary for android
-fn handle_lifetime(
-    mut reader: MessageReader<AppLifecycle>,
-    music_controller: Single<&AudioSink>,
-) {
+fn handle_lifetime(mut reader: MessageReader<AppLifecycle>, music_controller: Single<&AudioSink>) {
     for app_lifecycle in reader.read() {
         match app_lifecycle {
             AppLifecycle::Suspended => music_controller.pause(),

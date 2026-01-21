@@ -27,10 +27,9 @@ bevy_asset_loader = { version = "0.24.0", features = [
 ] }
 bevy_common_assets = { version = "0.14.0", features = ["ron"] }
 bevy_ecs_tilemap = "0.17.0"
-# FIXME: Temporary workaround to circumvent failing wasm builds.
-#        Wait for https://github.com/Lommix/bevy_enoki/pull/35 to be merged.
-#        Also see: https://github.com/Lommix/bevy_enoki/issues/34
 bevy_enhanced_input = "0.20.1"
+# FIXME: Temporary workaround to circumvent failing wasm builds.
+#        Wait for new version to be released
 bevy_enoki = { git = "https://github.com/leomeinel/bevy_enoki.git", branch = "update-dependencies" }
 bevy_light_2d = "0.8.0"
 bevy_prng = { version = "0.12.1", features = ["rand_chacha", "wyrand"] }

@@ -15,7 +15,6 @@ use crate::{
     AppSystems,
     camera::OVERLAY_Z,
     characters::{Character, CollisionDataCache, Health, Movement, player::Player},
-    input::AimDirection,
     logging::{
         error::{ERR_INVALID_ATTACKER, ERR_INVALID_RAPIER_CONTEXT},
         warn::{WARN_INCOMPLETE_COLLISION_DATA, WARN_INVALID_ATTACK},
@@ -46,7 +45,10 @@ pub(crate) struct Attack {
 
 /// [`EntityEvent`] that is triggered if the contained [`Entity`] has attacked.
 #[derive(EntityEvent)]
-pub(crate) struct Attacked(pub(crate) Entity);
+pub(crate) struct Attacked {
+    pub(crate) entity: Entity,
+    pub(crate) direction: Vec2,
+}
 
 /// Controller for combat
 #[derive(Component, Default)]
@@ -82,7 +84,6 @@ fn apply_melee<T>(
     mut target_query: Query<&mut Health>,
     origin_query: Query<(&Transform, &Movement, &CombatController), With<T>>,
     mut commands: Commands,
-    aim_direction: Res<AimDirection>,
     collision_data: Res<CollisionDataCache<T>>,
     rapier_context: ReadRapierContext,
     particle_handle: Res<ParticleHandle<ParticleCombatHit>>,
@@ -95,16 +96,16 @@ fn apply_melee<T>(
         return;
     };
 
-    let origin = event.0;
+    let (origin, event_direction) = (event.entity, event.direction);
     let (transform, movement, controller) = origin_query.get(origin).expect(ERR_INVALID_ATTACKER);
     let Some(melee) = &controller.melee else {
         warn_once!(WARN_INVALID_ATTACK);
         return;
     };
-    let direction = if aim_direction.0 == Vec2::ZERO {
+    let direction = if event_direction == Vec2::ZERO {
         movement.facing
     } else {
-        aim_direction.0
+        event_direction
     };
 
     // Cast ray to determine boundary of `Collider`

@@ -7,6 +7,8 @@
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  */
 
+// FIXME: We currently don't have a way to handle joystick drift.
+
 use bevy::{input::mouse::MouseButtonInput, prelude::*, window::PrimaryWindow};
 use bevy_enhanced_input::prelude::*;
 use bevy_rapier2d::prelude::*;
@@ -29,9 +31,6 @@ use crate::{
 };
 
 pub(super) fn plugin(app: &mut App) {
-    // Insert resources
-    app.init_resource::<AimDirection>();
-
     // Add library plugins
     app.add_plugins(EnhancedInputPlugin);
 
@@ -59,6 +58,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_observer(stop_walk);
     app.add_observer(set_jump);
     app.add_observer(trigger_melee);
+    app.add_observer(stop_aim);
 }
 
 /// Walk [`InputAction`]
@@ -80,18 +80,6 @@ pub(crate) struct Melee;
 #[derive(InputAction)]
 #[action_output(Vec2)]
 pub(crate) struct Aim;
-
-/// Aim direction
-#[derive(Resource, Default)]
-pub(crate) struct AimDirection(pub(crate) Vec2);
-impl AimDirection {
-    /// Sets a new [`AimDirection::0`] if it has not already been set.
-    pub(crate) fn set_new(&mut self, new: Vec2) {
-        if self.0 != new {
-            self.0 = new;
-        }
-    }
-}
 
 /// Max duration for a tap to be recognized.
 const TAP_MAX_DURATION_SECS: f32 = 0.5;
@@ -187,7 +175,7 @@ fn mock_aim_from_touch(
             let direction = pos - player_transform.translation.xy();
             commands.entity(aim.entity()).insert(ActionMock::once(
                 ActionState::Fired,
-                ActionValue::from(direction),
+                ActionValue::from(direction.normalize_or_zero()),
             ));
         }
     }
@@ -216,7 +204,7 @@ fn mock_aim_from_click(
             let direction = pos - player_transform.translation.xy();
             commands.entity(aim.entity()).insert(ActionMock::once(
                 ActionState::Fired,
-                ActionValue::from(direction),
+                ActionValue::from(direction.normalize_or_zero()),
             ));
         }
     }
@@ -308,10 +296,9 @@ fn set_jump(
 /// On a fired [`Melee`], trigger [`Attacked`].
 fn trigger_melee(
     _: On<Fire<Melee>>,
-    parent: Single<(Entity, Option<&AttackTimer>), With<Player>>,
     aim: Single<&Action<Aim>>,
+    parent: Single<(Entity, Option<&AttackTimer>), With<Player>>,
     mut commands: Commands,
-    mut aim_direction: ResMut<AimDirection>,
     pause: Res<State<Pause>>,
 ) {
     // Return if game is paused
@@ -326,19 +313,12 @@ fn trigger_melee(
         return;
     }
 
-    // FIXME: If using gamepad input, we get very unexpected results for the aim direction.
-    //        It seems like it sometimes just falls back to a random position. This
-    //        may be because of us also interpreting inwards movement of the stick?
-    //        Also if the player is moving, we should initially fall back to that.
-    //        I have already tried to set the direction in a system externally and some other
-    //        approaches but none of them worked reliably. I'm not sure if this is worth
-    //        fixing for now, but later it has to be done.
-    //        I have already decoupled `AimDirection` to be able to access/change it externally.
-    let direction = if (***aim).is_normalized() {
-        ***aim
-    } else {
-        (***aim).normalize_or_zero()
-    };
-    aim_direction.set_new(direction);
-    commands.trigger(Attacked(entity));
+    commands.trigger(Attacked {
+        entity,
+        direction: ***aim,
+    });
+}
+
+fn stop_aim(mut action: On<Complete<Aim>>) {
+    action.value = Vec2::ZERO;
 }

@@ -27,7 +27,6 @@ use crate::{
     characters::animations::{AnimationController, AnimationTimer, Animations},
     logging::warn::WARN_INCOMPLETE_COLLISION_DATA_FALLBACK,
     screens::Screen,
-    utils::math::NearEq,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -247,12 +246,9 @@ pub(crate) fn character_collider(
 /// This also updates [`Movement::old_direction`] from [`Movement::direction`].
 fn update_movement_facing(query: Query<&mut Movement>) {
     for mut movement in query {
-        let epsilon = 0.1;
         // NOTE: This only checks for desired movement, not actual movement. This is to ensure that
         //       even if a character can't move, it can still change its' facing direction.
-        if !movement.direction.is_near(movement.old_direction, epsilon)
-            && !movement.direction.is_near_zero(0.1)
-        {
+        if movement.direction != Vec2::ZERO && movement.direction != movement.old_direction {
             movement.facing = movement.direction.normalize_or_zero();
         }
         movement.old_direction = movement.direction;

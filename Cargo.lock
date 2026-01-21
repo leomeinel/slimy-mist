@@ -1498,9 +1498,9 @@ dependencies = [
 
 [[package]]
 name = "bevy_spritesheet_animation"
-version = "5.0.0"
+version = "5.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "168ec80a03384b754337a7df86f53e3484aabfa683bb00746d172d48d7535680"
+checksum = "190e3890fa413c44b624e0167ee982ce678cd0a326286698cb781b9055b7df98"
 dependencies = [
  "bevy",
 ]
@@ -5027,7 +5027,7 @@ checksum = "7a2ae44ef20feb57a68b23d846850f861394c2e02dc425a50098ae8c90267589"
 
 [[package]]
 name = "slimy_mist"
-version = "0.11.16"
+version = "0.11.17"
 dependencies = [
  "bevy",
  "bevy_asset_loader",

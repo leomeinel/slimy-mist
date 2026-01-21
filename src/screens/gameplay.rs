@@ -29,6 +29,7 @@ use crate::{
     menus::Menu,
     procgen::{ProcGenController, navmesh::spawn_navmesh},
     screens::Screen,
+    utils::run_conditions::window_unfocused,
     visual::particles::{ParticleMap, ParticleWalkingDust},
 };
 
@@ -70,10 +71,13 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         (
-            (pause, spawn_pause_overlay, open_pause_menu)
-                .run_if(in_state(Menu::None).and(
-                    input_just_pressed(KeyCode::KeyP).or(input_just_pressed(KeyCode::Escape)),
-                )),
+            (pause, spawn_pause_overlay, open_pause_menu).run_if(
+                in_state(Menu::None).and(
+                    input_just_pressed(KeyCode::KeyP)
+                        .or(input_just_pressed(KeyCode::Escape))
+                        .or(window_unfocused),
+                ),
+            ),
             close_menu.run_if(not(in_state(Menu::None)).and(input_just_pressed(KeyCode::KeyP))),
         )
             .run_if(in_state(Screen::Gameplay)),

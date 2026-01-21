@@ -30,6 +30,7 @@ mod mobile;
 mod procgen;
 mod screens;
 mod theme;
+mod utils;
 mod visual;
 
 use bevy::asset::AssetMetaCheck;

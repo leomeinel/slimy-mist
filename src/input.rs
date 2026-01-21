@@ -42,9 +42,10 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         PreUpdate,
         (
+            mock_jump_from_touch,
+            mock_melee_from_touch,
             // Mock `Aim` from clicks or override with touch input
             (mock_aim_from_click, mock_aim_from_touch).chain(),
-            mock_melee_from_touch,
             #[cfg(any(target_os = "android", target_os = "ios"))]
             mock_walk_from_virtual_joystick,
         )
@@ -144,6 +145,28 @@ fn mock_walk_from_virtual_joystick(
     }
 }
 
+/// Threshold for a valid swipe action from touch input in logical pixels.
+const SWIPE_THRESHOLD: f32 = 50.;
+
+/// Use [`ActionMock`] to mock [`Jump`] from touch inputs.
+fn mock_jump_from_touch(
+    jump: Single<Entity, With<Action<Jump>>>,
+    mut commands: Commands,
+    touches: Res<Touches>,
+) {
+    for touch in touches.iter_just_released() {
+        let distance = touch.distance();
+        // FIXME: We should check if the input is outside of the rect of virtual joystick.
+        // NOTE: We are inverting y to align with user intent because `distance` is reversed on the y axis.
+        if -distance.y > SWIPE_THRESHOLD && distance.y.abs() > distance.x.abs() {
+            commands.entity(jump.entity()).insert(ActionMock::once(
+                ActionState::Fired,
+                ActionValue::Bool(true),
+            ));
+        }
+    }
+}
+
 /// Use [`ActionMock`] to mock [`Melee`] from touch inputs.
 fn mock_melee_from_touch(
     melee: Single<Entity, With<Action<Melee>>>,
@@ -151,6 +174,7 @@ fn mock_melee_from_touch(
     touches: Res<Touches>,
 ) {
     // FIXME: We should check for taps within `TAP_MAX_DURATION_SECS` instead.
+    // FIXME: We should check if the input is outside of the rect of virtual joystick.
     if touches.any_just_released() {
         commands.entity(melee.entity()).insert(ActionMock::once(
             ActionState::Fired,
@@ -170,6 +194,7 @@ fn mock_aim_from_touch(
     let (camera, camera_transform) = *camera;
 
     // FIXME: We should check for taps within `TAP_MAX_DURATION_SECS` instead.
+    // FIXME: We should check if the input is outside of the rect of virtual joystick.
     for touch in touches.iter_just_released() {
         if let Ok(pos) = camera.viewport_to_world_2d(camera_transform, touch.position()) {
             let direction = pos - player_transform.translation.xy();
@@ -193,6 +218,7 @@ fn mock_aim_from_click(
     let (camera, camera_transform) = *camera;
 
     // FIXME: We should check for taps within `TAP_MAX_DURATION_SECS` instead.
+    // FIXME: We should check if the input is outside of the rect of virtual joystick.
     for click in reader.read() {
         if click.button != MouseButton::Left {
             continue;

@@ -19,7 +19,6 @@ path = "src/main.rs"
 doc = false
 
 [dependencies]
-bevy = "0.18.0"
 bevy_asset_loader = { version = "0.25.0", features = [
  "2d",
  "standard_dynamic_assets",
@@ -50,10 +49,9 @@ tracing = { version = "0.1.44", features = [
 vleue_navigator = "0.15.0"
 
 [dev-dependencies]
-# FIXME: Wait for new version to be released and PRs to be merged:
-#        - https://github.com/dimforge/bevy_rapier/pull/686
-bevy_rapier2d = { git = "https://github.com/Buncys/bevy_rapier.git", rev = "8c25504d336c8c9fc7a3c765422d56845cc36075", features = [
- "debug-render-2d",
+bevy = { version = "0.18.0", default-features = false, features = [
+ "2d",
+ "webp",
 ] }
 
 # FIXME: Wait for new version to be released and PRs to be merged:
@@ -67,9 +65,17 @@ virtual_joystick = { git = "https://github.com/leomeinel/virtual_joystick.git", 
 bevy_rand = { version = "0.13.0", features = ["wasm_js"] }
 
 [target.'cfg(not(target_os = "linux"))'.dependencies]
-bevy = { version = "0.18.0", features = ["webp"] }
+bevy = { version = "0.18.0", default-features = false, features = [
+ "2d",
+ "webp",
+] }
 [target.'cfg(target_os = "linux")'.dependencies]
-bevy = { version = "0.18.0", features = ["wayland", "webp", "x11"] }
+bevy = { version = "0.18.0", default-features = false, features = [
+ "2d",
+ "wayland",
+ "webp",
+ "x11",
+] }
 
 # FIXME: android-activity 0.6.0 is only compatible with major version 2 of games-activity which is no at 4.0.0.
 #        This is why we are using a fix from: https://mevlyshkin.com/notes/bevy-android-input/

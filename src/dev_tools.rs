@@ -161,7 +161,7 @@ fn display_prim_obstacles(mut gizmos: Gizmos, query: Query<(&PrimitiveObstacle, 
 
 /// Draw [`Primitive2d`]
 ///
-/// This is a helper function for [`display_primitive_obstacles`].
+/// This is a helper function for [`display_prim_obstacles`].
 fn draw_prim<T>(gizmos: &mut Gizmos, transform: &Transform, prim: &T)
 where
     T: Primitive2d,

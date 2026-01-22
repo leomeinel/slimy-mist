@@ -9,9 +9,6 @@
  * Heavily inspired by: https://github.com/bevyengine/bevy/tree/main/examples/mobile
  */
 
-// FIXME: Currently android is unsupported.
-//        Also see: https://github.com/jgayfer/bevy_light_2d/issues/59
-
 use bevy::{prelude::*, window::AppLifecycle};
 
 pub(super) fn plugin(app: &mut App) {

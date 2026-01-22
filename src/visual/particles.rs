@@ -31,7 +31,6 @@ pub(super) fn plugin(app: &mut App) {
     app.add_plugins(EnokiPlugin);
 
     // Add particle systems
-    // FIXME: Think of using a SystemSet here instead that includes spawn_overworld
     app.add_systems(
         OnEnter(Screen::Gameplay),
         add_walking_dust::<Player>.after(spawn_overworld),

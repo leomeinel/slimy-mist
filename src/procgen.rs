@@ -19,6 +19,7 @@
 //        that. Especially pathfinding, storing game data etc. would be a lot harder/impossible.
 //        I'm pretty sure that even for my plans with the infinite open world, a limit of `1 << 20`
 //        will be just fine. That is a world of 4096x4096 chunks with 16 16x16 tiles.
+//        Also see: https://github.com/bevyengine/bevy/issues/1680
 
 pub(crate) mod chunks;
 pub(crate) mod navmesh;

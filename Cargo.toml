@@ -85,6 +85,11 @@ bevy = { version = "0.18.0", default-features = false, features = [
 #        - https://github.com/bevyengine/bevy/issues/10945
 [patch.crates-io]
 android-activity = { git = "https://github.com/damus-io/android-activity", rev = "a8948332c7c551303d32eb26a59d0abd676e47a5" }
+# FIXME: Wait for new version to be released.
+#        We need this because `geo` uses `rand ^0.8.0` in their latest release.
+#        Also see: https://github.com/vleue/polyanya/issues/132
+geo = { git = "https://github.com/georust/geo.git", rev = "0492e738a7199f4792cca5cb76e67bdfc7734074" }
+geo-types = { git = "https://github.com/georust/geo.git", rev = "0492e738a7199f4792cca5cb76e67bdfc7734074" }
 
 [features]
 # Default to a native dev build.

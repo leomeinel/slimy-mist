@@ -14,7 +14,7 @@
 //! Development tools for the game. This plugin is only enabled in dev builds.
 
 use bevy::{
-    color::palettes::tailwind, dev_tools::states::log_transitions,
+    color::palettes::tailwind, dev_tools::states::log_transitions, gizmos::gizmos::GizmoBuffer,
     input::common_conditions::input_just_pressed, prelude::*,
 };
 use bevy_rapier2d::render::{DebugRenderContext, RapierDebugRenderPlugin};
@@ -52,7 +52,7 @@ pub(super) fn plugin(app: &mut App) {
     );
     app.add_systems(
         Update,
-        (display_primitive_obstacles, display_navigator_path)
+        (display_prim_obstacles, display_navigator_path)
             .run_if(in_state(Debugging(true)).and(in_state(Screen::Gameplay))),
     );
 
@@ -141,89 +141,38 @@ pub fn display_navigator_path(navigator: Query<(&Transform, &Path)>, mut gizmos:
 const DEBUG_OBSTACLE_COLOR: Srgba = tailwind::VIOLET_800;
 
 /// Display [`PrimitiveObstacle`]s
-fn display_primitive_obstacles(mut gizmos: Gizmos, query: Query<(&PrimitiveObstacle, &Transform)>) {
+fn display_prim_obstacles(mut gizmos: Gizmos, query: Query<(&PrimitiveObstacle, &Transform)>) {
     for (prim, transform) in &query {
         match prim {
-            PrimitiveObstacle::Rectangle(prim) => {
-                gizmos.primitive_2d(
-                    prim,
-                    Isometry2d::new(
-                        transform.translation.xy(),
-                        Rot2::radians(transform.rotation.to_axis_angle().1),
-                    ),
-                    Color::from(DEBUG_OBSTACLE_COLOR),
-                );
-            }
-            PrimitiveObstacle::Circle(prim) => {
-                gizmos.primitive_2d(
-                    prim,
-                    Isometry2d::new(
-                        transform.translation.xy(),
-                        Rot2::radians(transform.rotation.to_axis_angle().1),
-                    ),
-                    Color::from(DEBUG_OBSTACLE_COLOR),
-                );
-            }
-            PrimitiveObstacle::Ellipse(prim) => {
-                gizmos.primitive_2d(
-                    prim,
-                    Isometry2d::new(
-                        transform.translation.xy(),
-                        Rot2::radians(transform.rotation.to_axis_angle().1),
-                    ),
-                    Color::from(DEBUG_OBSTACLE_COLOR),
-                );
-            }
-            PrimitiveObstacle::CircularSector(prim) => {
-                gizmos.primitive_2d(
-                    prim,
-                    Isometry2d::new(
-                        transform.translation.xy(),
-                        Rot2::radians(transform.rotation.to_axis_angle().1),
-                    ),
-                    Color::from(DEBUG_OBSTACLE_COLOR),
-                );
-            }
-            PrimitiveObstacle::CircularSegment(prim) => {
-                gizmos.primitive_2d(
-                    prim,
-                    Isometry2d::new(
-                        transform.translation.xy(),
-                        Rot2::radians(transform.rotation.to_axis_angle().1),
-                    ),
-                    Color::from(DEBUG_OBSTACLE_COLOR),
-                );
-            }
-            PrimitiveObstacle::Capsule(prim) => {
-                gizmos.primitive_2d(
-                    prim,
-                    Isometry2d::new(
-                        transform.translation.xy(),
-                        Rot2::radians(transform.rotation.to_axis_angle().1),
-                    ),
-                    Color::from(DEBUG_OBSTACLE_COLOR),
-                );
-            }
-            PrimitiveObstacle::RegularPolygon(prim) => {
-                gizmos.primitive_2d(
-                    prim,
-                    Isometry2d::new(
-                        transform.translation.xy(),
-                        Rot2::radians(transform.rotation.to_axis_angle().1),
-                    ),
-                    Color::from(DEBUG_OBSTACLE_COLOR),
-                );
-            }
-            PrimitiveObstacle::Rhombus(prim) => {
-                gizmos.primitive_2d(
-                    prim,
-                    Isometry2d::new(
-                        transform.translation.xy(),
-                        Rot2::radians(transform.rotation.to_axis_angle().1),
-                    ),
-                    Color::from(DEBUG_OBSTACLE_COLOR),
-                );
-            }
+            PrimitiveObstacle::Rectangle(prim) => draw_prim(&mut gizmos, transform, prim),
+            PrimitiveObstacle::Circle(prim) => draw_prim(&mut gizmos, transform, prim),
+            PrimitiveObstacle::Ellipse(prim) => draw_prim(&mut gizmos, transform, prim),
+            PrimitiveObstacle::CircularSector(prim) => draw_prim(&mut gizmos, transform, prim),
+            PrimitiveObstacle::CircularSegment(prim) => draw_prim(&mut gizmos, transform, prim),
+            PrimitiveObstacle::Capsule(prim) => draw_prim(&mut gizmos, transform, prim),
+            PrimitiveObstacle::RegularPolygon(prim) => draw_prim(&mut gizmos, transform, prim),
+            PrimitiveObstacle::Rhombus(prim) => draw_prim(&mut gizmos, transform, prim),
+            PrimitiveObstacle::Triangle(prim) => draw_prim(&mut gizmos, transform, prim),
+            PrimitiveObstacle::Polygon(prim) => draw_prim(&mut gizmos, transform, prim),
+            _ => (),
         }
     }
+}
+
+/// Draw [`Primitive2d`]
+///
+/// This is a helper function for [`display_primitive_obstacles`].
+fn draw_prim<T>(gizmos: &mut Gizmos, transform: &Transform, prim: &T)
+where
+    T: Primitive2d,
+    GizmoBuffer<DefaultGizmoConfigGroup, ()>: GizmoPrimitive2d<T>,
+{
+    gizmos.primitive_2d(
+        prim,
+        Isometry2d::new(
+            transform.translation.xy(),
+            Rot2::radians(transform.rotation.to_axis_angle().1),
+        ),
+        Color::from(DEBUG_OBSTACLE_COLOR),
+    );
 }

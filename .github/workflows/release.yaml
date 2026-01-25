@@ -129,7 +129,7 @@ jobs:
           - platform: android
             targets: aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
             package_ext: .zip
-            runner: ubuntu-24.04-arm
+            runner: ubuntu-latest
 
           - platform: linux-x86_64
             targets: x86_64-unknown-linux-gnu
@@ -280,8 +280,8 @@ jobs:
           cargo build --bin '${{ env.app_binary_name }}' --no-default-features --profile web-release --locked --target=${{ matrix.targets }} --features='${{ matrix.features }}' -j default
 
           # Install binaryen version 125
-          curl -LJO https://github.com/WebAssembly/binaryen/releases/download/version_125/binaryen-version_125-x86_64-linux.tar.gz
-          tar -xzf ./binaryen-version_125-x86_64-linux.tar.gz
+          curl -LJO https://github.com/WebAssembly/binaryen/releases/download/version_125/binaryen-version_125-aarch64-linux.tar.gz
+          tar -xzf ./binaryen-version_125-aarch64-linux.tar.gz
 
           # Optimize binary
           OUTPUT=target/${{ matrix.targets }}/web-release/${{ env.app_binary_name }}${{ matrix.binary_ext }}

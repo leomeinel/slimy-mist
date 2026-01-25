@@ -21,6 +21,7 @@ env:
   build_for_linux-x86_64: true
   build_for_linux-aarch64: true
   build_for_macos: true
+  build_for_ios: true
   build_for_web: true
   build_for_windows: true
   deploy_to_github_pages: true
@@ -152,9 +153,9 @@ jobs:
             package_ext: .dmg
             runner: macos-latest
 
-          # FIXME: Implement this
           - platform: ios
             targets: aarch64-apple-ios x86_64-apple-ios aarch64-apple-ios-sim
+            package_ext: .zip
             runner: macos-latest
     runs-on: ${{ matrix.runner }}
     permissions:
@@ -204,7 +205,8 @@ jobs:
             (matrix.platform == 'linux-x86_64' && env.build_for_linux-x86_64) ||
             (matrix.platform == 'linux-aarch64' && env.build_for_linux-aarch64) ||
             (matrix.platform == 'windows' && env.build_for_windows) ||
-            (matrix.platform == 'macos' && env.build_for_macos)
+            (matrix.platform == 'macos' && env.build_for_macos) ||
+            (matrix.platform == 'ios' && env.build_for_ios)
           }}' >> "${GITHUB_ENV}"
 
       - name: Checkout repository
@@ -303,6 +305,16 @@ jobs:
           else
             mv tmp/binary/*'${{ matrix.binary_ext }}' '${{ env.app }}/${{ env.app_binary_name }}${{ matrix.binary_ext }}'
           fi
+
+      - name: Build and add binaries to app (Ios)
+        if: ${{ env.is_platform_enabled == 'true' && matrix.platform == 'ios' }}
+        run: |
+          # Build package
+          make -C ./mobile/ios xcodebuild-iphone
+
+          # Prepare package
+          BUILD_OUTPUT=./mobile/ios/build/Build/Products/Release-iphoneos
+          mv "${BUILD_OUTPUT}"/${{ env.app_binary_name }}.app '${{ env.app }}'/${{ env.app_binary_name }}.app
 
       - name: Add assets to app (non-Android/non-Ios)
         if: ${{ env.is_platform_enabled == 'true' && matrix.platform != 'android' && matrix.platform != 'ios' }}

@@ -82,7 +82,7 @@ jobs:
   # This is needed because the `env` context can't be used in the `if:` condition of a job:
   # <https://docs.github.com/en/actions/learn-github-actions/contexts#context-availability>
   forward-env:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - name: Do nothing
         run: "true"
@@ -95,7 +95,7 @@ jobs:
 
   # Determine the version number for this workflow.
   get-version:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - name: Determine version number
         id: tag
@@ -124,17 +124,17 @@ jobs:
             targets: wasm32-unknown-unknown
             binary_ext: .wasm
             package_ext: .zip
-            runner: ubuntu-latest
+            runner: ubuntu-24.04-arm
 
           - platform: android
             targets: aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
             package_ext: .zip
-            runner: ubuntu-latest
+            runner: ubuntu-24.04-arm
 
           - platform: linux-x86_64
             targets: x86_64-unknown-linux-gnu
             package_ext: .zip
-            runner: ubuntu-latest
+            runner: ubuntu-24.04-arm
 
           - platform: linux-aarch64
             targets: aarch64-unknown-linux-gnu
@@ -403,13 +403,12 @@ jobs:
 
   # Deploy to itch.io.
   deploy-to-itch:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     needs:
       - forward-env
       - get-version
       - build
     if: ${{ needs.forward-env.outputs.deploy_to_itch && needs.forward-env.outputs.itch_page != '' }}
-
     steps:
       - name: Download packages
         uses: actions/download-artifact@v4
@@ -438,7 +437,7 @@ jobs:
 
   # Deploy to GitHub Pages.
   deploy-to-github-pages:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     needs:
       - forward-env
       - build
@@ -452,7 +451,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     if: ${{ needs.forward-env.outputs.deploy_to_github_pages && needs.forward-env.outputs.build_for_web }}
-
     steps:
       - name: Deploy to GitHub Pages
         id: deploy

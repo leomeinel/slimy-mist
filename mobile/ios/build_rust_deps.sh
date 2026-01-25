@@ -74,4 +74,4 @@ for arch in ${ARCHS}; do
 done
 
 # Combine executables, and place them at the output path excepted by Xcode
-lipo -create -output "${TARGET}_BUILD_DIR/${EXECUTABLE_PATH}" "${EXECUTABLES[@]}"
+lipo -create -output "${TARGET_BUILD_DIR}/${EXECUTABLE_PATH}" "${EXECUTABLES[@]}"

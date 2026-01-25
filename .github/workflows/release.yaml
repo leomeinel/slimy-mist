@@ -134,7 +134,7 @@ jobs:
           - platform: linux-x86_64
             targets: x86_64-unknown-linux-gnu
             package_ext: .zip
-            runner: ubuntu-24.04-arm
+            runner: ubuntu-latest
 
           - platform: linux-aarch64
             targets: aarch64-unknown-linux-gnu

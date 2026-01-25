@@ -14,13 +14,13 @@ boot-sim:
 	xcrun simctl boot $(DEVICE) || true
 
 install: xcodebuild-simulator boot-sim
-	xcrun simctl install $(DEVICE) build/Build/Products/Debug-iphonesimulator/slimymist.app
+	xcrun simctl install $(DEVICE) build/Build/Products/Release-iphonesimulator/slimymist.app
 
 xcodebuild-simulator:
-	IOS_TARGETS=x86_64-apple-ios xcodebuild -scheme slimymist -configuration Debug -derivedDataPath build -destination "id=$(DEVICE)"
+	IOS_TARGETS=x86_64-apple-ios xcodebuild -scheme slimymist -configuration Release -derivedDataPath build -destination "id=$(DEVICE)"
 
 xcodebuild-iphone:
-	IOS_TARGETS=aarch64-apple-ios xcodebuild -scheme slimymist -configuration Debug -derivedDataPath build -arch arm64
+	IOS_TARGETS=aarch64-apple-ios xcodebuild -scheme slimymist -configuration Release -derivedDataPath build -arch arm64
 
 clean:
 	rm -r build

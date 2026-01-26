@@ -8,7 +8,6 @@
  */
 
 // FIXME: We currently don't have a way to handle joystick drift.
-// FIXME: For touch input, we for some reason (sometimes, actually as far as I can tell always) fall back to movement direction
 
 use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_enhanced_input::prelude::*;

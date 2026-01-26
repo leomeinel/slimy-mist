@@ -11,7 +11,8 @@
 //        Also see:
 //        - https://github.com/bevyengine/bevy/issues/1738
 //        - https://github.com/bevyengine/bevy/issues/7131
-//        - https://github.com/bevyengine/bevy/pull/22484
+//        - https://github.com/merwaaan/bevy_spritesheet_animation/issues/66
+//        - https://github.com/bevyengine/bevy/pull/22484 (merged)
 
 pub(crate) mod particles;
 

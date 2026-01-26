@@ -11,8 +11,6 @@
 
 //! Helper functions for creating common widgets.
 
-// FIXME: Use `AutoDirectionalNavigation` after upgrade to bevy 0.18
-
 use std::borrow::Cow;
 
 use bevy::{

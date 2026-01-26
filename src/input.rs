@@ -10,7 +10,7 @@
 // FIXME: We currently don't have a way to handle joystick drift.
 // FIXME: For touch input, we for some reason (sometimes, actually as far as I can tell always) fall back to movement direction
 
-use bevy::{input::mouse::MouseButtonInput, prelude::*, window::PrimaryWindow};
+use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_enhanced_input::prelude::*;
 use bevy_rapier2d::prelude::*;
 #[cfg(any(target_os = "android", target_os = "ios"))]
@@ -43,24 +43,27 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         PreUpdate,
         (
-            mock_jump_from_touch,
-            mock_melee_from_touch,
             // Mock `Aim` from clicks or override with touch input
             (mock_aim_from_click, mock_aim_from_touch).chain(),
-            #[cfg(any(target_os = "android", target_os = "ios"))]
-            mock_walk_from_virtual_joystick,
+            (
+                mock_jump_from_touch,
+                mock_melee_from_touch,
+                #[cfg(any(target_os = "android", target_os = "ios"))]
+                mock_walk_from_virtual_joystick,
+            ),
         )
             .before(EnhancedInputSystems::Update)
-            .run_if(in_state(Screen::Gameplay)),
+            .run_if(in_state(Screen::Gameplay))
+            .chain(),
     );
 
     // Handle bevy_enhanced_input with input context and observers
     app.add_input_context::<Player>();
     app.add_observer(apply_walk);
-    app.add_observer(stop_walk);
+    app.add_observer(reset_walk);
     app.add_observer(set_jump);
     app.add_observer(trigger_melee);
-    app.add_observer(stop_aim);
+    app.add_observer(reset_aim);
 }
 
 /// Walk [`InputAction`]
@@ -96,6 +99,10 @@ pub(crate) fn player_input() -> impl Bundle {
             // Movement
             (
                 Action::<Walk>::new(),
+                ActionSettings {
+                    require_reset: true,
+                    ..Default::default()
+                },
                 DeadZone::default(),
                 SmoothNudge::default(),
                 Scale::splat(PLAYER_WALK_SPEED),
@@ -117,6 +124,10 @@ pub(crate) fn player_input() -> impl Bundle {
             ),
             (
                 Action::<Aim>::new(),
+                ActionSettings {
+                    require_reset: true,
+                    ..Default::default()
+                },
                 Bindings::spawn(Axial::right_stick())
             ),
         ]
@@ -196,12 +207,14 @@ fn mock_aim_from_touch(
 
     // FIXME: We should check for taps within `TAP_MAX_DURATION_SECS` instead.
     // FIXME: We should check if the input is outside of the rect of virtual joystick.
-    for touch in touches.iter_just_released() {
+    // NOTE: We are using `just_pressed` to allow use in `Melee`.
+    for touch in touches.iter_just_pressed() {
         if let Ok(pos) = camera.viewport_to_world_2d(camera_transform, touch.position()) {
             let direction = pos - player_transform.translation.xy();
-            commands.entity(aim.entity()).insert(ActionMock::once(
+            commands.entity(aim.entity()).insert(ActionMock::new(
                 ActionState::Fired,
                 ActionValue::from(direction.normalize_or_zero()),
+                MockSpan::Manual,
             ));
         }
     }
@@ -209,31 +222,31 @@ fn mock_aim_from_touch(
 
 /// Use [`ActionMock`] to mock [`Aim`] from clicks.
 fn mock_aim_from_click(
-    mut reader: MessageReader<MouseButtonInput>,
     aim: Single<Entity, With<Action<Aim>>>,
     camera: Single<(&Camera, &GlobalTransform), With<CanvasCamera>>,
     player_transform: Single<&Transform, With<Player>>,
     window: Single<&Window, With<PrimaryWindow>>,
     mut commands: Commands,
+    mouse: Res<ButtonInput<MouseButton>>,
 ) {
+    // FIXME: We should check for taps within `TAP_MAX_DURATION_SECS` instead.
+    // NOTE: We are using `just_pressed` to allow use in `Melee`.
+    if !mouse.just_pressed(MouseButton::Left) {
+        return;
+    }
+
     let (camera, camera_transform) = *camera;
 
-    // FIXME: We should check for taps within `TAP_MAX_DURATION_SECS` instead.
     // FIXME: We should check if the input is outside of the rect of virtual joystick.
-    for click in reader.read() {
-        if click.button != MouseButton::Left {
-            continue;
-        }
-
-        if let Some(pos) = window.cursor_position()
-            && let Ok(pos) = camera.viewport_to_world_2d(camera_transform, pos)
-        {
-            let direction = pos - player_transform.translation.xy();
-            commands.entity(aim.entity()).insert(ActionMock::once(
-                ActionState::Fired,
-                ActionValue::from(direction.normalize_or_zero()),
-            ));
-        }
+    if let Some(pos) = window.cursor_position()
+        && let Ok(pos) = camera.viewport_to_world_2d(camera_transform, pos)
+    {
+        let direction = pos - player_transform.translation.xy();
+        commands.entity(aim.entity()).insert(ActionMock::new(
+            ActionState::Fired,
+            ActionValue::from(direction.normalize_or_zero()),
+            MockSpan::Manual,
+        ));
     }
 }
 
@@ -267,7 +280,7 @@ fn apply_walk(
 }
 
 /// On a completed [`Walk`], set translation to zero.
-fn stop_walk(
+fn reset_walk(
     _: On<Complete<Walk>>,
     parent: Single<(Entity, &mut KinematicCharacterController, &mut Movement), With<Player>>,
     mut child_query: Query<&mut AnimationController, Without<Player>>,
@@ -275,7 +288,7 @@ fn stop_walk(
 ) {
     let (entity, mut character_controller, mut movement) = parent.into_inner();
 
-    // Reset movement diretion
+    // Reset `movement.direction`
     movement.direction = Vec2::ZERO;
 
     let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
@@ -346,6 +359,13 @@ fn trigger_melee(
     });
 }
 
-fn stop_aim(mut action: On<Complete<Aim>>) {
-    action.value = Vec2::ZERO;
+/// On a completed [`Melee`], reset [`Aim`].
+fn reset_aim(_: On<Complete<Melee>>, aim: Single<(&mut Action<Aim>, Option<&mut ActionMock>)>) {
+    let (mut aim, mock) = aim.into_inner();
+
+    // Reset `aim` and `mock`
+    **aim = Vec2::ZERO;
+    if let Some(mut mock) = mock {
+        mock.enabled = false;
+    }
 }

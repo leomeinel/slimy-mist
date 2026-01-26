@@ -42,18 +42,15 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         PreUpdate,
         (
+            #[cfg(any(target_os = "android", target_os = "ios"))]
+            mock_walk_from_virtual_joystick,
+            mock_jump_from_touch,
+            mock_melee_from_touch,
             // Mock `Aim` from clicks or override with touch input
             (mock_aim_from_click, mock_aim_from_touch).chain(),
-            (
-                mock_jump_from_touch,
-                mock_melee_from_touch,
-                #[cfg(any(target_os = "android", target_os = "ios"))]
-                mock_walk_from_virtual_joystick,
-            ),
         )
             .before(EnhancedInputSystems::Update)
-            .run_if(in_state(Screen::Gameplay))
-            .chain(),
+            .run_if(in_state(Screen::Gameplay)),
     );
 
     // Handle bevy_enhanced_input with input context and observers
@@ -100,7 +97,7 @@ pub(crate) fn player_input() -> impl Bundle {
                 Action::<Walk>::new(),
                 ActionSettings {
                     require_reset: true,
-                    ..Default::default()
+                    ..default()
                 },
                 DeadZone::default(),
                 SmoothNudge::default(),
@@ -125,7 +122,7 @@ pub(crate) fn player_input() -> impl Bundle {
                 Action::<Aim>::new(),
                 ActionSettings {
                     require_reset: true,
-                    ..Default::default()
+                    ..default()
                 },
                 Bindings::spawn(Axial::right_stick())
             ),

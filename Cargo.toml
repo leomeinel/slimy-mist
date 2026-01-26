@@ -3,7 +3,7 @@
 [package]
 name = "slimy_mist"
 # NOTE: Update with full semantic version on each release
-version = "0.11.18"
+version = "0.12.0"
 edition = "2024"
 license = "Apache-2.0"
 
@@ -27,8 +27,7 @@ bevy_asset_loader = { version = "0.25.0", features = [
 bevy_common_assets = { version = "0.15.0", features = ["ron"] }
 bevy_ecs_tilemap = "0.18.1"
 bevy_enhanced_input = "0.22.2"
-# FIXME: Wait for new version to be released.
-bevy_enoki = { git = "https://github.com/Lommix/bevy_enoki.git", rev = "a6a827da75ad2a3d4a2c2b7d5526cebd40730af1" }
+bevy_enoki = "0.6.0"
 bevy_light_2d = { git = "https://github.com/leomeinel/bevy_light_2d.git", branch = "update-bevy-0-18" }
 bevy_prng = { version = "0.13.0", features = ["rand_chacha", "wyrand"] }
 bevy_rand = "0.13.0"

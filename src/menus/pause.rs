@@ -2,7 +2,7 @@
  * File: pause.rs
  * Author: Leopold Johannes Meinel (leo@meinel.dev)
  * -----
- * Copyright (c) 2025 Leopold Johannes Meinel & contributors
+ * Copyright (c) 2026 Leopold Johannes Meinel & contributors
  * SPDX ID: Apache-2.0
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  * -----
@@ -13,7 +13,7 @@
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
-use crate::{menus::Menu, screens::Screen, theme::widgets};
+use crate::{menus::Menu, screens::Screen, ui::widgets};
 
 pub(super) fn plugin(app: &mut App) {
     // Open pause menu
@@ -29,14 +29,14 @@ pub(super) fn plugin(app: &mut App) {
 /// Spawn pause menu
 fn spawn_pause_menu(mut commands: Commands) {
     commands.spawn((
-        widgets::common::ui_root("Pause Menu"),
+        widgets::ui_root("Pause Menu"),
         GlobalZIndex(2),
         DespawnOnExit(Menu::Pause),
         children![
-            widgets::common::header("Game paused"),
-            widgets::common::button("Continue", close_menu),
-            widgets::common::button("Settings", open_settings_menu),
-            widgets::common::button("Quit to title", quit_to_title),
+            widgets::header("Game paused"),
+            widgets::button("Continue", close_menu),
+            widgets::button("Settings", open_settings_menu),
+            widgets::button("Quit to title", quit_to_title),
         ],
     ));
 }

@@ -38,7 +38,7 @@ use crate::{
         TileHandle,
     },
     screens::{Screen, splash::SplashAssets},
-    theme::{interaction::InteractionAssets, prelude::*},
+    ui::{interaction::InteractionAssets, prelude::*},
     visual::particles::{ParticleCombatHit, ParticleHandle, ParticleWalkingDust},
 };
 
@@ -107,9 +107,9 @@ pub(super) fn plugin(app: &mut App) {
 /// Display loading screen
 fn spawn_loading_screen(mut commands: Commands) {
     commands.spawn((
-        widgets::common::ui_root("Loading Screen"),
+        widgets::ui_root("Loading Screen"),
         DespawnOnExit(Screen::Loading),
-        children![widgets::common::label("Loading...")],
+        children![widgets::label("Loading...")],
     ));
 }
 

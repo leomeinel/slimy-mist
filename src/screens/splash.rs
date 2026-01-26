@@ -14,7 +14,7 @@
 use bevy::{color::palettes::tailwind, input::common_conditions::input_just_pressed, prelude::*};
 use bevy_asset_loader::prelude::*;
 
-use crate::{AppSystems, screens::Screen, theme::prelude::*};
+use crate::{AppSystems, screens::Screen, ui::prelude::*};
 
 pub(super) fn plugin(app: &mut App) {
     // Insert resources
@@ -105,7 +105,7 @@ const SPLASH_FADE_DURATION_SECS: f32 = 0.6;
 /// Spawn splash screen
 fn spawn_splash_screen(mut commands: Commands, splash_assets: Res<SplashAssets>) {
     commands.spawn((
-        widgets::common::ui_root("Splash Screen"),
+        widgets::ui_root("Splash Screen"),
         BackgroundColor(SPLASH_BACKGROUND_COLOR.into()),
         DespawnOnExit(Screen::Splash),
         children![(

@@ -9,6 +9,18 @@
 
 use bevy::{prelude::*, window::WindowFocused};
 
+/// Run condition that is active if any specified [`Component`] `T` is present.
+///
+/// ## Traits
+///
+/// - `T` must implement [`Component`] and is used as the component to check for.
+pub(crate) fn component_is_present<T>(query: Query<(), With<T>>) -> bool
+where
+    T: Component,
+{
+    !query.is_empty()
+}
+
 /// Run condition that is active if any [`WindowFocused::focused`] has been sent with false.
 ///
 /// This indicates that any window has lost focus.

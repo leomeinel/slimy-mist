@@ -2,7 +2,7 @@
  * File: interaction.rs
  * Author: Leopold Johannes Meinel (leo@meinel.dev)
  * -----
- * Copyright (c) 2025 Leopold Johannes Meinel & contributors
+ * Copyright (c) 2026 Leopold Johannes Meinel & contributors
  * SPDX ID: Apache-2.0
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  * -----
@@ -14,12 +14,29 @@ use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
+    // Insert states
+    app.init_state::<OverrideInteraction>();
+
     // Visualize ui interactions with color palette
     app.add_systems(Update, apply_interaction_palette);
 
     // Play sound effects
     app.add_observer(play_on_hover_sound_effect);
     app.add_observer(play_on_click_sound_effect);
+}
+
+/// Tracks whether [`Interaction::None`] is allowed to be overriden by [`InteractionOverride`].
+#[derive(States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
+pub(crate) struct OverrideInteraction(pub(crate) bool);
+
+/// A custom [`Interaction`] that overrides if [`OverrideInteraction`] is true.
+#[derive(Component, Default, PartialEq)]
+pub(crate) enum InteractionOverride {
+    /// Nothing has happened
+    #[default]
+    None,
+    /// The node has been hovered over
+    Hovered,
 }
 
 /// Palette for widget interactions. Add this to an entity that supports
@@ -42,18 +59,35 @@ pub(crate) struct InteractionAssets {
     click: Handle<AudioSource>,
 }
 
-/// Apply color from palette mapped to interaction
-fn apply_interaction_palette(
-    mut query: Query<
-        (&Interaction, &InteractionPalette, &mut BackgroundColor),
-        Changed<Interaction>,
+/// Apply color from palette mapped to [`Interaction`] or [`InteractionOverride`].
+///
+/// This also sets [`OverrideInteraction`] to false if any [`Interaction`] that is not [`Interaction::None`] occurred.
+pub(crate) fn apply_interaction_palette(
+    query: Query<
+        (
+            &Interaction,
+            &InteractionOverride,
+            &InteractionPalette,
+            &mut BackgroundColor,
+        ),
+        Or<(Changed<Interaction>, Changed<InteractionOverride>)>,
     >,
+    mut next_state: ResMut<NextState<OverrideInteraction>>,
 ) {
-    for (interaction, palette, mut background) in &mut query {
+    for (interaction, interaction_override, palette, mut background) in query {
         *background = match interaction {
-            Interaction::None => palette.none,
-            Interaction::Hovered => palette.hovered,
-            Interaction::Pressed => palette.pressed,
+            Interaction::None => match interaction_override {
+                InteractionOverride::Hovered => palette.hovered,
+                InteractionOverride::None => palette.none,
+            },
+            Interaction::Hovered => {
+                next_state.set(OverrideInteraction(false));
+                palette.hovered
+            }
+            Interaction::Pressed => {
+                next_state.set(OverrideInteraction(false));
+                palette.pressed
+            }
         }
         .into();
     }

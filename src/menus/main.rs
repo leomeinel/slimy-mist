@@ -13,7 +13,7 @@
 
 use bevy::prelude::*;
 
-use crate::{menus::Menu, screens::Screen, theme::widgets};
+use crate::{menus::Menu, screens::Screen, ui::widgets};
 
 pub(super) fn plugin(app: &mut App) {
     // Open main menu
@@ -23,22 +23,22 @@ pub(super) fn plugin(app: &mut App) {
 fn spawn_main_menu(mut commands: Commands) {
     // Spawn Main menu with state changing buttons
     commands.spawn((
-        widgets::common::ui_root("Main Menu"),
+        widgets::ui_root("Main Menu"),
         GlobalZIndex(2),
         DespawnOnExit(Menu::Main),
         #[cfg(not(any(target_family = "wasm", target_os = "android", target_os = "ios")))]
         children![
-            widgets::common::button("Play", enter_gameplay_screen),
-            widgets::common::button("Settings", open_settings_menu),
-            widgets::common::button("Credits", open_credits_menu),
-            widgets::common::button("Exit", exit_app),
+            widgets::button("Play", enter_gameplay_screen),
+            widgets::button("Settings", open_settings_menu),
+            widgets::button("Credits", open_credits_menu),
+            widgets::button("Exit", exit_app),
         ],
         // Do not add exit button for wasm, android and ios
         #[cfg(any(target_family = "wasm", target_os = "android", target_os = "ios"))]
         children![
-            widgets::common::button("Play", enter_gameplay_screen),
-            widgets::common::button("Settings", open_settings_menu),
-            widgets::common::button("Credits", open_credits_menu),
+            widgets::button("Play", enter_gameplay_screen),
+            widgets::button("Settings", open_settings_menu),
+            widgets::button("Credits", open_credits_menu),
         ],
     ));
 }

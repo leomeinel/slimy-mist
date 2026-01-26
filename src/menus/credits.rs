@@ -14,7 +14,7 @@
 use bevy::{ecs::spawn::SpawnIter, input::common_conditions::input_just_pressed, prelude::*};
 use bevy_asset_loader::prelude::*;
 
-use crate::{audio::music, menus::Menu, theme::prelude::*};
+use crate::{audio::music, menus::Menu, ui::prelude::*};
 
 pub(super) fn plugin(app: &mut App) {
     // Open credits menu and start music
@@ -40,15 +40,15 @@ pub(crate) struct CreditsAssets {
 /// Spawn menu with credits for assets and creators of the game
 fn spawn_credits_menu(mut commands: Commands) {
     commands.spawn((
-        widgets::common::ui_root("Credits Menu"),
+        widgets::ui_root("Credits Menu"),
         GlobalZIndex(2),
         DespawnOnExit(Menu::Credits),
         children![
-            widgets::common::header("Created by"),
+            widgets::header("Created by"),
             created_by(),
-            widgets::common::header("Assets"),
+            widgets::header("Assets"),
             assets(),
-            widgets::common::button("Back", go_back_on_click),
+            widgets::button("Back", go_back_on_click),
         ],
     ));
 }
@@ -91,7 +91,7 @@ fn grid(content: Vec<[&'static str; 2]>) -> impl Bundle {
         Children::spawn(SpawnIter(content.into_iter().flatten().enumerate().map(
             |(i, text)| {
                 (
-                    widgets::common::label(text),
+                    widgets::label(text),
                     Node {
                         justify_self: if i.is_multiple_of(2) {
                             JustifySelf::End

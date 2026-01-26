@@ -2,7 +2,7 @@
  * File: settings.rs
  * Author: Leopold Johannes Meinel (leo@meinel.dev)
  * -----
- * Copyright (c) 2025 Leopold Johannes Meinel & contributors
+ * Copyright (c) 2026 Leopold Johannes Meinel & contributors
  * SPDX ID: Apache-2.0
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  * -----
@@ -15,7 +15,7 @@
 
 use bevy::{audio::Volume, input::common_conditions::input_just_pressed, prelude::*};
 
-use crate::{menus::Menu, screens::Screen, theme::prelude::*};
+use crate::{menus::Menu, screens::Screen, ui::prelude::*};
 
 pub(super) fn plugin(app: &mut App) {
     // Open settings menu on state
@@ -41,13 +41,13 @@ struct GlobalVolumeLabel;
 /// Spawn settings menu
 fn spawn_settings_menu(mut commands: Commands) {
     commands.spawn((
-        widgets::common::ui_root("Settings Menu"),
+        widgets::ui_root("Settings Menu"),
         GlobalZIndex(2),
         DespawnOnExit(Menu::Settings),
         children![
-            widgets::common::header("Settings"),
+            widgets::header("Settings"),
             grid(),
-            widgets::common::button("Back", go_back_on_click),
+            widgets::button("Back", go_back_on_click),
         ],
     ));
 }
@@ -65,7 +65,7 @@ fn grid() -> impl Bundle {
         },
         children![
             (
-                widgets::common::label("Master Volume"),
+                widgets::label("Master Volume"),
                 Node {
                     justify_self: JustifySelf::End,
                     ..default()
@@ -85,7 +85,7 @@ fn global_volume_widget() -> impl Bundle {
             ..default()
         },
         children![
-            widgets::common::button_small("-", lower_global_volume),
+            widgets::button_small("-", lower_global_volume),
             (
                 Name::new("Current Volume"),
                 Node {
@@ -93,9 +93,9 @@ fn global_volume_widget() -> impl Bundle {
                     justify_content: JustifyContent::Center,
                     ..default()
                 },
-                children![(widgets::common::label(""), GlobalVolumeLabel)],
+                children![(widgets::label(""), GlobalVolumeLabel)],
             ),
-            widgets::common::button_small("+", raise_global_volume),
+            widgets::button_small("+", raise_global_volume),
         ],
     )
 }

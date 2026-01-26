@@ -29,7 +29,7 @@ mod menus;
 mod mobile;
 mod procgen;
 mod screens;
-mod theme;
+mod ui;
 mod utils;
 mod visual;
 
@@ -115,7 +115,7 @@ impl Plugin for AppPlugin {
             mobile::plugin,
             procgen::plugin,
             screens::plugin,
-            theme::plugin,
+            ui::plugin,
             visual::plugin,
         ));
 

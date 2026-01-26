@@ -1,5 +1,5 @@
 /*
- * File: common.rs
+ * File: widgets.rs
  * Author: Leopold Johannes Meinel (leo@meinel.dev)
  * -----
  * Copyright (c) 2026 Leopold Johannes Meinel & contributors
@@ -18,9 +18,10 @@ use std::borrow::Cow;
 use bevy::{
     ecs::{spawn::SpawnWith, system::IntoObserverSystem},
     prelude::*,
+    ui::auto_directional_navigation::AutoDirectionalNavigation,
 };
 
-use crate::theme::{interaction::InteractionPalette, palette::*};
+use crate::ui::{palette::*, prelude::*};
 
 /// A root UI node that fills the window and centers its content.
 pub(crate) fn ui_root(name: impl Into<Cow<'static, str>>) -> impl Bundle {
@@ -163,6 +164,8 @@ where
                         hovered: BUTTON_HOVERED_BACKGROUND.into(),
                         pressed: BUTTON_PRESSED_BACKGROUND.into(),
                     },
+                    InteractionOverride::default(),
+                    AutoDirectionalNavigation::default(),
                     children![(
                         Name::new("Button Text"),
                         Text(text),

@@ -21,3 +21,5 @@ pub(crate) const WARN_INCOMPLETE_COLLISION_DATA_FALLBACK: &str =
 
 /// Warning on invalid [`crate::characters::combat::Attack`]
 pub(crate) const WARN_INVALID_ATTACK: &str = "The fired attack is invalid.";
+/// Warning on invalid [`crate::ui::directional_nav::DirectionalNavAction`]
+pub(crate) const WARN_INVALID_UI_NAV: &str = "No next button found to navigate to.";

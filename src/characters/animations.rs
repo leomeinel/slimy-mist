@@ -347,7 +347,7 @@ fn animation_handle(
     repetitions: AnimationRepeat,
 ) -> Option<Handle<Animation>> {
     let (Some(row), Some(frames), Some(interval)) = (row, frames, interval) else {
-        warn_once!(WARN_INCOMPLETE_ANIMATION_DATA);
+        warn_once!("{}", WARN_INCOMPLETE_ANIMATION_DATA);
         return None;
     };
 

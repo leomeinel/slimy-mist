@@ -99,7 +99,7 @@ fn apply_melee<T>(
     let (origin, event_direction) = (event.entity, event.direction);
     let (transform, movement, controller) = origin_query.get(origin).expect(ERR_INVALID_ATTACKER);
     let Some(melee) = &controller.melee else {
-        warn_once!(WARN_INVALID_ATTACK);
+        warn_once!("{}", WARN_INVALID_ATTACK);
         return;
     };
     let direction = if event_direction == Vec2::ZERO {

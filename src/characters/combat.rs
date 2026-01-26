@@ -111,12 +111,12 @@ fn apply_melee<T>(
     // Cast ray to determine boundary of `Collider`
     // NOTE: We have to add an offset to max_toi to ensure that the ray reaches the boundary.
     let max_toi = (width / 2.).max(height / 2.) + 1.;
-    // Filter for `entity` itself
+    // Filter for `origin` itself
     let filter = &|e| e == origin;
     let filter = QueryFilter::exclude_dynamic()
         .exclude_sensors()
         .predicate(filter);
-    let pos: Vec2 = transform.translation.xy();
+    let pos = transform.translation.xy();
     let Some((_, extent)) = rapier_context.cast_ray(pos, direction, max_toi, false, filter) else {
         return;
     };
@@ -127,7 +127,7 @@ fn apply_melee<T>(
     let shape_pos = pos + direction * offset;
     let shape_rot = direction.to_angle();
     let shape = shape::Cuboid::new(shape_half_size.into());
-    // Filter for anything that is not `entity`
+    // Filter for anything that is not `origin`
     let filter = QueryFilter::exclude_dynamic()
         .exclude_sensors()
         .exclude_rigid_body(origin);

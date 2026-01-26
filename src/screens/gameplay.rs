@@ -129,17 +129,17 @@ fn pause(mut next_state: ResMut<NextState<Pause>>) {
 /// Insert resources for [`crate::procgen`]
 fn insert_resources(mut commands: Commands) {
     commands.init_resource::<NavTargetPosMap>();
+    commands.init_resource::<ParticleMap<ParticleWalkingDust>>();
     commands.init_resource::<ProcGenController<OverworldProcGen>>();
     commands.init_resource::<ProcGenController<Slime>>();
-    commands.init_resource::<ParticleMap<ParticleWalkingDust>>();
     commands.init_resource::<VisualMap>();
 }
 
 /// Remove resources for [`crate::procgen`]
 fn remove_resources(mut commands: Commands) {
     commands.remove_resource::<NavTargetPosMap>();
+    commands.remove_resource::<ParticleMap<ParticleWalkingDust>>();
     commands.remove_resource::<ProcGenController<OverworldProcGen>>();
     commands.remove_resource::<ProcGenController<Slime>>();
-    commands.remove_resource::<ParticleMap<ParticleWalkingDust>>();
     commands.remove_resource::<VisualMap>();
 }

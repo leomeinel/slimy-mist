@@ -15,8 +15,4 @@
     "male.fall_sounds": Files (
         paths: [],
     ),
-    "male.image": Image (
-        path: "images/characters/player/male.webp",
-        sampler: Nearest,
-    ),
 })

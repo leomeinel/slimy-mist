@@ -16,6 +16,7 @@
 // Disable console on Windows for non-dev builds.
 #![cfg_attr(not(feature = "dev"), windows_subsystem = "windows")]
 
+mod animations;
 mod audio;
 mod camera;
 mod characters;
@@ -103,6 +104,7 @@ impl Plugin for AppPlugin {
 
         // Add other plugins.
         app.add_plugins((
+            animations::plugin,
             audio::plugin,
             camera::plugin,
             characters::plugin,

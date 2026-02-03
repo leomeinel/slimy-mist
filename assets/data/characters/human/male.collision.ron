@@ -1,5 +1,5 @@
 CollisionData (
     shape: Some("capsule_y"),
-    width: Some(18),
-    height: Some(24),
+    width: Some(16),
+    height: Some(30),
 )

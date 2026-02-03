@@ -1,0 +1,13 @@
+// NOTE: This contains all possible layers for the character type.
+({
+    "slime.body_eyes": Files (
+        paths: [
+            "images/characters/npc/body/eyes.webp"
+        ],
+    ),
+    "slime.body_skin": Files (
+        paths: [
+            "images/characters/npc/body/skin.webp",
+        ],
+    ),
+})

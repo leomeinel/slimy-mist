@@ -26,17 +26,17 @@ pub(crate) trait LevelAssets
 where
     Self: AssetCollection + Resource + Default + Reflectable,
 {
-    fn get_music(&self) -> &Option<Vec<Handle<AudioSource>>>;
-    fn get_tile_set(&self) -> &Handle<Image>;
+    fn music(&self) -> &Option<Vec<Handle<AudioSource>>>;
+    fn tile_set(&self) -> &Handle<Image>;
 }
 #[macro_export]
 macro_rules! impl_level_assets {
     ($type: ty) => {
         impl LevelAssets for $type {
-            fn get_music(&self) -> &Option<Vec<Handle<AudioSource>>> {
+            fn music(&self) -> &Option<Vec<Handle<AudioSource>>> {
                 &self.music
             }
-            fn get_tile_set(&self) -> &Handle<Image> {
+            fn tile_set(&self) -> &Handle<Image> {
                 &self.tile_set
             }
         }

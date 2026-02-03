@@ -9,7 +9,6 @@
 
 //! Characters
 
-pub(crate) mod animations;
 pub(crate) mod combat;
 pub(crate) mod nav;
 pub(crate) mod npc;
@@ -17,27 +16,19 @@ pub(crate) mod player;
 
 use std::marker::PhantomData;
 
-use bevy::{platform::collections::HashMap, prelude::*, reflect::Reflectable};
+use bevy::{prelude::*, reflect::Reflectable};
 use bevy_asset_loader::asset_collection::AssetCollection;
 use bevy_rapier2d::prelude::*;
 use bevy_spritesheet_animation::prelude::SpritesheetAnimation;
 
 use crate::{
-    AppSystems,
-    characters::animations::{AnimationController, AnimationTimer, Animations},
-    logging::warn::WARN_INCOMPLETE_COLLISION_DATA_FALLBACK,
+    AppSystems, animations::Animations, logging::warn::WARN_INCOMPLETE_COLLISION_DATA_FALLBACK,
     screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {
     // Add child plugins
-    app.add_plugins((
-        animations::plugin,
-        combat::plugin,
-        npc::plugin,
-        nav::plugin,
-        player::plugin,
-    ));
+    app.add_plugins((combat::plugin, npc::plugin, nav::plugin, player::plugin));
 
     // Tick timers
     app.add_systems(Update, tick_jump_timer.in_set(AppSystems::TickTimers));
@@ -57,26 +48,22 @@ pub(crate) trait CharacterAssets
 where
     Self: AssetCollection + Resource + Default + Reflectable,
 {
-    fn get_walk_sounds(&self) -> &Option<Vec<Handle<AudioSource>>>;
-    fn get_jump_sounds(&self) -> &Option<Vec<Handle<AudioSource>>>;
-    fn get_fall_sounds(&self) -> &Option<Vec<Handle<AudioSource>>>;
-    fn get_image(&self) -> &Handle<Image>;
+    fn walk_sounds(&self) -> &Option<Vec<Handle<AudioSource>>>;
+    fn jump_sounds(&self) -> &Option<Vec<Handle<AudioSource>>>;
+    fn fall_sounds(&self) -> &Option<Vec<Handle<AudioSource>>>;
 }
 #[macro_export]
 macro_rules! impl_character_assets {
     ($type: ty) => {
         impl CharacterAssets for $type {
-            fn get_walk_sounds(&self) -> &Option<Vec<Handle<AudioSource>>> {
+            fn walk_sounds(&self) -> &Option<Vec<Handle<AudioSource>>> {
                 &self.walk_sounds
             }
-            fn get_jump_sounds(&self) -> &Option<Vec<Handle<AudioSource>>> {
+            fn jump_sounds(&self) -> &Option<Vec<Handle<AudioSource>>> {
                 &self.jump_sounds
             }
-            fn get_fall_sounds(&self) -> &Option<Vec<Handle<AudioSource>>> {
+            fn fall_sounds(&self) -> &Option<Vec<Handle<AudioSource>>> {
                 &self.fall_sounds
-            }
-            fn get_image(&self) -> &Handle<Image> {
-                &self.image
             }
         }
     };
@@ -89,26 +76,20 @@ where
 {
     fn container_bundle(
         &self,
+        animation_delay: f32,
         collision_set: &(Option<String>, Option<f32>, Option<f32>),
         pos: Vec2,
     ) -> impl Bundle;
 
-    fn visual_bundle(
-        &self,
-        animations: &Res<Animations<Self>>,
-        animation_delay: f32,
-    ) -> impl Bundle {
+    fn animation_bundle(&self, animations: &Res<Animations<Self>>) -> impl Bundle {
         (
             animations.sprite.clone(),
             SpritesheetAnimation::new(animations.idle.clone()),
-            AnimationController::default(),
-            AnimationTimer(Timer::from_seconds(animation_delay, TimerMode::Once)),
         )
     }
 
     fn spawn(
         commands: &mut Commands,
-        visual_map: &mut ResMut<VisualMap>,
         collision_set: &(Option<String>, Option<f32>, Option<f32>),
         pos: Vec2,
         animations: &Res<Animations<Self>>,
@@ -116,14 +97,10 @@ where
     ) -> Entity {
         let character = Self::default();
         let container = commands
-            .spawn(character.container_bundle(collision_set, pos))
+            .spawn(character.container_bundle(animation_delay, collision_set, pos))
             .id();
-
-        let visual = commands
-            .spawn(character.visual_bundle(animations, animation_delay))
-            .id();
-        commands.entity(container).add_child(visual);
-        visual_map.0.insert(container, visual);
+        let animation = commands.spawn(character.animation_bundle(animations)).id();
+        commands.entity(container).add_child(animation);
 
         container
     }
@@ -212,10 +189,6 @@ impl Default for JumpTimer {
 /// Health that determines if a [`Character`] is living.
 #[derive(Component, Default)]
 pub(crate) struct Health(f32);
-
-/// Map of characters to their visual representations
-#[derive(Resource, Default)]
-pub(crate) struct VisualMap(pub(crate) HashMap<Entity, Entity>);
 
 /// Radius of the fallback ball collider
 const FALLBACK_BALL_COLLIDER_RADIUS: f32 = 8.;

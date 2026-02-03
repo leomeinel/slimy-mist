@@ -19,11 +19,10 @@ use bevy_asset_loader::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
+    animations::{AnimationController, AnimationTimer, Animations},
     camera::{FOREGROUND_Z, ysort::YSort},
     characters::{
-        Character, CharacterAssets, Health, Movement,
-        animations::Animations,
-        character_collider,
+        Character, CharacterAssets, Health, Movement, character_collider,
         combat::{CombatController, punch},
         nav::Navigator,
     },
@@ -48,9 +47,6 @@ pub(crate) struct SlimeAssets {
 
     #[asset(key = "slime.fall_sounds", collection(typed), optional)]
     pub(crate) fall_sounds: Option<Vec<Handle<AudioSource>>>,
-
-    #[asset(key = "slime.image")]
-    pub(crate) image: Handle<Image>,
 }
 impl_character_assets!(SlimeAssets);
 
@@ -67,6 +63,7 @@ pub(crate) struct Slime;
 impl Character for Slime {
     fn container_bundle(
         &self,
+        animation_delay: f32,
         collision_set: &(Option<String>, Option<f32>, Option<f32>),
         pos: Vec2,
     ) -> impl Bundle {
@@ -101,6 +98,11 @@ impl Character for Slime {
                     melee: Some(punch()),
                     _ranged: None,
                 },
+            ),
+            // Animations
+            (
+                AnimationController::default(),
+                AnimationTimer(Timer::from_seconds(animation_delay, TimerMode::Once)),
             ),
         )
     }

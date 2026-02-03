@@ -9,7 +9,7 @@
 
 //! This stores warning messages
 
-/// Warning on incomplete [`crate::characters::animations::AnimationData`]
+/// Warning on incomplete [`crate::animations::AnimationData`]
 pub(crate) const WARN_INCOMPLETE_ANIMATION_DATA: &str = "The animation data is incomplete.";
 /// Warning on incomplete asset data
 pub(crate) const WARN_INCOMPLETE_ASSET_DATA: &str = "The asset data is incomplete.";

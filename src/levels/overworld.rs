@@ -15,13 +15,10 @@ use bevy_prng::WyRand;
 use rand::{Rng as _, seq::IndexedRandom};
 
 use crate::{
+    animations::{ANIMATION_DELAY_RANGE_SECS, AnimationRng, Animations},
     audio::music,
     camera::LEVEL_Z,
-    characters::{
-        Character as _, CollisionDataCache, VisualMap,
-        animations::{ANIMATION_DELAY_RANGE_SECS, AnimationRng, Animations},
-        player::Player,
-    },
+    characters::{Character as _, CollisionDataCache, player::Player},
     impl_level_assets,
     levels::{Level, LevelAssets, LevelRng},
     logging::warn::WARN_INCOMPLETE_ASSET_DATA,
@@ -61,7 +58,6 @@ pub(crate) fn spawn_overworld(
     mut animation_rng: Single<&mut WyRand, (With<AnimationRng>, Without<LevelRng>)>,
     mut level_rng: Single<&mut WyRand, (With<LevelRng>, Without<AnimationRng>)>,
     mut commands: Commands,
-    mut visual_map: ResMut<VisualMap>,
     animations: Res<Animations<Player>>,
     collision_data: Res<CollisionDataCache<Player>>,
     level_assets: Res<OverworldAssets>,
@@ -78,7 +74,7 @@ pub(crate) fn spawn_overworld(
 
     // Spawn music
     if let Some(level_music) = level_assets
-        .get_music()
+        .music()
         .clone()
         .unwrap_or_else(|| {
             warn_once!("{}", WARN_INCOMPLETE_ASSET_DATA);
@@ -100,7 +96,6 @@ pub(crate) fn spawn_overworld(
     );
     let player = Player::spawn(
         &mut commands,
-        &mut visual_map,
         &collision_set,
         PLAYER_POS,
         &animations,

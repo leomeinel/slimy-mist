@@ -9,19 +9,16 @@
 
 use std::marker::PhantomData;
 
-use bevy::{platform::collections::HashMap, prelude::*};
+use bevy::prelude::*;
 use bevy_enoki::prelude::*;
 
 use crate::{
     AppSystems,
+    animations::{AnimationController, AnimationState},
     camera::BACKGROUND_Z_DELTA,
-    characters::{
-        Character, VisualMap,
-        animations::{AnimationController, AnimationState},
-        player::Player,
-    },
+    characters::{Character, player::Player},
     levels::overworld::spawn_overworld,
-    logging::error::{ERR_INVALID_PARTICLE_MAP, ERR_INVALID_VISUAL_MAP},
+    logging::error::ERR_INVALID_CHILDREN,
     screens::Screen,
     visual::{TextureInfoCache, Visible},
 };
@@ -83,16 +80,6 @@ impl Particle for ParticleWalkingDust {
 pub(crate) struct ParticleCombatHit;
 impl Particle for ParticleCombatHit {}
 
-/// Map of characters to their particles
-#[derive(Resource, Default)]
-pub(crate) struct ParticleMap<T>
-where
-    T: Particle,
-{
-    pub(crate) map: HashMap<Entity, Entity>,
-    _phantom: PhantomData<T>,
-}
-
 /// Handle for [`Particle2dEffect`] as a generic.
 ///
 /// ## Traits
@@ -142,7 +129,6 @@ const WALKING_DUST_INTERVAL_SECS: f32 = 0.5;
 fn add_walking_dust<T>(
     query: Query<Entity, With<T>>,
     mut commands: Commands,
-    mut particle_map: ResMut<ParticleMap<ParticleWalkingDust>>,
     texture_info: Res<TextureInfoCache<T>>,
     handle: Res<ParticleHandle<ParticleWalkingDust>>,
 ) where
@@ -169,7 +155,6 @@ fn add_walking_dust<T>(
             ))
             .id();
         commands.entity(container).add_child(particle);
-        particle_map.map.insert(container, particle);
     }
 }
 
@@ -180,40 +165,31 @@ fn add_walking_dust<T>(
 /// - `T` must implement [`Character`] and [`Visible`].
 /// - `A` must implement [`Particle`].
 fn update_character_particles<T, A>(
-    parent_query: Query<Entity, With<T>>,
-    mut child_particle_query: Query<
+    character_query: Query<(&mut AnimationController, &Children), With<T>>,
+    mut particle_query: Query<
         (
             &ParticleWalkingDust,
             &ParticleTimer,
             &mut ParticleSpawnerState,
         ),
-        (With<A>, Without<T>),
+        With<A>,
     >,
-    mut child_visual_query: Query<&mut AnimationController, Without<T>>,
-    particle_map: Res<ParticleMap<A>>,
-    visual_map: Res<VisualMap>,
 ) where
     T: Character + Visible,
     A: Particle,
 {
-    for container in parent_query {
-        let particle = particle_map
-            .map
-            .get(&container)
-            .expect(ERR_INVALID_PARTICLE_MAP);
-        let (particle, timer, mut state) = child_particle_query
-            .get_mut(*particle)
-            .expect(ERR_INVALID_PARTICLE_MAP);
+    for (animation_controller, children) in character_query {
+        let child = children
+            .iter()
+            .find(|e| particle_query.contains(*e))
+            .expect(ERR_INVALID_CHILDREN);
+        let (particle, timer, mut state) =
+            particle_query.get_mut(child).expect(ERR_INVALID_CHILDREN);
 
         // Continue if timer has not finished
         if !timer.0.just_finished() {
             continue;
         }
-
-        let visual = visual_map.0.get(&container).expect(ERR_INVALID_VISUAL_MAP);
-        let animation_controller = child_visual_query
-            .get_mut(*visual)
-            .expect(ERR_INVALID_VISUAL_MAP);
 
         state.set_new_active(particle.is_active(animation_controller.state));
     }

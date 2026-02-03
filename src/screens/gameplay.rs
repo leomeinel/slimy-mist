@@ -17,27 +17,30 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use crate::mobile::spawn_joystick;
 use crate::{
     Pause,
+    animations::setup_animations,
     camera::center_camera_on_player,
-    characters::{
-        VisualMap,
-        animations::setup_animations,
-        nav::NavTargetPosMap,
-        npc::{Slime, SlimeAssets},
-        player::{Player, PlayerAssets},
-    },
+    characters::{nav::NavTargetPosMap, npc::Slime, player::Player},
     levels::overworld::{Overworld, OverworldProcGen, spawn_overworld},
     menus::Menu,
     procgen::{ProcGenController, navmesh::spawn_navmesh},
     screens::Screen,
     utils::run_conditions::window_unfocused,
-    visual::particles::{ParticleMap, ParticleWalkingDust},
+    visual::{
+        Visible,
+        layers::{DisplayImage, HumanMaleLayerMaps, LayerDataCache, LayerMaps, SlimeLayerMaps},
+    },
 };
 
 pub(super) fn plugin(app: &mut App) {
     // Insert/Remove resources and cache deserialized data in resources
     app.add_systems(
         OnEnter(Screen::Gameplay),
-        insert_resources.in_set(PrepareGameplaySystems),
+        (
+            insert_resources,
+            insert_display_image::<HumanMaleLayerMaps, Player>,
+            insert_display_image::<SlimeLayerMaps, Slime>,
+        )
+            .in_set(PrepareGameplaySystems),
     );
     app.add_systems(OnExit(Screen::Gameplay), remove_resources);
 
@@ -53,10 +56,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         OnEnter(Screen::Gameplay),
         (
-            (
-                setup_animations::<Player, PlayerAssets>,
-                setup_animations::<Slime, SlimeAssets>,
-            ),
+            (setup_animations::<Player>, setup_animations::<Slime>),
             spawn_overworld,
             center_camera_on_player,
             spawn_navmesh::<OverworldProcGen, Overworld>,
@@ -126,20 +126,36 @@ fn pause(mut next_state: ResMut<NextState<Pause>>) {
     next_state.set(Pause(true));
 }
 
-/// Insert resources for [`crate::procgen`]
-fn insert_resources(mut commands: Commands) {
-    commands.init_resource::<NavTargetPosMap>();
-    commands.init_resource::<ParticleMap<ParticleWalkingDust>>();
-    commands.init_resource::<ProcGenController<OverworldProcGen>>();
-    commands.init_resource::<ProcGenController<Slime>>();
-    commands.init_resource::<VisualMap>();
+/// Insert [`DisplayImage`].
+///
+/// ## Traits
+///
+/// - `T` must implement [`LayerMaps`].
+/// - `A` must implement [`Visible`].
+pub(crate) fn insert_display_image<T, A>(
+    mut commands: Commands,
+    mut images: ResMut<Assets<Image>>,
+    layers: Res<T>,
+    data: Res<LayerDataCache<A>>,
+) where
+    T: LayerMaps,
+    A: Visible,
+{
+    commands.insert_resource(layers.to_display_image(&data, &mut images));
 }
 
-/// Remove resources for [`crate::procgen`]
+/// Insert [`Resource`]s
+fn insert_resources(mut commands: Commands) {
+    commands.init_resource::<NavTargetPosMap>();
+    commands.init_resource::<ProcGenController<OverworldProcGen>>();
+    commands.init_resource::<ProcGenController<Slime>>();
+}
+
+/// Remove [`Resource`]s
 fn remove_resources(mut commands: Commands) {
     commands.remove_resource::<NavTargetPosMap>();
-    commands.remove_resource::<ParticleMap<ParticleWalkingDust>>();
     commands.remove_resource::<ProcGenController<OverworldProcGen>>();
     commands.remove_resource::<ProcGenController<Slime>>();
-    commands.remove_resource::<VisualMap>();
+    commands.remove_resource::<DisplayImage<Player>>();
+    commands.remove_resource::<DisplayImage<Slime>>();
 }

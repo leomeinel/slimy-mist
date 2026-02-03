@@ -17,20 +17,20 @@
 use bevy::{platform::collections::HashSet, prelude::*};
 use bevy_asset_loader::prelude::*;
 use bevy_rapier2d::prelude::*;
+use bevy_spritesheet_animation::prelude::*;
 
 use crate::{
     AppSystems,
+    animations::{AnimationController, AnimationState, AnimationTimer, Animations},
     camera::{FOREGROUND_Z, ysort::YSort},
     characters::{
-        Character, CharacterAssets, Health, JumpTimer, Movement, VisualMap,
-        animations::{AnimationController, AnimationState, Animations},
-        character_collider,
+        Character, CharacterAssets, Health, JumpTimer, Movement, character_collider,
         combat::{CombatController, punch},
         nav::NavTarget,
     },
     impl_character_assets,
     input::player_input,
-    logging::error::ERR_INVALID_VISUAL_MAP,
+    logging::error::ERR_INVALID_CHILDREN,
     visual::Visible,
 };
 
@@ -58,9 +58,6 @@ pub(crate) struct PlayerAssets {
 
     #[asset(key = "male.fall_sounds", collection(typed), optional)]
     pub(crate) fall_sounds: Option<Vec<Handle<AudioSource>>>,
-
-    #[asset(key = "male.image")]
-    pub(crate) image: Handle<Image>,
 }
 impl_character_assets!(PlayerAssets);
 
@@ -71,6 +68,7 @@ pub(crate) struct Player;
 impl Character for Player {
     fn container_bundle(
         &self,
+        animation_delay: f32,
         collision_set: &(Option<String>, Option<f32>, Option<f32>),
         pos: Vec2,
     ) -> impl Bundle {
@@ -110,6 +108,11 @@ impl Character for Player {
                     _ranged: None,
                 },
             ),
+            // Animations
+            (
+                AnimationController::default(),
+                AnimationTimer(Timer::from_seconds(animation_delay, TimerMode::Once)),
+            ),
         )
     }
 }
@@ -120,15 +123,11 @@ const JUMP_HEIGHT: f32 = 12.;
 
 /// Apply jump
 fn apply_jump(
-    parent: Single<(Entity, &mut Movement, &JumpTimer), With<Player>>,
-    mut child_query: Query<(&AnimationController, &mut Transform), Without<Player>>,
-    visual_map: Res<VisualMap>,
+    player: Single<(&AnimationController, &mut Movement, &JumpTimer, &Children), With<Player>>,
+    mut transform_query: Query<&mut Transform, With<SpritesheetAnimation>>,
 ) {
-    let (entity, mut movement, timer) = parent.into_inner();
+    let (animation_controller, mut movement, timer, children) = player.into_inner();
 
-    let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
-    let (animation_controller, mut transform) =
-        child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
     // Return if we are not jumping or falling
     let state = animation_controller.state;
     if !matches!(state, AnimationState::Jump | AnimationState::Fall) {
@@ -145,18 +144,21 @@ fn apply_jump(
     let eased_time = eased_time.sample_clamped(timer.0.fraction());
     let target = JUMP_HEIGHT * factor * eased_time;
 
+    let child = children
+        .iter()
+        .find(|e| transform_query.contains(*e))
+        .expect(ERR_INVALID_CHILDREN);
+    let mut transform = transform_query.get_mut(child).expect(ERR_INVALID_CHILDREN);
     transform.translation.y += target - movement.jump_height;
     movement.jump_height = target;
 }
 
 /// Limit jump by setting fall after specific time and then switching to walk
 fn limit_jump(
-    parent: Single<(Entity, &mut Movement, &JumpTimer), With<Player>>,
-    mut child_query: Query<&mut AnimationController, Without<Player>>,
+    player: Single<(Entity, &mut AnimationController, &mut Movement, &JumpTimer), With<Player>>,
     mut commands: Commands,
-    visual_map: Res<VisualMap>,
 ) {
-    let (entity, mut movement, timer) = parent.into_inner();
+    let (entity, mut animation_controller, mut movement, timer) = player.into_inner();
 
     // Return if timer has not finished
     if !timer.0.just_finished() {
@@ -165,9 +167,6 @@ fn limit_jump(
 
     // Reset jump height
     movement.jump_height = 0.;
-
-    let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
-    let mut animation_controller = child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
 
     // Set animation states
     match animation_controller.state {

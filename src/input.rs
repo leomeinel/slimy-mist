@@ -19,14 +19,13 @@ use virtual_joystick::VirtualJoystickMessage;
 use crate::mobile::VirtualJoystick;
 use crate::{
     Pause,
+    animations::{AnimationController, AnimationState},
     camera::CanvasCamera,
     characters::{
-        JumpTimer, Movement, VisualMap,
-        animations::{AnimationController, AnimationState},
+        JumpTimer, Movement,
         combat::{AttackTimer, Attacked},
         player::Player,
     },
-    logging::error::ERR_INVALID_VISUAL_MAP,
     screens::Screen,
 };
 
@@ -249,25 +248,27 @@ fn mock_aim_from_click(
 /// On a fired [`Walk`], set translation to the given input.
 fn apply_walk(
     event: On<Fire<Walk>>,
-    parent: Single<(Entity, &mut KinematicCharacterController, &mut Movement), With<Player>>,
-    mut child_query: Query<&mut AnimationController, Without<Player>>,
+    player: Single<
+        (
+            &mut AnimationController,
+            &mut KinematicCharacterController,
+            &mut Movement,
+        ),
+        With<Player>,
+    >,
     pause: Res<State<Pause>>,
     time: Res<Time>,
-    visual_map: Res<VisualMap>,
 ) {
     // Return if game is paused
     if pause.get().0 {
         return;
     }
 
-    let (entity, mut character_controller, mut movement) = parent.into_inner();
+    let (mut animation_controller, mut character_controller, mut movement) = player.into_inner();
 
     // Apply movement from input
     movement.direction = event.value * time.delta_secs();
     character_controller.translation = Some(movement.direction);
-
-    let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
-    let mut animation_controller = child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
 
     // Set animation state if we are `Idle`
     if animation_controller.state == AnimationState::Idle {
@@ -278,17 +279,19 @@ fn apply_walk(
 /// On a completed [`Walk`], set translation to zero.
 fn reset_walk(
     _: On<Complete<Walk>>,
-    parent: Single<(Entity, &mut KinematicCharacterController, &mut Movement), With<Player>>,
-    mut child_query: Query<&mut AnimationController, Without<Player>>,
-    visual_map: Res<VisualMap>,
+    player: Single<
+        (
+            &mut AnimationController,
+            &mut KinematicCharacterController,
+            &mut Movement,
+        ),
+        With<Player>,
+    >,
 ) {
-    let (entity, mut character_controller, mut movement) = parent.into_inner();
+    let (mut animation_controller, mut character_controller, mut movement) = player.into_inner();
 
     // Reset `movement.direction`
     movement.direction = Vec2::ZERO;
-
-    let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
-    let mut animation_controller = child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
 
     // Stop movement if we are not jumping or falling
     if !matches!(
@@ -303,21 +306,16 @@ fn reset_walk(
 /// On a fired [`Jump`], add [`JumpTimer`].
 fn set_jump(
     _: On<Fire<Jump>>,
-    parent: Single<Entity, With<Player>>,
-    mut child_query: Query<&mut AnimationController, Without<Player>>,
+    player: Single<(Entity, &mut AnimationController), With<Player>>,
     mut commands: Commands,
     pause: Res<State<Pause>>,
-    visual_map: Res<VisualMap>,
 ) {
     // Return if game is paused
     if pause.get().0 {
         return;
     }
 
-    let entity = parent.entity();
-
-    let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
-    let mut animation_controller = child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
+    let (entity, mut animation_controller) = player.into_inner();
 
     // Set state to jump if we are not jumping or falling
     if !matches!(

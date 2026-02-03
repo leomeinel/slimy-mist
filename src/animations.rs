@@ -29,19 +29,19 @@ use crate::{
     AppSystems, PausableSystems,
     audio::sound_effect,
     characters::{
-        Character, CharacterAssets, JUMP_DURATION_SECS, Movement, VisualMap,
+        Character, CharacterAssets, JUMP_DURATION_SECS, Movement,
         npc::{Slime, SlimeAssets},
         player::{Player, PlayerAssets},
     },
     logging::{
         error::{
-            ERR_INVALID_REQUIRED_ANIMATION_DATA, ERR_INVALID_TEXTURE_ATLAS, ERR_INVALID_VISUAL_MAP,
+            ERR_INVALID_CHILDREN, ERR_INVALID_REQUIRED_ANIMATION_DATA, ERR_INVALID_TEXTURE_ATLAS,
             ERR_NOT_LOADED_SPRITE_IMAGE, ERR_UNINITIALIZED_REQUIRED_ANIMATION,
         },
         warn::{WARN_INCOMPLETE_ANIMATION_DATA, WARN_INCOMPLETE_ASSET_DATA},
     },
     screens::Screen,
-    visual::{TextureInfoCache, Visible},
+    visual::{TextureInfoCache, Visible, layers::DisplayImage},
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -93,29 +93,27 @@ where
     pub(crate) atlas_columns: usize,
     pub(crate) atlas_rows: usize,
     #[serde(default)]
-    pub(crate) idle_row: Option<usize>,
-    #[serde(default)]
-    pub(crate) idle_frames: Option<usize>,
+    pub(crate) idle_frames: Option<Vec<(usize, usize)>>,
     #[serde(default)]
     pub(crate) idle_interval_ms: Option<u32>,
     #[serde(default)]
-    pub(crate) walk_row: Option<usize>,
-    #[serde(default)]
-    pub(crate) walk_frames: Option<usize>,
+    pub(crate) walk_frames: Option<Vec<(usize, usize)>>,
     #[serde(default)]
     pub(crate) walk_interval_ms: Option<u32>,
     #[serde(default)]
     pub(crate) walk_sound_frames: Option<Vec<usize>>,
     #[serde(default)]
-    pub(crate) jump_row: Option<usize>,
+    pub(crate) run_frames: Option<Vec<(usize, usize)>>,
     #[serde(default)]
-    pub(crate) jump_frames: Option<usize>,
+    pub(crate) run_interval_ms: Option<u32>,
+    #[serde(default)]
+    pub(crate) run_sound_frames: Option<Vec<usize>>,
+    #[serde(default)]
+    pub(crate) jump_frames: Option<Vec<(usize, usize)>>,
     #[serde(default)]
     pub(crate) jump_sound_frames: Option<Vec<usize>>,
     #[serde(default)]
-    pub(crate) fall_row: Option<usize>,
-    #[serde(default)]
-    pub(crate) fall_frames: Option<usize>,
+    pub(crate) fall_frames: Option<Vec<(usize, usize)>>,
     #[serde(default)]
     pub(crate) fall_sound_frames: Option<Vec<usize>>,
     #[serde(skip)]
@@ -146,18 +144,18 @@ where
 {
     pub(crate) atlas_columns: usize,
     pub(crate) atlas_rows: usize,
-    pub(crate) idle_row: Option<usize>,
-    pub(crate) idle_frames: Option<usize>,
+    pub(crate) idle_frames: Option<Vec<(usize, usize)>>,
     pub(crate) idle_interval_ms: Option<u32>,
-    pub(crate) walk_row: Option<usize>,
-    pub(crate) walk_frames: Option<usize>,
+    pub(crate) walk_frames: Option<Vec<(usize, usize)>>,
     pub(crate) walk_interval_ms: Option<u32>,
     pub(crate) walk_sound_frames: Option<Vec<usize>>,
-    pub(crate) jump_row: Option<usize>,
-    pub(crate) jump_frames: Option<usize>,
+    // FIXME: We should use fields prefixed with `_`
+    pub(crate) _run_frames: Option<Vec<(usize, usize)>>,
+    pub(crate) _run_interval_ms: Option<u32>,
+    pub(crate) _run_sound_frames: Option<Vec<usize>>,
+    pub(crate) jump_frames: Option<Vec<(usize, usize)>>,
     pub(crate) jump_sound_frames: Option<Vec<usize>>,
-    pub(crate) fall_row: Option<usize>,
-    pub(crate) fall_frames: Option<usize>,
+    pub(crate) fall_frames: Option<Vec<(usize, usize)>>,
     pub(crate) fall_sound_frames: Option<Vec<usize>>,
     pub(crate) _phantom: PhantomData<T>,
 }
@@ -228,21 +226,19 @@ fn setup_rng(mut global: Single<&mut WyRand, With<GlobalRng>>, mut commands: Com
 /// ## Traits
 ///
 /// - `T` must implement [`Character`] and [`Visible`].
-/// - `A` must implement [`CharacterAssets`]
-pub(crate) fn setup_animations<T, A>(
+pub(crate) fn setup_animations<T>(
     mut commands: Commands,
     mut atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     mut global_animations: ResMut<Assets<Animation>>,
     animation_data: Res<AnimationDataCache<T>>,
-    assets: Res<A>,
+    display_image: Res<DisplayImage<T>>,
     images: Res<Assets<Image>>,
 ) where
     T: Character + Visible,
-    A: CharacterAssets,
 {
     // Set sprite sheet and generate sprite from it
     let sprite_sheet = Spritesheet::new(
-        assets.get_image(),
+        &display_image.image,
         animation_data.atlas_columns,
         animation_data.atlas_rows,
     );
@@ -255,8 +251,7 @@ pub(crate) fn setup_animations<T, A>(
     let idle = animation_handle(
         &mut global_animations,
         &sprite_sheet,
-        animation_data.idle_row,
-        animation_data.idle_frames,
+        animation_data.idle_frames.as_ref(),
         animation_data.idle_interval_ms,
         AnimationRepeat::Loop,
     )
@@ -266,8 +261,7 @@ pub(crate) fn setup_animations<T, A>(
     let walk = animation_handle(
         &mut global_animations,
         &sprite_sheet,
-        animation_data.walk_row,
-        animation_data.walk_frames,
+        animation_data.walk_frames.as_ref(),
         animation_data.walk_interval_ms,
         AnimationRepeat::Loop,
     );
@@ -275,13 +269,13 @@ pub(crate) fn setup_animations<T, A>(
     // Jump animation
     let jump = animation_data
         .jump_frames
+        .as_ref()
         .map(|frames| {
-            let interval_ms = (JUMP_DURATION_SECS * 500. / frames.max(1) as f32) as u32;
+            let interval_ms = (JUMP_DURATION_SECS * 500. / frames.len().max(1) as f32) as u32;
             animation_handle(
                 &mut global_animations,
                 &sprite_sheet,
-                animation_data.jump_row,
-                animation_data.jump_frames,
+                animation_data.jump_frames.as_ref(),
                 Some(interval_ms),
                 AnimationRepeat::Times(1),
             )
@@ -291,20 +285,19 @@ pub(crate) fn setup_animations<T, A>(
     // Fall animation
     let fall = animation_data
         .fall_frames
+        .as_ref()
         .map(|frames| {
-            let interval_ms = (JUMP_DURATION_SECS * 500. / frames.max(1) as f32) as u32;
+            let interval_ms = (JUMP_DURATION_SECS * 500. / frames.len().max(1) as f32) as u32;
             animation_handle(
                 &mut global_animations,
                 &sprite_sheet,
-                animation_data.fall_row,
-                animation_data.fall_frames,
+                animation_data.fall_frames.as_ref(),
                 Some(interval_ms),
                 AnimationRepeat::Times(1),
             )
         })
         .unwrap_or_else(|| None);
 
-    // Data for `SpriteInfoCache`
     let sprite_layout_id = sprite
         .texture_atlas
         .as_ref()
@@ -319,17 +312,16 @@ pub(crate) fn setup_animations<T, A>(
         .expect(ERR_INVALID_TEXTURE_ATLAS)
         .size();
 
-    // Init resources
+    commands.insert_resource(TextureInfoCache::<T> {
+        size: texture_size,
+        ..default()
+    });
     commands.insert_resource(Animations::<T> {
         sprite,
         idle,
         walk,
         jump,
         fall,
-        ..default()
-    });
-    commands.insert_resource(TextureInfoCache::<T> {
-        size: texture_size,
         ..default()
     });
 }
@@ -341,17 +333,15 @@ pub(crate) fn setup_animations<T, A>(
 fn animation_handle(
     global_animations: &mut ResMut<Assets<Animation>>,
     sprite_sheet: &Spritesheet,
-    row: Option<usize>,
-    frames: Option<usize>,
+    frames: Option<&Vec<(usize, usize)>>,
     interval: Option<u32>,
     repetitions: AnimationRepeat,
 ) -> Option<Handle<Animation>> {
-    let (Some(row), Some(frames), Some(interval)) = (row, frames, interval) else {
+    let (Some(frames), Some(interval)) = (frames, interval) else {
         warn_once!("{}", WARN_INCOMPLETE_ANIMATION_DATA);
         return None;
     };
-
-    if frames < 1 {
+    if frames.is_empty() {
         return None;
     }
 
@@ -359,7 +349,7 @@ fn animation_handle(
         global_animations.add(
             sprite_sheet
                 .create_animation()
-                .add_horizontal_strip(0, row, frames)
+                .add_cells(frames.clone())
                 .set_clip_duration(AnimationDuration::PerFrame(interval))
                 .set_repetitions(repetitions)
                 .build(),
@@ -374,21 +364,23 @@ fn animation_handle(
 ///
 /// - `T` must implement [`Character`].
 fn flip_sprites<T>(
-    parent_query: Query<(Entity, &Movement), With<T>>,
-    mut child_query: Query<&mut Sprite, Without<T>>,
-    visual_map: Res<VisualMap>,
+    character_query: Query<(&Movement, &Children), With<T>>,
+    mut sprite_query: Query<&mut Sprite, With<SpritesheetAnimation>>,
 ) where
     T: Character,
 {
-    for (entity, movement) in parent_query {
-        let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
-        let mut sprite = child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
-
-        // Sprite flipping
+    for (movement, children) in character_query {
         let direction = movement.direction;
-        if direction.x != 0. {
-            sprite.flip_x = direction.x < 0.;
+        if direction.x == 0. {
+            continue;
         }
+
+        let child = children
+            .iter()
+            .find(|e| sprite_query.contains(*e))
+            .expect(ERR_INVALID_CHILDREN);
+        let mut sprite = sprite_query.get_mut(child).expect(ERR_INVALID_CHILDREN);
+        sprite.flip_x = direction.x < 0.;
     }
 }
 
@@ -398,24 +390,18 @@ fn flip_sprites<T>(
 ///
 /// - `T` must implement [`Character`].
 fn update_animations<T>(
-    parent_query: Query<Entity, With<T>>,
-    mut child_query: Query<
-        (
-            &mut AnimationController,
-            &mut SpritesheetAnimation,
-            &AnimationTimer,
-        ),
-        Without<T>,
-    >,
+    character_query: Query<(&mut AnimationController, &AnimationTimer, &Children), With<T>>,
+    mut animation_query: Query<&mut SpritesheetAnimation, With<SpritesheetAnimation>>,
     animations: Res<Animations<T>>,
-    visual_map: Res<VisualMap>,
 ) where
     T: Character,
 {
-    for entity in parent_query {
-        let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
-        let (mut controller, mut animation, timer) =
-            child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
+    for (mut controller, timer, children) in character_query {
+        let child = children
+            .iter()
+            .find(|e| animation_query.contains(*e))
+            .expect(ERR_INVALID_CHILDREN);
+        let mut animation = animation_query.get_mut(child).expect(ERR_INVALID_CHILDREN);
 
         // Reset animation after timer has finished
         if timer.0.just_finished() {
@@ -464,11 +450,10 @@ fn switch_to_new_animation(
 /// - `A` must implement [`CharacterAssets`]
 pub(crate) fn update_animation_sounds<T, A>(
     mut rng: Single<&mut WyRand, With<AnimationRng>>,
-    parent_query: Query<Entity, With<T>>,
-    mut child_query: Query<(&mut AnimationController, &mut SpritesheetAnimation), Without<T>>,
+    character_query: Query<(&mut AnimationController, &Children), With<T>>,
+    animation_query: Query<&mut SpritesheetAnimation>,
     mut commands: Commands,
     animation_data: Res<AnimationDataCache<T>>,
-    visual_map: Res<VisualMap>,
     assets: Res<A>,
 ) where
     T: Character,
@@ -480,13 +465,15 @@ pub(crate) fn update_animation_sounds<T, A>(
         animation_data.fall_sound_frames.clone(),
     );
 
-    for entity in parent_query {
-        let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
-        let (mut controller, animation) =
-            child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
-        let current_frame = animation.progress.frame;
+    for (mut controller, children) in character_query {
+        let child = children
+            .iter()
+            .find(|e| animation_query.contains(*e))
+            .expect(ERR_INVALID_CHILDREN);
+        let animation = animation_query.get(child).expect(ERR_INVALID_CHILDREN);
 
         // Continue if sound has already been played
+        let current_frame = animation.progress.frame;
         if let Some(sound_frame) = controller.sound_frame
             && sound_frame == current_frame
         {
@@ -495,24 +482,15 @@ pub(crate) fn update_animation_sounds<T, A>(
 
         // Match to current `AnimationState`
         let Some(sound) = (match controller.state {
-            AnimationState::Walk => choose_sound(
-                &mut rng,
-                &current_frame,
-                &frame_set.0,
-                assets.get_walk_sounds(),
-            ),
-            AnimationState::Jump => choose_sound(
-                &mut rng,
-                &current_frame,
-                &frame_set.1,
-                assets.get_jump_sounds(),
-            ),
-            AnimationState::Fall => choose_sound(
-                &mut rng,
-                &current_frame,
-                &frame_set.2,
-                assets.get_fall_sounds(),
-            ),
+            AnimationState::Walk => {
+                choose_sound(&mut rng, &current_frame, &frame_set.0, assets.walk_sounds())
+            }
+            AnimationState::Jump => {
+                choose_sound(&mut rng, &current_frame, &frame_set.1, assets.jump_sounds())
+            }
+            AnimationState::Fall => {
+                choose_sound(&mut rng, &current_frame, &frame_set.2, assets.fall_sounds())
+            }
             _ => None,
         }) else {
             controller.sound_frame = None;
@@ -532,19 +510,18 @@ pub(crate) fn update_animation_sounds<T, A>(
 fn choose_sound(
     rng: &mut WyRand,
     current_frame: &usize,
-    frames: &Option<Vec<usize>>,
+    sound_frames: &Option<Vec<usize>>,
     sounds: &Option<Vec<Handle<AudioSource>>>,
 ) -> Option<Handle<AudioSource>> {
     // Return `None` if frame data is missing or does not contain current frame
-    let Some(frames) = frames else {
+    let Some(sound_frames) = sound_frames else {
         warn_once!("{}", WARN_INCOMPLETE_ANIMATION_DATA);
         return None;
     };
-    if !frames.contains(current_frame) {
+    if !sound_frames.contains(current_frame) {
         return None;
     }
-
-    // Return none if asset data is missing
+    // Return `None` if asset data is missing
     let Some(sounds) = sounds else {
         warn_once!("{}", WARN_INCOMPLETE_ASSET_DATA);
         return None;

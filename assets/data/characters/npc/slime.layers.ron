@@ -1,0 +1,10 @@
+// NOTE: This contains the default layers for a single character.
+LayerData (
+    layers:
+        [
+            // body_eyes
+            Some("images/characters/npc/body/eyes.webp"),
+            // body_skin
+            Some("images/characters/npc/body/skin.webp"),
+        ],
+)

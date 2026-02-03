@@ -4,8 +4,4 @@
             "audio/sound-effects/movement/bounce.ogg",
         ],
     ),
-    "slime.image": Image (
-        path: "images/characters/npc/slime.webp",
-        sampler: Nearest,
-    ),
 })

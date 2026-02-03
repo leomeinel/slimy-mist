@@ -120,7 +120,7 @@ fn spawn_chunk<T, A>(
     }
 
     let world_pos = chunk_pos.as_vec2() * CHUNK_SIZE.as_vec2() * tile_size;
-    let handle = assets.get_tile_set().clone();
+    let handle = assets.tile_set().clone();
 
     // Insert TileMapBundle with storage, transform and texture from handle to container entity
     let tile_size_vec = Vec2::splat(tile_size);

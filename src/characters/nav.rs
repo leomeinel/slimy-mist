@@ -17,12 +17,10 @@ use vleue_navigator::prelude::*;
 
 use crate::{
     AppSystems, PausableSystems,
-    characters::{
-        Movement, VisualMap,
-        animations::{AnimationController, AnimationState},
-    },
+    animations::{AnimationController, AnimationState},
+    characters::Movement,
     levels::overworld::OverworldProcGen,
-    logging::error::{ERR_INVALID_NAV_TARGET, ERR_INVALID_NAVMESH, ERR_INVALID_VISUAL_MAP},
+    logging::error::{ERR_INVALID_NAV_TARGET, ERR_INVALID_NAVMESH},
     procgen::{ProcGenDespawning, ProcGenInit, ProcGenerated, TileDataCache},
     screens::Screen,
 };
@@ -235,10 +233,10 @@ const PATH_OVERSHOOT_THRESHOLD_DIVISOR: f32 = 50.;
 
 /// Apply [`Path`]
 fn apply_path(
-    mut child_query: Query<&mut AnimationController, Without<Navigator>>,
     navigator_query: Query<(
         Entity,
         &Transform,
+        &mut AnimationController,
         &mut KinematicCharacterController,
         Option<&KinematicCharacterControllerOutput>,
         &mut Movement,
@@ -247,25 +245,29 @@ fn apply_path(
     )>,
     mut commands: Commands,
     time: Res<Time>,
-    visual_map: Res<VisualMap>,
 ) {
-    for (entity, transform, mut controller, controller_output, mut movement, mut path, navigator) in
-        navigator_query
+    for (
+        entity,
+        transform,
+        mut animation_controller,
+        mut character_controller,
+        character_controller_output,
+        mut movement,
+        mut path,
+        navigator,
+    ) in navigator_query
     {
         // Set movement direction to normalized vector and apply translation
         let navigator_pos = transform.translation.xy();
         let direction = path.current - navigator_pos;
         movement.direction = direction.normalize_or_zero() * navigator.0 * time.delta_secs();
-        controller.translation = Some(movement.direction);
-
-        let visual = visual_map.0.get(&entity).expect(ERR_INVALID_VISUAL_MAP);
-        let mut animation_controller = child_query.get_mut(*visual).expect(ERR_INVALID_VISUAL_MAP);
+        character_controller.translation = Some(movement.direction);
 
         // If `entity` collided with `path.target` stop applying path and return.
         // NOTE: This does not reliably determine whether the `entity` can not advance, just if it has collided with their target.
         //       For now this should be enough since not switching to `Idle` for these entities might cause the illusion of them
         //       still trying to wiggle their way around obstacles.
-        if let Some(output) = controller_output
+        if let Some(output) = character_controller_output
             && output.collisions.iter().any(|c| c.entity == path.target)
         {
             stop_apply_path(&mut commands, entity, &mut animation_controller);

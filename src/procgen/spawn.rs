@@ -12,10 +12,8 @@ use bevy_prng::WyRand;
 use rand::{Rng as _, seq::IndexedRandom as _};
 
 use crate::{
-    characters::{
-        Character, CollisionDataCache, VisualMap,
-        animations::{ANIMATION_DELAY_RANGE_SECS, AnimationRng, Animations},
-    },
+    animations::{ANIMATION_DELAY_RANGE_SECS, AnimationRng, Animations},
+    characters::{Character, CollisionDataCache},
     levels::Level,
     procgen::{CHUNK_SIZE, ProcGenController, ProcGenRng, ProcGenerated, TileDataCache},
 };
@@ -33,7 +31,6 @@ pub(crate) fn spawn_characters<T, A, B>(
     level: Single<Entity, With<B>>,
     mut commands: Commands,
     mut controller: ResMut<ProcGenController<T>>,
-    mut visual_map: ResMut<VisualMap>,
     animations: Res<Animations<T>>,
     chunk_controller: Res<ProcGenController<A>>,
     collision_data: Res<CollisionDataCache<T>>,
@@ -64,7 +61,6 @@ pub(crate) fn spawn_characters<T, A, B>(
             &mut procgen_rng,
             &mut commands,
             &mut controller,
-            &mut visual_map,
             level.entity(),
             &animations,
             &collision_set,
@@ -87,7 +83,6 @@ fn spawn_character<T>(
     procgen_rng: &mut WyRand,
     commands: &mut Commands,
     controller: &mut ResMut<ProcGenController<T>>,
-    visual_map: &mut ResMut<VisualMap>,
     level: Entity,
     animations: &Res<Animations<T>>,
     collision_set: &(Option<String>, Option<f32>, Option<f32>),
@@ -115,7 +110,6 @@ fn spawn_character<T>(
         // Spawn entity in chosen tile and store in controller
         let entity = T::spawn(
             commands,
-            visual_map,
             collision_set,
             target_pos,
             animations,

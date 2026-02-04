@@ -1,43 +1,5 @@
 // NOTE: This contains all possible layers for the character type.
 ({
-    "male.lower_regular_accessories": Files (
-        paths: [],
-    ),
-    "male.lower_regular_armor": Files (
-        paths: [
-            "images/characters/human/male/lower-regular/armor/light-surcoat-sideless.webp",
-        ],
-    ),
-    "male.lower_regular_arms_clothing": Files (
-        paths: [
-            "images/characters/human/male/lower-regular/arms/clothing/shirt-plain.webp",
-        ],
-    ),
-    "male.lower_regular_arms": Files (
-        paths: [
-            "images/characters/human/male/lower-regular/arms/skin.webp",
-        ],
-    ),
-    "male.lower_regular_chest_clothing": Files (
-        paths: [
-            "images/characters/human/male/lower-regular/chest/clothing/shirt-plain.webp",
-        ],
-    ),
-    "male.lower_regular_chest": Files (
-        paths: [
-            "images/characters/human/male/lower-regular/chest/skin.webp",
-        ],
-    ),
-    "male.lower_regular_legs_clothing": Files (
-        paths: [
-            "images/characters/human/male/lower-regular/legs/clothing/jeans-plain.webp",
-        ],
-    ),
-    "male.lower_regular_legs": Files (
-        paths: [
-            "images/characters/human/male/lower-regular/legs/skin.webp",
-        ],
-    ),
     "male.upper_accessories": Files (
         paths: [],
     ),
@@ -53,7 +15,48 @@
     ),
     "male.upper_head": Files (
         paths: [
-            "images/characters/human/male/upper/head.webp",
+            "images/characters/human/male/upper/head/skin.webp",
+        ],
+    ),
+    "male.lower_regular_accessories": Files (
+        paths: [
+            "images/characters/human/male/lower-regular/accessories/straps-vertical.webp",
+            "images/characters/human/male/lower-regular/accessories/gloves-plain.webp",
+        ],
+    ),
+    "male.lower_regular_arms_clothing": Files (
+        paths: [
+            "images/characters/human/male/lower-regular/arms/clothing/shirt-plain.webp",
+        ],
+    ),
+    "male.lower_regular_arms": Files (
+        paths: [
+            "images/characters/human/male/lower-regular/arms/skin.webp",
+        ],
+    ),
+    "male.lower_regular_armor": Files (
+        paths: [
+            "images/characters/human/male/lower-regular/armor/light-coat-buttons.webp",
+        ],
+    ),
+    "male.lower_regular_chest_clothing": Files (
+        paths: [
+            "images/characters/human/male/lower-regular/chest/clothing/shirt-plain.webp",
+        ],
+    ),
+    "male.lower_regular_chest": Files (
+        paths: [
+            "images/characters/human/male/lower-regular/chest/skin.webp",
+        ],
+    ),
+    "male.lower_regular_legs_clothing": Files (
+        paths: [
+            "images/characters/human/male/lower-regular/legs/clothing/pants-plain.webp",
+        ],
+    ),
+    "male.lower_regular_legs": Files (
+        paths: [
+            "images/characters/human/male/lower-regular/legs/skin.webp",
         ],
     ),
 })

@@ -40,7 +40,7 @@ use crate::{
         warn::{WARN_INCOMPLETE_ANIMATION_DATA, WARN_INCOMPLETE_ASSET_DATA},
     },
     screens::Screen,
-    utils::{ForkedRng, setup_rng},
+    utils::rng::{ForkedRng, setup_rng},
     visual::{TextureInfoCache, Visible, layers::DisplayImage},
 };
 

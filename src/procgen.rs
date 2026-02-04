@@ -41,7 +41,7 @@ use crate::{
     logging::error::ERR_INVALID_MINIMUM_CHUNK_POS,
     procgen::{chunks::spawn_chunks, navmesh::move_navmesh, spawn::spawn_characters},
     screens::Screen,
-    utils::{ForkedRng, setup_rng},
+    utils::rng::{ForkedRng, setup_rng},
 };
 
 pub(super) fn plugin(app: &mut App) {

@@ -14,7 +14,7 @@ pub(crate) mod overworld;
 use bevy::{prelude::*, reflect::Reflectable};
 use bevy_asset_loader::asset_collection::AssetCollection;
 
-use crate::utils::{ForkedRng, setup_rng};
+use crate::utils::rng::{ForkedRng, setup_rng};
 
 pub(super) fn plugin(app: &mut App) {
     // Add rng for levels

@@ -13,12 +13,11 @@ set -e
 
 # Set env variables
 SCRIPT_DIR="$(dirname -- "$(readlink -f -- "${0}")")"
-BINARY_NAME="slimymist"
+BINARY_NAME="$(tomlq -r '.bin.[].name' "${SCRIPT_DIR}"/../Cargo.toml)"
 
 # Define functions
 run_web() {
-    PACKAGE_NAME="$(tomlq -r '.package.name' "${SCRIPT_DIR}"/../Cargo.toml)"
-    OUTPUT="${SCRIPT_DIR}"/../target/wasm32-unknown-unknown/"${1}"/"${PACKAGE_NAME}".wasm
+    OUTPUT="${SCRIPT_DIR}"/../target/wasm32-unknown-unknown/"${1}"/"${BINARY_NAME}".wasm
     CARGO_XDG_DIR=~/.local/share/cargo/bin
     CARGO_DIR=~/.cargo/bin
     WASM_RUNNER="wasm-server-runner"

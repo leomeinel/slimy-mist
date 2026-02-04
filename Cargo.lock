@@ -1272,7 +1272,7 @@ dependencies = [
 [[package]]
 name = "bevy_rapier2d"
 version = "0.32.0"
-source = "git+https://github.com/Buncys/bevy_rapier.git?rev=8c25504d336c8c9fc7a3c765422d56845cc36075#8c25504d336c8c9fc7a3c765422d56845cc36075"
+source = "git+https://github.com/Buncys/bevy_rapier.git?rev=4ab7e7dcc9a5772dcba0defb3625350eff2bd822#4ab7e7dcc9a5772dcba0defb3625350eff2bd822"
 dependencies = [
  "bevy",
  "bitflags 2.10.0",
@@ -4951,7 +4951,7 @@ checksum = "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5"
 
 [[package]]
 name = "slimy_mist"
-version = "0.13.0"
+version = "0.13.1"
 dependencies = [
  "bevy",
  "bevy_asset_loader",

@@ -3,7 +3,7 @@
 [package]
 name = "slimy_mist"
 # NOTE: Update with full semantic version on each release
-version = "0.13.0"
+version = "0.13.1"
 edition = "2024"
 license = "Apache-2.0"
 
@@ -39,7 +39,7 @@ bevy_prng = { version = "0.13.0", features = ["rand_chacha", "wyrand"] }
 bevy_rand = "0.13.0"
 # FIXME: Wait for new version to be released and PRs to be merged:
 #        - https://github.com/dimforge/bevy_rapier/pull/686
-bevy_rapier2d = { git = "https://github.com/Buncys/bevy_rapier.git", rev = "8c25504d336c8c9fc7a3c765422d56845cc36075" }
+bevy_rapier2d = { git = "https://github.com/Buncys/bevy_rapier.git", rev = "4ab7e7dcc9a5772dcba0defb3625350eff2bd822" }
 bevy_spritesheet_animation = "6.1.0"
 iyes_progress = "0.16.0"
 ordered-float = "5.1.0"
@@ -63,7 +63,7 @@ virtual_joystick = { git = "https://github.com/leomeinel/virtual_joystick.git", 
 [target.'cfg(all(target_family = "wasm", any(target_os = "unknown", target_os = "none")))'.dependencies]
 bevy_rand = { version = "0.13.0", features = ["wasm_js"] }
 
-# FIXME: android-activity 0.6.0 is only compatible with major version 2 of games-activity which is no at 4.0.0.
+# FIXME: android-activity 0.6.0 is only compatible with major version 2 of games-activity which is now at 4.0.0.
 #        This is why we are using a fix from: https://mevlyshkin.com/notes/bevy-android-input/
 #        Also see:
 #        - https://github.com/rust-mobile/android-activity/discussions/208

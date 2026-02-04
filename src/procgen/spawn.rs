@@ -15,14 +15,14 @@ use crate::{
     animations::{ANIMATION_DELAY_RANGE_SECS, AnimationRng, Animations},
     characters::{Character, CollisionDataCache},
     levels::Level,
-    procgen::{CHUNK_SIZE, ProcGenController, ProcGenRng, ProcGenerated, TileDataCache},
+    procgen::{CHUNK_SIZE, ProcGenCache, ProcGenRng, ProcGenerated, TileDataCache},
 };
 
-/// Spawn characters in every chunk contained in [`ProcGenController<A>`]
+/// Spawn characters in every chunk contained in [`ProcGenCache<A>`]
 ///
 /// ## Traits
 ///
-/// - `T` must implement [`Character`] and [`ProcGenerated`] and is used as the procedurally generated character associated with a [`ProcGenController<T>`].
+/// - `T` must implement [`Character`] and [`ProcGenerated`] and is used as the procedurally generated character associated with a [`ProcGenCache<T>`].
 /// - `A` must implement [`ProcGenerated`] and is used as a level's procedurally generated item.
 /// - `B` must implement [`Level`].
 pub(crate) fn spawn_characters<T, A, B>(
@@ -30,9 +30,9 @@ pub(crate) fn spawn_characters<T, A, B>(
     mut procgen_rng: Single<&mut WyRand, (With<ProcGenRng>, Without<AnimationRng>)>,
     level: Single<Entity, With<B>>,
     mut commands: Commands,
-    mut controller: ResMut<ProcGenController<T>>,
+    mut character_cache: ResMut<ProcGenCache<T>>,
     animations: Res<Animations<T>>,
-    chunk_controller: Res<ProcGenController<A>>,
+    chunk_cache: Res<ProcGenCache<A>>,
     collision_data: Res<CollisionDataCache<T>>,
     tile_data: Res<TileDataCache<A>>,
 ) where
@@ -40,9 +40,9 @@ pub(crate) fn spawn_characters<T, A, B>(
     A: ProcGenerated,
     B: Level,
 {
-    for (_, chunk_pos) in &chunk_controller.chunk_positions {
+    for (_, chunk_pos) in &chunk_cache.chunk_positions {
         // Continue if chunk has already been stored
-        if controller
+        if character_cache
             .chunk_positions
             .values()
             .any(|&v| v == *chunk_pos)
@@ -60,7 +60,7 @@ pub(crate) fn spawn_characters<T, A, B>(
             &mut animation_rng,
             &mut procgen_rng,
             &mut commands,
-            &mut controller,
+            &mut character_cache,
             level.entity(),
             &animations,
             &collision_set,
@@ -82,7 +82,7 @@ fn spawn_character<T>(
     animation_rng: &mut WyRand,
     procgen_rng: &mut WyRand,
     commands: &mut Commands,
-    controller: &mut ResMut<ProcGenController<T>>,
+    cache: &mut ResMut<ProcGenCache<T>>,
     level: Entity,
     animations: &Res<Animations<T>>,
     collision_set: &(Option<String>, Option<f32>, Option<f32>),
@@ -107,7 +107,7 @@ fn spawn_character<T>(
         let world_pos = chunk_pos.as_vec2() * CHUNK_SIZE.as_vec2() * tile_size;
         let target_pos = world_pos + origin * tile_size;
 
-        // Spawn entity in chosen tile and store in controller
+        // Spawn entity in chosen tile and store in `cache`
         let entity = T::spawn(
             commands,
             collision_set,
@@ -115,7 +115,7 @@ fn spawn_character<T>(
             animations,
             animation_delay,
         );
-        controller.chunk_positions.insert(entity, *chunk_pos);
+        cache.chunk_positions.insert(entity, *chunk_pos);
 
         // Add entity to level so that level handles despawning
         commands.entity(level).add_child(entity);

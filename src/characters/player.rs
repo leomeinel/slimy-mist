@@ -21,11 +21,11 @@ use bevy_spritesheet_animation::prelude::*;
 
 use crate::{
     AppSystems,
-    animations::{AnimationController, AnimationState, AnimationTimer, Animations},
+    animations::{AnimationCache, AnimationState, AnimationTimer, Animations},
     camera::{FOREGROUND_Z, ysort::YSort},
     characters::{
         Character, CharacterAssets, JumpTimer, Movement,
-        attack::{AttackController, punch},
+        attack::{AttackStats, punch},
         character_collider,
         health::Health,
         nav::NavTarget,
@@ -103,7 +103,7 @@ impl Character for Player {
             // Attack
             (
                 Health(10.),
-                AttackController {
+                AttackStats {
                     _attacks: HashSet::from([punch()]),
                     damage_factor: 1.,
                     melee: Some(punch()),
@@ -112,7 +112,7 @@ impl Character for Player {
             ),
             // Animations
             (
-                AnimationController::default(),
+                AnimationCache::default(),
                 AnimationTimer(Timer::from_seconds(animation_delay, TimerMode::Once)),
             ),
         )
@@ -125,13 +125,13 @@ const JUMP_HEIGHT: f32 = 12.;
 
 /// Apply jump
 fn apply_jump(
-    player: Single<(&AnimationController, &mut Movement, &JumpTimer, &Children), With<Player>>,
+    player: Single<(&AnimationCache, &mut Movement, &JumpTimer, &Children), With<Player>>,
     mut transform_query: Query<&mut Transform, With<SpritesheetAnimation>>,
 ) {
-    let (animation_controller, mut movement, timer, children) = player.into_inner();
+    let (cache, mut movement, timer, children) = player.into_inner();
 
     // Return if we are not jumping or falling
-    let state = animation_controller.state;
+    let state = cache.state;
     if !matches!(state, AnimationState::Jump | AnimationState::Fall) {
         return;
     }
@@ -157,10 +157,10 @@ fn apply_jump(
 
 /// Limit jump by setting fall after specific time and then switching to walk
 fn limit_jump(
-    player: Single<(Entity, &mut AnimationController, &mut Movement, &JumpTimer), With<Player>>,
+    player: Single<(Entity, &mut AnimationCache, &mut Movement, &JumpTimer), With<Player>>,
     mut commands: Commands,
 ) {
-    let (entity, mut animation_controller, mut movement, timer) = player.into_inner();
+    let (entity, mut cache, mut movement, timer) = player.into_inner();
 
     // Return if timer has not finished
     if !timer.0.just_finished() {
@@ -171,12 +171,12 @@ fn limit_jump(
     movement.jump_height = 0.;
 
     // Set animation states
-    match animation_controller.state {
+    match cache.state {
         AnimationState::Jump => {
             commands.entity(entity).insert(JumpTimer::default());
-            animation_controller.state = AnimationState::Fall;
+            cache.state = AnimationState::Fall;
         }
-        AnimationState::Fall => animation_controller.state = AnimationState::Idle,
+        AnimationState::Fall => cache.state = AnimationState::Idle,
         _ => (),
     }
 }

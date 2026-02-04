@@ -22,7 +22,7 @@ use crate::{
     characters::{nav::NavTargetPosMap, npc::Slime, player::Player},
     levels::overworld::{Overworld, OverworldProcGen, spawn_overworld},
     menus::Menu,
-    procgen::{ProcGenController, navmesh::spawn_navmesh},
+    procgen::{ProcGenCache, navmesh::spawn_navmesh},
     screens::Screen,
     utils::run_conditions::window_unfocused,
     visual::{
@@ -147,15 +147,15 @@ pub(crate) fn insert_display_image<T, A>(
 /// Insert [`Resource`]s
 fn insert_resources(mut commands: Commands) {
     commands.init_resource::<NavTargetPosMap>();
-    commands.init_resource::<ProcGenController<OverworldProcGen>>();
-    commands.init_resource::<ProcGenController<Slime>>();
+    commands.init_resource::<ProcGenCache<OverworldProcGen>>();
+    commands.init_resource::<ProcGenCache<Slime>>();
 }
 
 /// Remove [`Resource`]s
 fn remove_resources(mut commands: Commands) {
     commands.remove_resource::<NavTargetPosMap>();
-    commands.remove_resource::<ProcGenController<OverworldProcGen>>();
-    commands.remove_resource::<ProcGenController<Slime>>();
+    commands.remove_resource::<ProcGenCache<OverworldProcGen>>();
+    commands.remove_resource::<ProcGenCache<Slime>>();
     commands.remove_resource::<DisplayImage<Player>>();
     commands.remove_resource::<DisplayImage<Slime>>();
 }

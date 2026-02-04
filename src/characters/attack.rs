@@ -78,9 +78,9 @@ pub(crate) struct DelayAttack {
     cooldown_secs: f32,
 }
 
-/// Controller for [Attack]
+/// Stats for [`Attack`]
 #[derive(Component, Default)]
-pub(crate) struct AttackController {
+pub(crate) struct AttackStats {
     pub(crate) _attacks: HashSet<AttackData>,
     pub(crate) damage_factor: f32,
     pub(crate) melee: Option<AttackData>,
@@ -106,11 +106,11 @@ pub(crate) fn punch() -> AttackData {
 ///
 /// ## Traits
 ///
-/// - `T` must implement [`Character`] and is used as the character associated with a [`AttackController`].
+/// - `T` must implement [`Character`] and is used as the character associated with a [`AttackStats`].
 fn on_melee_attack<T>(
     event: On<Attack<MeleeAttack>>,
     target_query: Query<&Health>,
-    origin_query: Query<(&Transform, &Movement, &AttackController), With<T>>,
+    origin_query: Query<(&Transform, &Movement, &AttackStats), With<T>>,
     mut commands: Commands,
     collision_data: Res<CollisionDataCache<T>>,
     rapier_context: ReadRapierContext,
@@ -125,8 +125,8 @@ fn on_melee_attack<T>(
     };
 
     let (origin, event_direction) = (event.entity, event.direction);
-    let (transform, movement, controller) = origin_query.get(origin).expect(ERR_INVALID_ATTACKER);
-    let Some(melee) = &controller.melee else {
+    let (transform, movement, stats) = origin_query.get(origin).expect(ERR_INVALID_ATTACKER);
+    let Some(melee) = &stats.melee else {
         warn_once!("{}", WARN_INVALID_ATTACK_DATA);
         return;
     };
@@ -168,7 +168,7 @@ fn on_melee_attack<T>(
     });
 
     // Apply attack
-    let damage = controller.damage_factor * melee.damage.into_inner();
+    let damage = stats.damage_factor * melee.damage.into_inner();
     commands.trigger(Damage { targets, damage });
     let cooldown_secs = melee.cooldown_secs.into_inner();
     commands.trigger(DelayAttack {

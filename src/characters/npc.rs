@@ -19,11 +19,11 @@ use bevy_asset_loader::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    animations::{AnimationController, AnimationTimer, Animations},
+    animations::{AnimationCache, AnimationTimer, Animations},
     camera::{FOREGROUND_Z, ysort::YSort},
     characters::{
         Character, CharacterAssets, Movement,
-        attack::{AttackController, punch},
+        attack::{AttackStats, punch},
         character_collider,
         health::Health,
         nav::Navigator,
@@ -94,7 +94,7 @@ impl Character for Slime {
             // Attack
             (
                 Health(5.),
-                AttackController {
+                AttackStats {
                     _attacks: HashSet::from([punch()]),
                     damage_factor: 1.,
                     melee: Some(punch()),
@@ -103,7 +103,7 @@ impl Character for Slime {
             ),
             // Animations
             (
-                AnimationController::default(),
+                AnimationCache::default(),
                 AnimationTimer(Timer::from_seconds(animation_delay, TimerMode::Once)),
             ),
         )

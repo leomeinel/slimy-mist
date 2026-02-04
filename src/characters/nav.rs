@@ -17,7 +17,7 @@ use vleue_navigator::prelude::*;
 
 use crate::{
     AppSystems, PausableSystems,
-    animations::{AnimationController, AnimationState},
+    animations::{AnimationCache, AnimationState},
     characters::Movement,
     levels::overworld::OverworldProcGen,
     logging::error::{ERR_INVALID_NAV_TARGET, ERR_INVALID_NAVMESH},
@@ -236,7 +236,7 @@ fn apply_path(
     navigator_query: Query<(
         Entity,
         &Transform,
-        &mut AnimationController,
+        &mut AnimationCache,
         &mut KinematicCharacterController,
         Option<&KinematicCharacterControllerOutput>,
         &mut Movement,
@@ -249,9 +249,9 @@ fn apply_path(
     for (
         entity,
         transform,
-        mut animation_controller,
-        mut character_controller,
-        character_controller_output,
+        mut cache,
+        mut controller,
+        controller_output,
         mut movement,
         mut path,
         navigator,
@@ -261,22 +261,22 @@ fn apply_path(
         let navigator_pos = transform.translation.xy();
         let direction = path.current - navigator_pos;
         movement.direction = direction.normalize_or_zero() * navigator.0 * time.delta_secs();
-        character_controller.translation = Some(movement.direction);
+        controller.translation = Some(movement.direction);
 
         // If `entity` collided with `path.target` stop applying path and return.
         // NOTE: This does not reliably determine whether the `entity` can not advance, just if it has collided with their target.
         //       For now this should be enough since not switching to `Idle` for these entities might cause the illusion of them
         //       still trying to wiggle their way around obstacles.
-        if let Some(output) = character_controller_output
+        if let Some(output) = controller_output
             && output.collisions.iter().any(|c| c.entity == path.target)
         {
-            stop_apply_path(&mut commands, entity, &mut animation_controller);
+            stop_apply_path(&mut commands, entity, &mut cache);
             return;
         }
 
         // Set animation state if we are `Idle`
-        if animation_controller.state == AnimationState::Idle {
-            animation_controller.set_new_state(AnimationState::Walk);
+        if cache.state == AnimationState::Idle {
+            cache.set_new_state(AnimationState::Walk);
         }
 
         // Loop while distance to `path.current` is smaller than threshold to allow multiple next
@@ -287,16 +287,16 @@ fn apply_path(
             if let Some(next) = path.next.pop() {
                 path.current = next;
             } else {
-                stop_apply_path(&mut commands, entity, &mut animation_controller);
+                stop_apply_path(&mut commands, entity, &mut cache);
                 break;
             }
         }
     }
 }
 
-/// Remove [`Path`] and set [`AnimationController`] state to [`AnimationState::Idle`]
-fn stop_apply_path(commands: &mut Commands, entity: Entity, controller: &mut AnimationController) {
+/// Remove [`Path`] and set [`AnimationCache`] state to [`AnimationState::Idle`]
+fn stop_apply_path(commands: &mut Commands, entity: Entity, cache: &mut AnimationCache) {
     // NOTE: We are using `try_remove` to avoid use after despawn because of `procgen::despawn`.
     commands.entity(entity).try_remove::<Path>();
-    controller.set_new_state(AnimationState::Idle);
+    cache.set_new_state(AnimationState::Idle);
 }

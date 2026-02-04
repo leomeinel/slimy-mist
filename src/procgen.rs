@@ -134,7 +134,7 @@ where
 {
 }
 
-/// Controller that maps entities to their positions
+/// Cache that maps entities to their positions
 ///
 /// We are also storing entities to avoid duplicate spawning for a chunk. This allows us to check
 /// if a chunk has already been spawned to, even for entities that have left the chunk.
@@ -143,7 +143,7 @@ where
 ///
 /// - `T` must implement [`ProcGenerated`] and is used as any procedurally generated item.
 #[derive(Default, Debug, Resource)]
-pub(crate) struct ProcGenController<T>
+pub(crate) struct ProcGenCache<T>
 where
     T: ProcGenerated,
 {
@@ -152,11 +152,11 @@ where
     pub(crate) to_despawn: HashSet<Entity>,
     _phantom: PhantomData<T>,
 }
-impl<T> ProcGenController<T>
+impl<T> ProcGenCache<T>
 where
     T: ProcGenerated,
 {
-    /// Minimum chunk position stored in [`ProcGenController`]
+    /// Minimum chunk position stored in [`ProcGenCache`]
     pub(crate) fn min_chunk_pos(&self) -> &IVec2 {
         self.chunk_positions
             .values()
@@ -250,13 +250,13 @@ impl ForkedRng for ProcGenRng {}
 ///
 /// ## Traits
 ///
-/// - `T` must implement [`ProcGenerated`] and is used as the procedurally generated item associated with a [`ProcGenController<T>`].
+/// - `T` must implement [`ProcGenerated`] and is used as the procedurally generated item associated with a [`ProcGenCache<T>`].
 /// - `A` must implement [`ProcGenerated`] and is used as a level's procedurally generated item.
 /// - `const PROCEED` determines whether we should proceed to the next state.
 pub(crate) fn collect_to_despawn<T, A, const PROCEED: bool>(
     camera: Single<&Transform, (Changed<Transform>, With<CanvasCamera>, Without<T>)>,
     query: Query<(Entity, &Transform), (With<T>, Without<CanvasCamera>)>,
-    mut controller: ResMut<ProcGenController<T>>,
+    mut cache: ResMut<ProcGenCache<T>>,
     mut next_state: ResMut<NextState<ProcGenState>>,
     tile_data_related: Res<TileDataRelatedCache<A>>,
 ) where
@@ -264,7 +264,7 @@ pub(crate) fn collect_to_despawn<T, A, const PROCEED: bool>(
     A: ProcGenerated,
 {
     let chunk_size_px = tile_data_related.chunk_size_px;
-    controller.camera_chunk_pos = (camera.translation.xy() / chunk_size_px).floor().as_ivec2();
+    cache.camera_chunk_pos = (camera.translation.xy() / chunk_size_px).floor().as_ivec2();
 
     // Add entities outside of `PROCGEN_DISTANCE` to `to_despawn`
     for (entity, transform) in query {
@@ -273,51 +273,51 @@ pub(crate) fn collect_to_despawn<T, A, const PROCEED: bool>(
             .as_ivec2();
 
         // NOTE: We are using `chebyshev_distance` because we are spawning in a square.
-        if controller.camera_chunk_pos.chebyshev_distance(chunk_pos) > PROCGEN_DISTANCE as u32 {
-            controller.to_despawn.insert(entity);
+        if cache.camera_chunk_pos.chebyshev_distance(chunk_pos) > PROCGEN_DISTANCE as u32 {
+            cache.to_despawn.insert(entity);
         }
     }
 
     // Transition state if required
-    if PROCEED && (!controller.to_despawn.is_empty() || query.is_empty()) {
+    if PROCEED && (!cache.to_despawn.is_empty() || query.is_empty()) {
         next_state.set(ProcGenState::Spawn);
     }
 }
 
-/// Despawn procedurally generated entities from [`ProcGenController<T>::to_despawn`] and remove entries in [`ProcGenController<T>::chunk_positions`]
+/// Despawn procedurally generated entities from [`ProcGenCache<T>::to_despawn`] and remove entries in [`ProcGenCache<T>::chunk_positions`]
 ///
 /// ## Traits
 ///
-/// - `T` must implement [`ProcGenerated`] and is used as the procedurally generated item associated with a [`ProcGenController<T>`].
+/// - `T` must implement [`ProcGenerated`] and is used as the procedurally generated item associated with a [`ProcGenCache<T>`].
 fn despawn<T>(
     mut commands: Commands,
-    mut controller: ResMut<ProcGenController<T>>,
+    mut cache: ResMut<ProcGenCache<T>>,
     mut next_state: ResMut<NextState<ProcGenDespawning>>,
 ) where
     T: ProcGenerated,
 {
     // Despawn collected entities
-    let entities: Vec<_> = controller.to_despawn.drain().collect();
+    let entities: Vec<_> = cache.to_despawn.drain().collect();
     for entity in entities {
-        controller.chunk_positions.remove(&entity);
+        cache.chunk_positions.remove(&entity);
         commands.entity(entity).despawn();
     }
 
     next_state.set(ProcGenDespawning(false));
 }
 
-/// Set state [`ProcGenDespawning`] to true if [`ProcGenController<T>::to_despawn`] is not empty
+/// Set state [`ProcGenDespawning`] to true if [`ProcGenCache<T>::to_despawn`] is not empty
 ///
 /// ## Traits
 ///
-/// - `T` must implement [`ProcGenerated`] and is used as the procedurally generated item associated with a [`ProcGenController<T>`].
+/// - `T` must implement [`ProcGenerated`] and is used as the procedurally generated item associated with a [`ProcGenCache<T>`].
 fn set_despawning<T>(
     mut next_state: ResMut<NextState<ProcGenDespawning>>,
-    controller: Res<ProcGenController<T>>,
+    cache: Res<ProcGenCache<T>>,
 ) where
     T: ProcGenerated,
 {
-    if !controller.to_despawn.is_empty() {
+    if !cache.to_despawn.is_empty() {
         next_state.set(ProcGenDespawning(true));
     }
 }

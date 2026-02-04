@@ -190,15 +190,15 @@ pub(crate) enum AnimationState {
     Fall,
 }
 
-/// Controller for animations
+/// Cache for animations
 #[derive(Component, Default)]
-pub(crate) struct AnimationController {
+pub(crate) struct AnimationCache {
     /// Used to determine next animation
     pub(crate) state: AnimationState,
     /// Used to determine if we should play sound again
     pub(crate) sound_frame: Option<usize>,
 }
-impl AnimationController {
+impl AnimationCache {
     /// Sets a new [`AnimationState`] if it has not already been set.
     pub(crate) fn set_new_state(&mut self, new_state: AnimationState) {
         if self.state != new_state {
@@ -386,13 +386,13 @@ fn flip_sprites<T>(
 ///
 /// - `T` must implement [`Character`].
 fn update_animations<T>(
-    character_query: Query<(&mut AnimationController, &AnimationTimer, &Children), With<T>>,
+    character_query: Query<(&mut AnimationCache, &AnimationTimer, &Children), With<T>>,
     mut animation_query: Query<&mut SpritesheetAnimation, With<SpritesheetAnimation>>,
     animations: Res<Animations<T>>,
 ) where
     T: Character,
 {
-    for (mut controller, timer, children) in character_query {
+    for (mut cache, timer, children) in character_query {
         let child = children
             .iter()
             .find(|e| animation_query.contains(*e))
@@ -405,20 +405,18 @@ fn update_animations<T>(
         }
 
         // Match to current `AnimationState`
-        match controller.state {
+        match cache.state {
             AnimationState::Walk => {
-                switch_to_new_animation(&mut animation, animations.walk.clone(), &mut controller)
+                switch_to_new_animation(&mut animation, animations.walk.clone(), &mut cache)
             }
-            AnimationState::Idle => switch_to_new_animation(
-                &mut animation,
-                Some(animations.idle.clone()),
-                &mut controller,
-            ),
+            AnimationState::Idle => {
+                switch_to_new_animation(&mut animation, Some(animations.idle.clone()), &mut cache)
+            }
             AnimationState::Jump => {
-                switch_to_new_animation(&mut animation, animations.jump.clone(), &mut controller)
+                switch_to_new_animation(&mut animation, animations.jump.clone(), &mut cache)
             }
             AnimationState::Fall => {
-                switch_to_new_animation(&mut animation, animations.fall.clone(), &mut controller)
+                switch_to_new_animation(&mut animation, animations.fall.clone(), &mut cache)
             }
         }
     }
@@ -428,13 +426,13 @@ fn update_animations<T>(
 fn switch_to_new_animation(
     animation: &mut SpritesheetAnimation,
     new_animation: Option<Handle<Animation>>,
-    controller: &mut AnimationController,
+    cache: &mut AnimationCache,
 ) {
     let new_animation = new_animation.expect(ERR_UNINITIALIZED_REQUIRED_ANIMATION);
 
     if animation.animation != new_animation {
         animation.switch(new_animation);
-        controller.sound_frame = None;
+        cache.sound_frame = None;
     }
 }
 
@@ -446,7 +444,7 @@ fn switch_to_new_animation(
 /// - `A` must implement [`CharacterAssets`]
 pub(crate) fn update_animation_sounds<T, A>(
     mut rng: Single<&mut WyRand, With<AnimationRng>>,
-    character_query: Query<(&mut AnimationController, &Children), With<T>>,
+    character_query: Query<(&mut AnimationCache, &Children), With<T>>,
     animation_query: Query<&mut SpritesheetAnimation>,
     mut commands: Commands,
     animation_data: Res<AnimationDataCache<T>>,
@@ -461,7 +459,7 @@ pub(crate) fn update_animation_sounds<T, A>(
         animation_data.fall_sound_frames.clone(),
     );
 
-    for (mut controller, children) in character_query {
+    for (mut cache, children) in character_query {
         let child = children
             .iter()
             .find(|e| animation_query.contains(*e))
@@ -470,14 +468,14 @@ pub(crate) fn update_animation_sounds<T, A>(
 
         // Continue if sound has already been played
         let current_frame = animation.progress.frame;
-        if let Some(sound_frame) = controller.sound_frame
+        if let Some(sound_frame) = cache.sound_frame
             && sound_frame == current_frame
         {
             continue;
         }
 
         // Match to current `AnimationState`
-        let Some(sound) = (match controller.state {
+        let Some(sound) = (match cache.state {
             AnimationState::Walk => {
                 choose_sound(&mut rng, &current_frame, &frame_set.0, assets.walk_sounds())
             }
@@ -489,13 +487,13 @@ pub(crate) fn update_animation_sounds<T, A>(
             }
             _ => None,
         }) else {
-            controller.sound_frame = None;
+            cache.sound_frame = None;
             continue;
         };
 
         // Play sound
         commands.spawn(sound_effect(sound));
-        controller.sound_frame = Some(current_frame);
+        cache.sound_frame = Some(current_frame);
     }
 }
 

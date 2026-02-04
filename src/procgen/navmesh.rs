@@ -16,7 +16,7 @@ use vleue_navigator::prelude::*;
 use crate::{
     levels::Level,
     procgen::{
-        CHUNK_SIZE, PROCGEN_DISTANCE, ProcGenController, ProcGenInit, ProcGenState, ProcGenerated,
+        CHUNK_SIZE, PROCGEN_DISTANCE, ProcGenCache, ProcGenInit, ProcGenState, ProcGenerated,
         TileDataCache,
     },
 };
@@ -85,7 +85,7 @@ pub(crate) fn spawn_navmesh<T, A>(
 /// - `T` must implement [`ProcGenerated`]' and is used as the procedurally generated level.
 pub(crate) fn move_navmesh<T>(
     navmesh: Single<(&mut Transform, &mut NavMeshUpdateMode), With<ManagedNavMesh>>,
-    controller: Res<ProcGenController<T>>,
+    cache: Res<ProcGenCache<T>>,
     mut next_init_state: ResMut<NextState<ProcGenInit>>,
     mut next_state: ResMut<NextState<ProcGenState>>,
     init_state: Res<State<ProcGenInit>>,
@@ -95,7 +95,7 @@ pub(crate) fn move_navmesh<T>(
 {
     let tile_size = tile_data.tile_size;
     // Change navmesh translation
-    let min_world_pos = controller.min_chunk_pos().as_vec2() * CHUNK_SIZE.as_vec2() * tile_size;
+    let min_world_pos = cache.min_chunk_pos().as_vec2() * CHUNK_SIZE.as_vec2() * tile_size;
     // NOTE: This is anchored to the bottom left. Instead of min world pos, we actually need the minimum tile of the center chunk.
     //       Therefore we are adding `CHUNK_SIZE` * `PROCGEN_DISTANCE` to the calculation from `spawn_navmesh`
     //       and then adding everything to world pos to get the correct offset as world pos.

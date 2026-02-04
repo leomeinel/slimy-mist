@@ -14,7 +14,7 @@ use bevy_enoki::prelude::*;
 
 use crate::{
     AppSystems,
-    animations::{AnimationController, AnimationState},
+    animations::{AnimationCache, AnimationState},
     camera::BACKGROUND_Z_DELTA,
     characters::{Character, player::Player},
     levels::overworld::spawn_overworld,
@@ -174,7 +174,7 @@ fn add_walking_dust<T>(
 /// - `T` must implement [`Character`] and [`Visible`].
 /// - `A` must implement [`Particle`].
 fn update_character_particles<T, A>(
-    character_query: Query<(&mut AnimationController, &Children), With<T>>,
+    character_query: Query<(&mut AnimationCache, &Children), With<T>>,
     mut particle_query: Query<
         (
             &ParticleWalkingDust,
@@ -187,7 +187,7 @@ fn update_character_particles<T, A>(
     T: Character + Visible,
     A: Particle,
 {
-    for (animation_controller, children) in character_query {
+    for (cache, children) in character_query {
         let child = children
             .iter()
             .find(|e| particle_query.contains(*e))
@@ -200,7 +200,7 @@ fn update_character_particles<T, A>(
             continue;
         }
 
-        state.set_new_active(particle.is_active(animation_controller.state));
+        state.set_new_active(particle.is_active(cache.state));
     }
 }
 

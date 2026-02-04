@@ -16,7 +16,7 @@ use crate::{
     camera::LEVEL_Z,
     levels::{Level, LevelAssets},
     procgen::{
-        CHUNK_SIZE, PROCGEN_DISTANCE, ProcGenController, ProcGenRng, ProcGenState, ProcGenerated,
+        CHUNK_SIZE, PROCGEN_DISTANCE, ProcGenCache, ProcGenRng, ProcGenState, ProcGenerated,
         TileDataCache,
     },
 };
@@ -25,14 +25,14 @@ use crate::{
 ///
 /// ## Traits
 ///
-/// - `T` must implement [`ProcGenerated`]' and is used as the procedurally generated level associated with a [`ProcGenController<T>`].
+/// - `T` must implement [`ProcGenerated`]' and is used as the procedurally generated level associated with a [`ProcGenCache<T>`].
 /// - `A` must implement [`LevelAssets`] and is used as a level's assets.
 /// - `B` must implement [`Level`].
 pub(crate) fn spawn_chunks<T, A, B>(
     level: Single<Entity, With<B>>,
     mut rng: Single<&mut WyRand, With<ProcGenRng>>,
     mut commands: Commands,
-    mut controller: ResMut<ProcGenController<T>>,
+    mut cache: ResMut<ProcGenCache<T>>,
     mut next_state: ResMut<NextState<ProcGenState>>,
     tile_data: Res<TileDataCache<T>>,
     assets: Res<A>,
@@ -46,11 +46,11 @@ pub(crate) fn spawn_chunks<T, A, B>(
     // NOTE: We are spawning in a square. Since that has only minimal performance overhead.
     //       I deem this a cleaner solution and if spawning in a circle, distance calculations
     //       would be more expensive.
-    let chunk_pos = controller.camera_chunk_pos;
+    let chunk_pos = cache.camera_chunk_pos;
     for y in (chunk_pos.y - PROCGEN_DISTANCE)..=(chunk_pos.y + PROCGEN_DISTANCE) {
         for x in (chunk_pos.x - PROCGEN_DISTANCE)..=(chunk_pos.x + PROCGEN_DISTANCE) {
             // Continue if a chunk has already been stored
-            if controller
+            if cache
                 .chunk_positions
                 .values()
                 .any(|&v| v == IVec2::new(x, y))
@@ -65,7 +65,7 @@ pub(crate) fn spawn_chunks<T, A, B>(
             // Spawn chunk
             spawn_chunk::<T, A>(
                 &mut commands,
-                &mut controller,
+                &mut cache,
                 level.entity(),
                 &assets,
                 IVec2::new(x, y),
@@ -86,7 +86,7 @@ pub(crate) fn spawn_chunks<T, A, B>(
 /// - `A` must implement [`LevelAssets`] and is used as a level's assets.
 fn spawn_chunk<T, A>(
     commands: &mut Commands,
-    controller: &mut ResMut<ProcGenController<T>>,
+    cache: &mut ResMut<ProcGenCache<T>>,
     level: Entity,
     assets: &Res<A>,
     chunk_pos: IVec2,
@@ -96,9 +96,9 @@ fn spawn_chunk<T, A>(
     T: ProcGenerated,
     A: LevelAssets,
 {
-    // Create empty container and store in controller
+    // Create empty container and store in `cache`
     let container = commands.spawn(T::default()).id();
-    controller.chunk_positions.insert(container, chunk_pos);
+    cache.chunk_positions.insert(container, chunk_pos);
     let mut storage = TileStorage::empty(CHUNK_SIZE.into());
 
     // Spawn a `TileBundle` mapped to the container entity for each x/y in `CHUNK_SIZE`,

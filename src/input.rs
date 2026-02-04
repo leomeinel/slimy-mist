@@ -21,7 +21,7 @@ use virtual_joystick::VirtualJoystickMessage;
 use crate::mobile::VirtualJoystick;
 use crate::{
     Pause,
-    animations::{AnimationController, AnimationState},
+    animations::{AnimationCache, AnimationState},
     camera::CanvasCamera,
     characters::{
         JumpTimer, Movement,
@@ -252,7 +252,7 @@ fn apply_walk(
     event: On<Fire<Walk>>,
     player: Single<
         (
-            &mut AnimationController,
+            &mut AnimationCache,
             &mut KinematicCharacterController,
             &mut Movement,
         ),
@@ -266,15 +266,15 @@ fn apply_walk(
         return;
     }
 
-    let (mut animation_controller, mut character_controller, mut movement) = player.into_inner();
+    let (mut cache, mut controller, mut movement) = player.into_inner();
 
     // Apply movement from input
     movement.direction = event.value * time.delta_secs();
-    character_controller.translation = Some(movement.direction);
+    controller.translation = Some(movement.direction);
 
     // Set animation state if we are `Idle`
-    if animation_controller.state == AnimationState::Idle {
-        animation_controller.set_new_state(AnimationState::Walk);
+    if cache.state == AnimationState::Idle {
+        cache.set_new_state(AnimationState::Walk);
     }
 }
 
@@ -283,32 +283,29 @@ fn reset_walk(
     _: On<Complete<Walk>>,
     player: Single<
         (
-            &mut AnimationController,
+            &mut AnimationCache,
             &mut KinematicCharacterController,
             &mut Movement,
         ),
         With<Player>,
     >,
 ) {
-    let (mut animation_controller, mut character_controller, mut movement) = player.into_inner();
+    let (mut cache, mut controller, mut movement) = player.into_inner();
 
     // Reset `movement.direction`
     movement.direction = Vec2::ZERO;
 
     // Stop movement if we are not jumping or falling
-    if !matches!(
-        animation_controller.state,
-        AnimationState::Jump | AnimationState::Fall
-    ) {
-        character_controller.translation = Some(movement.direction);
-        animation_controller.set_new_state(AnimationState::Idle);
+    if !matches!(cache.state, AnimationState::Jump | AnimationState::Fall) {
+        controller.translation = Some(movement.direction);
+        cache.set_new_state(AnimationState::Idle);
     }
 }
 
 /// On a fired [`Jump`], add [`JumpTimer`].
 fn set_jump(
     _: On<Fire<Jump>>,
-    player: Single<(Entity, &mut AnimationController), With<Player>>,
+    player: Single<(Entity, &mut AnimationCache), With<Player>>,
     mut commands: Commands,
     pause: Res<State<Pause>>,
 ) {
@@ -317,15 +314,12 @@ fn set_jump(
         return;
     }
 
-    let (entity, mut animation_controller) = player.into_inner();
+    let (entity, mut cache) = player.into_inner();
 
     // Set state to jump if we are not jumping or falling
-    if !matches!(
-        animation_controller.state,
-        AnimationState::Jump | AnimationState::Fall
-    ) {
+    if !matches!(cache.state, AnimationState::Jump | AnimationState::Fall) {
         commands.entity(entity).insert(JumpTimer::default());
-        animation_controller.set_new_state(AnimationState::Jump);
+        cache.set_new_state(AnimationState::Jump);
     }
 }
 

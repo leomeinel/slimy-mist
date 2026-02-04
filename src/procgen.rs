@@ -32,8 +32,6 @@ use bevy::{
     prelude::*,
     reflect::Reflectable,
 };
-use bevy_prng::WyRand;
-use bevy_rand::{global::GlobalRng, traits::ForkableSeed as _};
 
 use crate::{
     AppSystems, PausableSystems,
@@ -43,6 +41,7 @@ use crate::{
     logging::error::ERR_INVALID_MINIMUM_CHUNK_POS,
     procgen::{chunks::spawn_chunks, navmesh::move_navmesh, spawn::spawn_characters},
     screens::Screen,
+    utils::{ForkedRng, setup_rng},
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -64,7 +63,7 @@ pub(super) fn plugin(app: &mut App) {
     );
 
     // Add rng for procedural generation
-    app.add_systems(Startup, setup_rng);
+    app.add_systems(Startup, setup_rng::<ProcGenRng>);
 
     // Despawn procgen
     app.add_systems(
@@ -243,8 +242,9 @@ where
 }
 
 /// Rng for procedural generation
-#[derive(Component)]
+#[derive(Component, Default)]
 pub(crate) struct ProcGenRng;
+impl ForkedRng for ProcGenRng {}
 
 /// Collect procedurally generated entities to despawn outside of [`PROCGEN_DISTANCE`]
 ///
@@ -320,11 +320,6 @@ fn set_despawning<T>(
     if !controller.to_despawn.is_empty() {
         next_state.set(ProcGenDespawning(true));
     }
-}
-
-/// Spawn [`ProcGenRng`] by forking [`GlobalRng`]
-fn setup_rng(mut global: Single<&mut WyRand, With<GlobalRng>>, mut commands: Commands) {
-    commands.spawn((ProcGenRng, global.fork_seed()));
 }
 
 /// Reset [`ProcGenState`]

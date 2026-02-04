@@ -21,7 +21,6 @@ use std::{marker::PhantomData, ops::Range};
 
 use bevy::prelude::*;
 use bevy_prng::WyRand;
-use bevy_rand::{global::GlobalRng, traits::ForkableSeed as _};
 use bevy_spritesheet_animation::prelude::*;
 use rand::seq::IndexedRandom as _;
 
@@ -41,6 +40,7 @@ use crate::{
         warn::{WARN_INCOMPLETE_ANIMATION_DATA, WARN_INCOMPLETE_ASSET_DATA},
     },
     screens::Screen,
+    utils::{ForkedRng, setup_rng},
     visual::{TextureInfoCache, Visible, layers::DisplayImage},
 };
 
@@ -49,7 +49,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_plugins(SpritesheetAnimationPlugin);
 
     // Add rng for animations
-    app.add_systems(Startup, setup_rng);
+    app.add_systems(Startup, setup_rng::<AnimationRng>);
 
     // Animation updates
     app.add_systems(
@@ -213,13 +213,9 @@ impl AnimationController {
 pub(crate) struct AnimationTimer(pub(crate) Timer);
 
 /// Rng for animations
-#[derive(Component)]
+#[derive(Component, Default)]
 pub(crate) struct AnimationRng;
-
-/// Spawn [`AnimationRng`] by forking [`GlobalRng`]
-fn setup_rng(mut global: Single<&mut WyRand, With<GlobalRng>>, mut commands: Commands) {
-    commands.spawn((AnimationRng, global.fork_seed()));
-}
+impl ForkedRng for AnimationRng {}
 
 /// Setup the [`Animations`] struct and add animations
 ///

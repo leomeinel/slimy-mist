@@ -13,12 +13,12 @@ pub(crate) mod overworld;
 
 use bevy::{prelude::*, reflect::Reflectable};
 use bevy_asset_loader::asset_collection::AssetCollection;
-use bevy_prng::WyRand;
-use bevy_rand::{global::GlobalRng, traits::ForkableSeed as _};
+
+use crate::utils::{ForkedRng, setup_rng};
 
 pub(super) fn plugin(app: &mut App) {
     // Add rng for levels
-    app.add_systems(Startup, setup_rng);
+    app.add_systems(Startup, setup_rng::<LevelRng>);
 }
 
 /// Applies to anything that stores level assets
@@ -51,10 +51,6 @@ where
 }
 
 /// Rng for levels
-#[derive(Component)]
+#[derive(Component, Default)]
 pub(crate) struct LevelRng;
-
-/// Spawn [`LevelRng`] by forking [`GlobalRng`]
-fn setup_rng(mut global: Single<&mut WyRand, With<GlobalRng>>, mut commands: Commands) {
-    commands.spawn((LevelRng, global.fork_seed()));
-}
+impl ForkedRng for LevelRng {}

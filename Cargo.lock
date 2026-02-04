@@ -1035,7 +1035,7 @@ dependencies = [
 [[package]]
 name = "bevy_light_2d"
 version = "0.9.0"
-source = "git+https://github.com/leomeinel/bevy_light_2d.git?branch=update-bevy-0-18#d67541098e01d923a0086bccc3ecb6df5fced01d"
+source = "git+https://github.com/leomeinel/bevy_light_2d.git?branch=update-bevy-0-18#87de5a27fc5f0d4c12dbb067ea961220c0f7a308"
 dependencies = [
  "bevy",
  "smallvec",

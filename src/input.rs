@@ -9,6 +9,8 @@
 
 // FIXME: We currently don't have a way to handle joystick drift.
 
+use std::marker::PhantomData;
+
 use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_enhanced_input::prelude::*;
 use bevy_rapier2d::prelude::*;
@@ -23,7 +25,7 @@ use crate::{
     camera::CanvasCamera,
     characters::{
         JumpTimer, Movement,
-        combat::{AttackTimer, Attacked},
+        attack::{Attack, AttackTimer, MeleeAttack},
         player::Player,
     },
     screens::Screen,
@@ -57,7 +59,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_observer(apply_walk);
     app.add_observer(reset_walk);
     app.add_observer(set_jump);
-    app.add_observer(trigger_melee);
+    app.add_observer(trigger_melee_attack);
     app.add_observer(reset_aim);
 }
 
@@ -111,7 +113,7 @@ pub(crate) fn player_input() -> impl Bundle {
                 Action::<Jump>::new(),
                 bindings![KeyCode::Space, GamepadButton::South],
             ),
-            // Combat
+            // Attack
             (
                 Action::<Melee>::new(),
                 Tap::new(TAP_MAX_DURATION_SECS),
@@ -327,8 +329,8 @@ fn set_jump(
     }
 }
 
-/// On a fired [`Melee`], trigger [`Attacked`].
-fn trigger_melee(
+/// On a fired [`Melee`], trigger [`Attack`].
+fn trigger_melee_attack(
     _: On<Fire<Melee>>,
     aim: Single<&Action<Aim>>,
     parent: Single<(Entity, Option<&AttackTimer>), With<Player>>,
@@ -347,9 +349,10 @@ fn trigger_melee(
         return;
     }
 
-    commands.trigger(Attacked {
+    commands.trigger(Attack::<MeleeAttack> {
         entity,
         direction: ***aim,
+        _phantom: PhantomData,
     });
 }
 

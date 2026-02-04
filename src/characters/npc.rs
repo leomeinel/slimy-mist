@@ -22,8 +22,10 @@ use crate::{
     animations::{AnimationController, AnimationTimer, Animations},
     camera::{FOREGROUND_Z, ysort::YSort},
     characters::{
-        Character, CharacterAssets, Health, Movement, character_collider,
-        combat::{CombatController, punch},
+        Character, CharacterAssets, Movement,
+        attack::{AttackController, punch},
+        character_collider,
+        health::Health,
         nav::Navigator,
     },
     impl_character_assets,
@@ -89,10 +91,10 @@ impl Character for Slime {
                 Movement::default(),
                 Navigator(SLIME_WALK_SPEED),
             ),
-            // Combat
+            // Attack
             (
                 Health(5.),
-                CombatController {
+                AttackController {
                     _attacks: HashSet::from([punch()]),
                     damage_factor: 1.,
                     melee: Some(punch()),

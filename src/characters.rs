@@ -9,7 +9,8 @@
 
 //! Characters
 
-pub(crate) mod combat;
+pub(crate) mod attack;
+pub(crate) mod health;
 pub(crate) mod nav;
 pub(crate) mod npc;
 pub(crate) mod player;
@@ -28,7 +29,13 @@ use crate::{
 
 pub(super) fn plugin(app: &mut App) {
     // Add child plugins
-    app.add_plugins((combat::plugin, npc::plugin, nav::plugin, player::plugin));
+    app.add_plugins((
+        attack::plugin,
+        health::plugin,
+        nav::plugin,
+        npc::plugin,
+        player::plugin,
+    ));
 
     // Tick timers
     app.add_systems(Update, tick_jump_timer.in_set(AppSystems::TickTimers));
@@ -185,10 +192,6 @@ impl Default for JumpTimer {
         ))
     }
 }
-
-/// Health that determines if a [`Character`] is living.
-#[derive(Component, Default)]
-pub(crate) struct Health(f32);
 
 /// Radius of the fallback ball collider
 const FALLBACK_BALL_COLLIDER_RADIUS: f32 = 8.;

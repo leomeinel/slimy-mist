@@ -24,8 +24,10 @@ use crate::{
     animations::{AnimationController, AnimationState, AnimationTimer, Animations},
     camera::{FOREGROUND_Z, ysort::YSort},
     characters::{
-        Character, CharacterAssets, Health, JumpTimer, Movement, character_collider,
-        combat::{CombatController, punch},
+        Character, CharacterAssets, JumpTimer, Movement,
+        attack::{AttackController, punch},
+        character_collider,
+        health::Health,
         nav::NavTarget,
     },
     impl_character_assets,
@@ -98,10 +100,10 @@ impl Character for Player {
                 Movement::default(),
                 NavTarget(128),
             ),
-            // Combat
+            // Attack
             (
                 Health(10.),
-                CombatController {
+                AttackController {
                     _attacks: HashSet::from([punch()]),
                     damage_factor: 1.,
                     melee: Some(punch()),

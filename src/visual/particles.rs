@@ -43,6 +43,9 @@ pub(super) fn plugin(app: &mut App) {
 
     // Tick timers
     app.add_systems(Update, tick_particle_timer.in_set(AppSystems::TickTimers));
+
+    // Add observers spawning particles
+    app.add_observer(on_spawn_particle_once::<ParticleMeleeAttack>);
 }
 
 /// Applies to anything that is considered a particle.
@@ -75,10 +78,16 @@ impl Particle for ParticleWalkingDust {
     }
 }
 
-/// Marker component for combat hit particles
+/// Marker component for [`crate::characters::attack::MeleeAttack`] particles
 #[derive(Component, Default)]
-pub(crate) struct ParticleCombatHit;
-impl Particle for ParticleCombatHit {}
+pub(crate) struct ParticleMeleeAttack;
+impl Particle for ParticleMeleeAttack {}
+
+#[derive(Event)]
+pub(crate) struct SpawnParticleOnce {
+    pub(crate) pos: Vec3,
+    pub(crate) handle: Handle<Particle2dEffect>,
+}
 
 /// Handle for [`Particle2dEffect`] as a generic.
 ///
@@ -104,7 +113,7 @@ struct ParticleTimer(Timer);
 /// ## Traits
 ///
 /// - `T` must implement [`Particle`] and is used as the associated particle type.
-pub(crate) fn spawn_particle_once<T>(commands: &mut Commands, pos: Vec3, handle: &ParticleHandle<T>)
+pub(crate) fn on_spawn_particle_once<T>(event: On<SpawnParticleOnce>, mut commands: Commands)
 where
     T: Particle,
 {
@@ -113,8 +122,8 @@ where
         OneShot::Despawn,
         ParticleSpawner::default(),
         NoAutoAabb,
-        Transform::from_translation(pos),
-        ParticleEffectHandle(handle.handle.clone()),
+        Transform::from_translation(event.pos),
+        ParticleEffectHandle(event.handle.clone()),
     ));
 }
 

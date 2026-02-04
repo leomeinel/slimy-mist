@@ -43,7 +43,7 @@ use crate::{
     visual::{
         Visible,
         layers::{HumanMaleLayerMaps, LayerData, LayerDataCache, LayerHandle, SlimeLayerMaps},
-        particles::{ParticleCombatHit, ParticleHandle, ParticleWalkingDust},
+        particles::{ParticleHandle, ParticleMeleeAttack, ParticleWalkingDust},
     },
 };
 
@@ -167,8 +167,8 @@ fn insert_handle_resources(mut commands: Commands, assets: Res<AssetServer>) {
         handle: assets.load("data/particles/walking-dust.particle.ron"),
         ..default()
     });
-    commands.insert_resource(ParticleHandle::<ParticleCombatHit> {
-        handle: assets.load("data/particles/combat-hit.particle.ron"),
+    commands.insert_resource(ParticleHandle::<ParticleMeleeAttack> {
+        handle: assets.load("data/particles/melee-attack.particle.ron"),
         ..default()
     });
 }

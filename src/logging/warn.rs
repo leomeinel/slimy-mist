@@ -19,7 +19,8 @@ pub(crate) const WARN_INCOMPLETE_COLLISION_DATA: &str = "The collision data is i
 pub(crate) const WARN_INCOMPLETE_COLLISION_DATA_FALLBACK: &str =
     "The collision data is incomplete. Using fallback ball collider.";
 
-/// Warning on invalid [`crate::characters::combat::Attack`]
-pub(crate) const WARN_INVALID_ATTACK: &str = "The fired attack is invalid.";
+/// Warning on invalid [`crate::characters::attack::AttackData`]
+pub(crate) const WARN_INVALID_ATTACK_DATA: &str =
+    "The attack data for the fired attack is invalid.";
 /// Warning on invalid [`crate::ui::directional_nav::DirectionalNavAction`]
 pub(crate) const WARN_INVALID_UI_NAV: &str = "No next button found to navigate to.";

@@ -1,11 +1,13 @@
 /*
- * File: combat.rs
+ * File: attack.rs
  * Author: Leopold Johannes Meinel (leo@meinel.dev)
  * -----
  * Copyright (c) 2026 Leopold Johannes Meinel & contributors
  * SPDX ID: Apache-2.0
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  */
+
+use std::marker::PhantomData;
 
 use bevy::{platform::collections::HashSet, prelude::*};
 use bevy_rapier2d::{parry::shape, prelude::*};
@@ -14,25 +16,36 @@ use ordered_float::OrderedFloat;
 use crate::{
     AppSystems,
     camera::OVERLAY_Z,
-    characters::{Character, CollisionDataCache, Health, Movement, player::Player},
+    characters::{
+        Character, CollisionDataCache, Movement,
+        health::{Damage, Health},
+        player::Player,
+    },
     logging::{
         error::{ERR_INVALID_ATTACKER, ERR_INVALID_RAPIER_CONTEXT},
-        warn::{WARN_INCOMPLETE_COLLISION_DATA, WARN_INVALID_ATTACK},
+        warn::{WARN_INCOMPLETE_COLLISION_DATA, WARN_INVALID_ATTACK_DATA},
     },
-    visual::particles::{ParticleCombatHit, ParticleHandle, spawn_particle_once},
+    visual::particles::{ParticleHandle, ParticleMeleeAttack, SpawnParticleOnce},
 };
 
 pub(super) fn plugin(app: &mut App) {
     // Tick timers
     app.add_systems(Update, tick_attack_timer.in_set(AppSystems::TickTimers));
 
-    // Apply combat in observers
-    app.add_observer(apply_melee::<Player>);
+    app.add_observer(on_melee_attack::<Player>);
+    app.add_observer(on_delay_attack);
 }
+
+/// Applies to anything that is a type of [`Attack`].
+pub(crate) trait AttackType {}
+
+/// Melee [`Attack`].
+pub(crate) struct MeleeAttack;
+impl AttackType for MeleeAttack {}
 
 /// Relevant data for an attack.
 #[derive(Default, PartialEq, Eq, Hash)]
-pub(crate) struct Attack {
+pub(crate) struct AttackData {
     pub(crate) name: String,
     pub(crate) damage: OrderedFloat<f32>,
     /// Attack range in pixels.
@@ -44,19 +57,34 @@ pub(crate) struct Attack {
 }
 
 /// [`EntityEvent`] that is triggered if the contained [`Entity`] has attacked.
+///
+/// ## Traits
+///
+/// - `T` must implement [`AttackType`].
 #[derive(EntityEvent)]
-pub(crate) struct Attacked {
+pub(crate) struct Attack<T>
+where
+    T: AttackType,
+{
     pub(crate) entity: Entity,
     pub(crate) direction: Vec2,
+    pub(crate) _phantom: PhantomData<T>,
 }
 
-/// Controller for combat
+/// [`EntityEvent`] that is triggered if the contained [`Entity`]'s next [`Attack`] should be delayed.
+#[derive(EntityEvent)]
+pub(crate) struct DelayAttack {
+    entity: Entity,
+    cooldown_secs: f32,
+}
+
+/// Controller for [Attack]
 #[derive(Component, Default)]
-pub(crate) struct CombatController {
-    pub(crate) _attacks: HashSet<Attack>,
+pub(crate) struct AttackController {
+    pub(crate) _attacks: HashSet<AttackData>,
     pub(crate) damage_factor: f32,
-    pub(crate) melee: Option<Attack>,
-    pub(crate) _ranged: Option<Attack>,
+    pub(crate) melee: Option<AttackData>,
+    pub(crate) _ranged: Option<AttackData>,
 }
 
 /// Timer that tracks [`Attack`]s
@@ -65,8 +93,8 @@ pub(crate) struct CombatController {
 pub(crate) struct AttackTimer(pub(crate) Timer);
 
 /// Simple punch [`Attack`] with short range
-pub(crate) fn punch() -> Attack {
-    Attack {
+pub(crate) fn punch() -> AttackData {
+    AttackData {
         name: "punch".to_string(),
         damage: OrderedFloat(1.),
         range: (OrderedFloat(8.), OrderedFloat(16.)),
@@ -74,19 +102,19 @@ pub(crate) fn punch() -> Attack {
     }
 }
 
-/// On a triggered [`Attacked`], apply melee damage to [Entity]s within range.
+/// On a triggered [`Attack<MeleeAttack>`] fire [`Damage`] on [Entity]s within range.
 ///
 /// ## Traits
 ///
-/// - `T` must implement [`Character`] and is used as the character associated with a [`CombatController`].
-fn apply_melee<T>(
-    event: On<Attacked>,
-    mut target_query: Query<&mut Health>,
-    origin_query: Query<(&Transform, &Movement, &CombatController), With<T>>,
+/// - `T` must implement [`Character`] and is used as the character associated with a [`AttackController`].
+fn on_melee_attack<T>(
+    event: On<Attack<MeleeAttack>>,
+    target_query: Query<&Health>,
+    origin_query: Query<(&Transform, &Movement, &AttackController), With<T>>,
     mut commands: Commands,
     collision_data: Res<CollisionDataCache<T>>,
     rapier_context: ReadRapierContext,
-    particle_handle: Res<ParticleHandle<ParticleCombatHit>>,
+    particle_handle: Res<ParticleHandle<ParticleMeleeAttack>>,
 ) where
     T: Character,
 {
@@ -99,7 +127,7 @@ fn apply_melee<T>(
     let (origin, event_direction) = (event.entity, event.direction);
     let (transform, movement, controller) = origin_query.get(origin).expect(ERR_INVALID_ATTACKER);
     let Some(melee) = &controller.melee else {
-        warn_once!("{}", WARN_INVALID_ATTACK);
+        warn_once!("{}", WARN_INVALID_ATTACK_DATA);
         return;
     };
     let direction = if event_direction == Vec2::ZERO {
@@ -141,47 +169,24 @@ fn apply_melee<T>(
 
     // Apply attack
     let damage = controller.damage_factor * melee.damage.into_inner();
+    commands.trigger(Damage { targets, damage });
     let cooldown_secs = melee.cooldown_secs.into_inner();
-    apply_attack(
-        &mut target_query,
-        &mut commands,
-        origin,
-        targets,
-        damage,
+    commands.trigger(DelayAttack {
+        entity: origin,
         cooldown_secs,
-    );
-    spawn_particle_once(
-        &mut commands,
-        shape_pos.extend(OVERLAY_Z),
-        &*particle_handle,
-    );
+    });
+    commands.trigger(SpawnParticleOnce {
+        pos: shape_pos.extend(OVERLAY_Z),
+        handle: particle_handle.handle.clone(),
+    });
 }
 
-/// Apply damage to [`Health`], handle despawning and insert [`AttackTimer`].
-fn apply_attack(
-    target_query: &mut Query<&mut Health>,
-    commands: &mut Commands,
-    origin: Entity,
-    targets: Vec<Entity>,
-    damage: f32,
-    cooldown_secs: f32,
-) {
-    // Apply damage to health and handle despawning.
-    for entity in targets {
-        let Ok(mut health) = target_query.get_mut(entity) else {
-            continue;
-        };
-        health.0 -= damage;
-        if health.0 <= 0. {
-            commands.entity(entity).despawn();
-        }
-    }
-
-    // Insert `AttackTimer`.
+/// Insert [`AttackTimer`] to delay [`Attack`]s.
+fn on_delay_attack(event: On<DelayAttack>, mut commands: Commands) {
     commands
-        .entity(origin)
+        .entity(event.entity)
         .insert(AttackTimer(Timer::from_seconds(
-            cooldown_secs,
+            event.cooldown_secs,
             TimerMode::Once,
         )));
 }

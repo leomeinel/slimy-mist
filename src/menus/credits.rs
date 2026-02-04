@@ -69,6 +69,7 @@ fn assets() -> impl Bundle {
             "Code & Game Engine",
             "Apache-2.0/MIT by bevyengine and contributors",
         ],
+        ["Sprites", "CC0-1.0 by Shave"],
         ["Music", "CC0-1.0 by freepd.com and creators"],
         ["SFX", "CC0-1.0 by Jaszunio15"],
         ["SFX", "CC0-1.0 by OwlishMedia"],

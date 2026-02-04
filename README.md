@@ -42,6 +42,7 @@ This repository is not entirely licensed as Apache-2.0. See [Credits](#Credits) 
 
 | Contribution | Author(s)                                                                                                                                                                                                                 |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sprites      | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/legalcode) by Shave                                                                                                                                           |
 | Music        | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/legalcode) by [freepd.com and creators](https://freepd.com/)                                                                                                  |
 | SFX          | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/legalcode) by [Jaszunio15](https://freesound.org/people/Jaszunio15/packs/23837/)                                                                              |
 | SFX          | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/legalcode) by OwlishMedia from [here](https://opengameart.org/content/sound-effects-pack) and [here](https://opengameart.org/content/8-bit-sound-effect-pack) |

@@ -13,6 +13,7 @@ use bevy::prelude::*;
 use bevy_prng::WyRand;
 use bevy_rand::{global::GlobalRng, traits::ForkableSeed as _};
 
+/// Applies to any rng that is forked from [`GlobalRng`]
 pub(crate) trait ForkedRng
 where
     Self: Component + Default,

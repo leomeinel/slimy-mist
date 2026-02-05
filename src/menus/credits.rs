@@ -11,6 +11,8 @@
 
 //! The credits menu.
 
+// FIXME: Add auto scrolling, also prevent overflow on small displays, make adaptive.
+
 use bevy::{ecs::spawn::SpawnIter, input::common_conditions::input_just_pressed, prelude::*};
 use bevy_asset_loader::prelude::*;
 
@@ -53,11 +55,16 @@ fn spawn_credits_menu(mut commands: Commands) {
     ));
 }
 
+// FIXME: Get data from ron instead of having it in code.
 /// Grid for created by section
 fn created_by() -> impl Bundle {
-    grid(vec![["Leopold Meinel", "Wrote code on top of bevy_new_2d"]])
+    grid(vec![
+        ["Leopold Meinel", "Game design and programming"],
+        ["Shave", "Sprites published under CC0-1.0"],
+    ])
 }
 
+// FIXME: Get data from ron instead of having it in code.
 /// Grid for assets section
 fn assets() -> impl Bundle {
     grid(vec![
@@ -69,7 +76,6 @@ fn assets() -> impl Bundle {
             "Code & Game Engine",
             "Apache-2.0/MIT by bevyengine and contributors",
         ],
-        ["Sprites", "CC0-1.0 by Shave"],
         ["Music", "CC0-1.0 by freepd.com and creators"],
         ["SFX", "CC0-1.0 by Jaszunio15"],
         ["SFX", "CC0-1.0 by OwlishMedia"],

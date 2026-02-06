@@ -3,7 +3,7 @@
 [package]
 name = "slimy_mist"
 # NOTE: Update with full semantic version on each release
-version = "0.13.2"
+version = "0.13.3"
 edition = "2024"
 license = "Apache-2.0"
 
@@ -30,7 +30,7 @@ bevy_asset_loader = { version = "0.25.0", features = [
 ] }
 bevy_common_assets = { version = "0.15.0", features = ["ron"] }
 bevy_ecs_tilemap = "0.18.1"
-bevy_enhanced_input = "0.23.1"
+bevy_enhanced_input = "0.23.2"
 bevy_enoki = "0.6.0"
 # FIXME: Wait for new version to be released and PRs to be merged:
 #        - https://github.com/jgayfer/bevy_light_2d/pull/60

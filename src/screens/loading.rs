@@ -228,7 +228,7 @@ fn cache_collision_data<T>(
     commands.remove_resource::<CollisionHandle<T>>();
 }
 
-/// Cache data from [`LayerData`] in [`LayerDataCache`]
+/// Cache data from [`LayerData`] in [`LayerDataRelatedCache`]
 ///
 /// ## Traits
 ///

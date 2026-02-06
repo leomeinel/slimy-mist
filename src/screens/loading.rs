@@ -42,7 +42,7 @@ use crate::{
     ui::{interaction::InteractionAssets, prelude::*},
     visual::{
         Visible,
-        layers::{HumanMaleLayerMaps, LayerData, LayerDataCache, LayerHandle, SlimeLayerMaps},
+        layers::{LayerData, LayerDataRelatedCache, LayerHandle},
         particles::{ParticleHandle, ParticleMeleeAttack, ParticleWalkingDust},
     },
 };
@@ -70,14 +70,6 @@ pub(super) fn plugin(app: &mut App) {
         .load_collection::<InteractionAssets>()
         .load_collection::<SplashAssets>()
         .load_collection::<CreditsAssets>()
-        .with_dynamic_assets_file::<StandardDynamicAssetCollection>(
-            "data/characters/human/male.layermap.ron",
-        )
-        .load_collection::<HumanMaleLayerMaps>()
-        .with_dynamic_assets_file::<StandardDynamicAssetCollection>(
-            "data/characters/npc/slime.layermap.ron",
-        )
-        .load_collection::<SlimeLayerMaps>()
         .with_dynamic_assets_file::<StandardDynamicAssetCollection>(
             "data/levels/overworld.assets.ron",
         )
@@ -111,8 +103,8 @@ pub(super) fn plugin(app: &mut App) {
                 cache_animation_data::<Slime>,
                 cache_collision_data::<Player>,
                 cache_collision_data::<Slime>,
-                cache_layer_data::<Player>,
-                cache_layer_data::<Slime>,
+                cache_layer_data_related::<Player>,
+                cache_layer_data_related::<Slime>,
                 cache_tile_data_and_related::<OverworldProcGen>,
             ),
             enter_splash_screen,
@@ -241,16 +233,18 @@ fn cache_collision_data<T>(
 /// ## Traits
 ///
 /// - `T` must implement [`Visible`].
-fn cache_layer_data<T>(
+fn cache_layer_data_related<T>(
     mut commands: Commands,
     mut data: ResMut<Assets<LayerData<T>>>,
+    assets: Res<AssetServer>,
     handle: Res<LayerHandle<T>>,
 ) where
     T: Visible,
 {
     let data = data.remove(handle.0.id()).expect(ERR_LOADING_LAYER_DATA);
-    commands.insert_resource(LayerDataCache::<T> {
-        layers: data.layers,
+    let images = data.layers.iter().map(|l| assets.load(l)).collect();
+    commands.insert_resource(LayerDataRelatedCache::<T> {
+        images,
         ..default()
     });
 

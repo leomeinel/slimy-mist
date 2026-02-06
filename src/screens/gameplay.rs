@@ -27,7 +27,7 @@ use crate::{
     utils::run_conditions::window_unfocused,
     visual::{
         Visible,
-        layers::{DisplayImage, HumanMaleLayerMaps, LayerDataCache, LayerMaps, SlimeLayerMaps},
+        layers::{DisplayImage, LayerDataRelatedCache},
     },
 };
 
@@ -37,8 +37,8 @@ pub(super) fn plugin(app: &mut App) {
         OnEnter(Screen::Gameplay),
         (
             insert_resources,
-            insert_display_image::<HumanMaleLayerMaps, Player>,
-            insert_display_image::<SlimeLayerMaps, Slime>,
+            insert_display_image::<Player>,
+            insert_display_image::<Slime>,
         )
             .in_set(PrepareGameplaySystems),
     );
@@ -130,18 +130,15 @@ fn pause(mut next_state: ResMut<NextState<Pause>>) {
 ///
 /// ## Traits
 ///
-/// - `T` must implement [`LayerMaps`].
-/// - `A` must implement [`Visible`].
-pub(crate) fn insert_display_image<T, A>(
+/// - `T` must implement [`Visible`].
+pub(crate) fn insert_display_image<T>(
     mut commands: Commands,
     mut images: ResMut<Assets<Image>>,
-    layers: Res<T>,
-    data: Res<LayerDataCache<A>>,
+    data: Res<LayerDataRelatedCache<T>>,
 ) where
-    T: LayerMaps,
-    A: Visible,
+    T: Visible,
 {
-    commands.insert_resource(layers.to_display_image(&data, &mut images));
+    commands.insert_resource(data.to_display_image(&mut images));
 }
 
 /// Insert [`Resource`]s

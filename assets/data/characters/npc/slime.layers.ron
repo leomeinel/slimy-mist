@@ -3,8 +3,8 @@ LayerData (
     layers:
         [
             // body_eyes
-            Some("images/characters/npc/slime/body/eyes.webp"),
+            "images/characters/npc/slime/body/eyes.webp",
             // body_skin
-            Some("images/characters/npc/slime/body/skin.webp"),
+            "images/characters/npc/slime/body/skin.webp",
         ],
 )

@@ -76,10 +76,12 @@ const MAX_AMBIENT: f32 = 0.6;
 fn update_ambient_brightness(
     mut light: Single<&mut Light2d, With<CanvasCamera>>,
     timer: Res<DayTimer>,
-    mut last_update: Local<f32>,
+    mut last_update: Local<Option<f32>>,
 ) {
     // Return if not on correct update interval
-    if timer.0.elapsed_secs() - *last_update < UPDATE_INTERVAL_SECS {
+    if let Some(last_update) = *last_update
+        && timer.0.elapsed_secs() - last_update < UPDATE_INTERVAL_SECS
+    {
         return;
     }
 
@@ -90,7 +92,7 @@ fn update_ambient_brightness(
     let brightness = brightness.sample_clamped(timer.0.fraction() * 2.);
     light.ambient_light.brightness = brightness;
 
-    *last_update = timer.0.elapsed_secs();
+    *last_update = Some(timer.0.elapsed_secs());
 }
 
 /// Tick [`DayTimer`]

@@ -142,8 +142,7 @@ fn apply_jump(
     } else {
         -1.0f32
     };
-    let eased_time = EasingCurve::new(0., 1., EaseFunction::QuadraticOut);
-    let eased_time = eased_time.sample_clamped(timer.0.fraction());
+    let eased_time = EaseFunction::QuadraticOut.sample_clamped(timer.0.fraction());
     let target = JUMP_HEIGHT * factor * eased_time;
 
     let child = children

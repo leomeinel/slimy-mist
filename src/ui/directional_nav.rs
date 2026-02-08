@@ -47,6 +47,7 @@ pub(super) fn plugin(app: &mut App) {
     });
 
     // Process inputs, override `Interaction` and navigate
+    app.add_systems(OnEnter(OverrideInteraction(true)), set_input_focus);
     app.add_systems(
         PreUpdate,
         (
@@ -63,8 +64,6 @@ pub(super) fn plugin(app: &mut App) {
         interact_with_focused_button.run_if(in_state(OverrideInteraction(true))),
     );
 
-    // Set focus
-    app.add_observer(on_add_button);
     // Set `OverrideInteraction` to false
     app.add_observer(on_remove_button);
 }
@@ -120,6 +119,7 @@ fn process_inputs(
     mut next_state: ResMut<NextState<OverrideInteraction>>,
     mut action_set: ResMut<DirectionalNavActionSet>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
+    state: Res<State<OverrideInteraction>>,
 ) {
     action_set.0.clear();
 
@@ -135,7 +135,7 @@ fn process_inputs(
         }
     }
 
-    if any_pressed {
+    if *state != OverrideInteraction(true) && any_pressed {
         next_state.set(OverrideInteraction(true));
     }
 }
@@ -211,17 +211,19 @@ fn interact_with_focused_button(
     }
 }
 
-// FIXME: After the condition is true, we should not run this again.
-/// Set initial focus to top-most [`AutoDirectionalNavigation`].
-fn on_add_button(
-    _: On<Add, AutoDirectionalNavigation>,
+/// Set initial focus to top left-most [`AutoDirectionalNavigation`].
+fn set_input_focus(
     query: Query<(Entity, &UiGlobalTransform), With<AutoDirectionalNavigation>>,
     mut input_focus: ResMut<InputFocus>,
 ) {
     if let Some(button) = query
         .iter()
         .min_by(|(_, transform), (_, other)| {
-            transform.translation.y.total_cmp(&other.translation.y)
+            transform
+                .translation
+                .y
+                .total_cmp(&other.translation.y)
+                .then_with(|| transform.translation.x.total_cmp(&other.translation.x))
         })
         .map(|(e, _)| e)
     {
@@ -229,15 +231,13 @@ fn on_add_button(
     }
 }
 
-// FIXME: After the condition is true, we should not run this again.
 /// Set [`OverrideInteraction`] to false if no [`AutoDirectionalNavigation`] is present.
 fn on_remove_button(
     _: On<Remove, AutoDirectionalNavigation>,
-    query: Query<Entity, With<AutoDirectionalNavigation>>,
     mut next_state: ResMut<NextState<OverrideInteraction>>,
     state: Res<State<OverrideInteraction>>,
 ) {
-    if *state != OverrideInteraction(false) && query.is_empty() {
+    if *state != OverrideInteraction(false) {
         next_state.set(OverrideInteraction(false));
     }
 }

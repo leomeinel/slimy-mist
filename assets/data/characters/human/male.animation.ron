@@ -1,6 +1,6 @@
 AnimationData (
     atlas_columns: 5,
-    atlas_rows: 10,
+    atlas_rows: 7,
     idle_frames: Some([(0, 0), (1, 0), (2, 0)]),
     idle_interval_ms: Some(1200),
     walk_frames: Some([(1, 1), (0, 1), (3, 1), (0, 1)]),

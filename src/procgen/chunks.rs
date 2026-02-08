@@ -58,11 +58,6 @@ pub(crate) fn spawn_chunks<T, A, B>(
                 continue;
             }
 
-            // FIXME: Currently this just chooses from a range of random numbers.
-            //        Make this choose from _tiles in a way that makes sense with noise.
-            let rand_index = rng.random_range(0_u32..15_u32);
-
-            // Spawn chunk
             spawn_chunk::<T, A>(
                 &mut commands,
                 &mut cache,
@@ -70,7 +65,9 @@ pub(crate) fn spawn_chunks<T, A, B>(
                 &assets,
                 IVec2::new(x, y),
                 tile_data.tile_size,
-                TileTextureIndex(rand_index),
+                // FIXME: Currently this just chooses from a range of random numbers.
+                //        Make this choose from tiles in a way that makes sense with noise.
+                TileTextureIndex(rng.random_range(0..8)),
             );
         }
     }

@@ -35,19 +35,22 @@ This repository is not entirely licensed as Apache-2.0. See [Credits](#Credits) 
 - [pixels2svg](https://github.com/ValentinFrancois/pixels2svg) for creating svgs from pixel art
 - [svgo](https://github.com/svg/svgo) for minifying svgs
 - [svg2vectordrawable](https://www.npmjs.com/package/svg2vectordrawable) for creating android vector drawables from svgs
+- [PKGaspi](https://github.com/PKGaspi/AsepriteScripts)
+- [alexpennells](https://github.com/alexpennells/AsepriteScripts)
 
 # Credits
 
 ## Assets
 
-| Contribution | Author(s)                                                                                                                                                                                                                 |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Sprites      | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/legalcode) by Shave                                                                                                                                           |
-| Music        | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/legalcode) by [freepd.com and creators](https://freepd.com/)                                                                                                  |
-| SFX          | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/legalcode) by [Jaszunio15](https://freesound.org/people/Jaszunio15/packs/23837/)                                                                              |
-| SFX          | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/legalcode) by OwlishMedia from [here](https://opengameart.org/content/sound-effects-pack) and [here](https://opengameart.org/content/8-bit-sound-effect-pack) |
-| SFX          | [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/legalcode)/[CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/legalcode) by [leohpaz](https://opengameart.org/content/12-player-movement-sfx)                |
-| Fonts        | [OFL-1.1](https://opensource.org/license/OFL-1.1) by [Google Fonts](https://fonts.google.com)                                                                                                                             |
+| Contribution  | Author(s)                                                                                                                                                                                                                 |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sprites       | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/legalcode) by Shave                                                                                                                                           |
+| Color palette | [Free to use](https://www.reddit.com/r/gamedev/comments/qsasc4/lospeccom_color_palettes_licensing/) by [uncured-official](https://lospec.com/palette-list/uncured-official) contributors                                  |
+| Music         | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/legalcode) by [freepd.com and creators](https://freepd.com/)                                                                                                  |
+| SFX           | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/legalcode) by [Jaszunio15](https://freesound.org/people/Jaszunio15/packs/23837/)                                                                              |
+| SFX           | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/legalcode) by OwlishMedia from [here](https://opengameart.org/content/sound-effects-pack) and [here](https://opengameart.org/content/8-bit-sound-effect-pack) |
+| SFX           | [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/legalcode)/[CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/legalcode) by [leohpaz](https://opengameart.org/content/12-player-movement-sfx)                |
+| Fonts         | [OFL-1.1](https://opensource.org/license/OFL-1.1) by [Google Fonts](https://fonts.google.com)                                                                                                                             |
 
 ## Code/Dependencies
 

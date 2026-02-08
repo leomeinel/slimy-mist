@@ -177,17 +177,17 @@ where
 {
     pub(crate) tile_size: f32,
     #[serde(default)]
-    pub(crate) full_dirt_tiles: Option<HashSet<UVec2>>,
+    pub(crate) full_dirt: Option<HashSet<UVec2>>,
     #[serde(default)]
-    pub(crate) full_grass_tiles: Option<HashSet<UVec2>>,
+    pub(crate) full_grass: Option<HashSet<UVec2>>,
     #[serde(default)]
-    pub(crate) corner_outer_grass_to_dirt_tiles: Option<HashSet<UVec2>>,
+    pub(crate) corner_outer_grass_to_dirt: Option<HashSet<UVec2>>,
     #[serde(default)]
-    pub(crate) corner_outer_dirt_to_grass_tiles: Option<HashSet<UVec2>>,
+    pub(crate) corner_outer_dirt_to_grass: Option<HashSet<UVec2>>,
     #[serde(default)]
-    pub(crate) side_dirt_and_grass_tiles: Option<HashSet<UVec2>>,
+    pub(crate) side_dirt_and_grass: Option<HashSet<UVec2>>,
     #[serde(default)]
-    pub(crate) diag_stripe_grass_in_dirt_tiles: Option<HashSet<UVec2>>,
+    pub(crate) diag_stripe_grass_in_dirt: Option<HashSet<UVec2>>,
     #[serde(skip)]
     pub(crate) _phantom: PhantomData<T>,
 }
@@ -215,12 +215,12 @@ where
     T: ProcGenerated,
 {
     pub(crate) tile_size: f32,
-    pub(crate) _full_dirt_tiles: Option<HashSet<UVec2>>,
-    pub(crate) _full_grass_tiles: Option<HashSet<UVec2>>,
-    pub(crate) _corner_outer_grass_to_dirt_tiles: Option<HashSet<UVec2>>,
-    pub(crate) _corner_outer_dirt_to_grass_tiles: Option<HashSet<UVec2>>,
-    pub(crate) _side_dirt_and_grass_tiles: Option<HashSet<UVec2>>,
-    pub(crate) _diag_stripe_grass_in_dirt_tiles: Option<HashSet<UVec2>>,
+    pub(crate) _full_dirt: Option<HashSet<UVec2>>,
+    pub(crate) _full_grass: Option<HashSet<UVec2>>,
+    pub(crate) _corner_outer_grass_to_dirt: Option<HashSet<UVec2>>,
+    pub(crate) _corner_outer_dirt_to_grass: Option<HashSet<UVec2>>,
+    pub(crate) _side_dirt_and_grass: Option<HashSet<UVec2>>,
+    pub(crate) _diag_stripe_grass_in_dirt: Option<HashSet<UVec2>>,
     pub(crate) _phantom: PhantomData<T>,
 }
 

@@ -1,10 +1,7 @@
-// NOTE: This contains the default layers for a single character.
 LayerData (
     layers:
         [
-            // body_eyes
-            "images/characters/npc/slime/body/eyes.webp",
-            // body_skin
-            "images/characters/npc/slime/body/skin.webp",
+            "images/characters/npc/slime/top/skin/eyes/default.webp",
+            "images/characters/npc/slime/top/skin/body/default.webp",
         ],
 )

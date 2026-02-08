@@ -75,7 +75,7 @@ pub(crate) fn spawn_navmesh<T, A>(
         ))
         .id();
 
-    commands.entity(level.entity()).add_child(entity);
+    commands.entity(*level).add_child(entity);
 }
 
 /// Move [`ManagedNavMesh`] with generated chunks

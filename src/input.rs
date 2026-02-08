@@ -147,7 +147,7 @@ fn mock_walk_from_virtual_joystick(
         if input == &Vec2::ZERO {
             continue;
         }
-        commands.entity(walk.entity()).insert(ActionMock::once(
+        commands.entity(*walk).insert(ActionMock::once(
             ActionState::Fired,
             ActionValue::from(*input * PLAYER_WALK_SPEED),
         ));
@@ -168,7 +168,7 @@ fn mock_jump_from_touch(
         // FIXME: We should check if the input is outside of the rect of virtual joystick.
         // NOTE: We are inverting y to align with user intent because `distance` is reversed on the y axis.
         if -distance.y > SWIPE_THRESHOLD && distance.y.abs() > distance.x.abs() {
-            commands.entity(jump.entity()).insert(ActionMock::once(
+            commands.entity(*jump).insert(ActionMock::once(
                 ActionState::Fired,
                 ActionValue::Bool(true),
             ));
@@ -185,7 +185,7 @@ fn mock_melee_from_touch(
     // FIXME: We should check for taps within `TAP_MAX_DURATION_SECS` instead.
     // FIXME: We should check if the input is outside of the rect of virtual joystick.
     if touches.any_just_released() {
-        commands.entity(melee.entity()).insert(ActionMock::once(
+        commands.entity(*melee).insert(ActionMock::once(
             ActionState::Fired,
             ActionValue::Bool(true),
         ));
@@ -208,7 +208,7 @@ fn mock_aim_from_touch(
     for touch in touches.iter_just_pressed() {
         if let Ok(pos) = camera.viewport_to_world_2d(camera_transform, touch.position()) {
             let direction = pos - player_transform.translation.xy();
-            commands.entity(aim.entity()).insert(ActionMock::new(
+            commands.entity(*aim).insert(ActionMock::new(
                 ActionState::Fired,
                 ActionValue::from(direction.normalize_or_zero()),
                 MockSpan::Manual,
@@ -239,7 +239,7 @@ fn mock_aim_from_click(
         && let Ok(pos) = camera.viewport_to_world_2d(camera_transform, pos)
     {
         let direction = pos - player_transform.translation.xy();
-        commands.entity(aim.entity()).insert(ActionMock::new(
+        commands.entity(*aim).insert(ActionMock::new(
             ActionState::Fired,
             ActionValue::from(direction.normalize_or_zero()),
             MockSpan::Manual,
@@ -327,7 +327,7 @@ fn set_jump(
 fn trigger_melee_attack(
     _: On<Fire<Melee>>,
     aim: Single<&Action<Aim>>,
-    parent: Single<(Entity, Option<&AttackTimer>), With<Player>>,
+    player: Single<(Entity, Option<&AttackTimer>), With<Player>>,
     mut commands: Commands,
     pause: Res<State<Pause>>,
 ) {
@@ -336,7 +336,7 @@ fn trigger_melee_attack(
         return;
     }
     // Return if `timer` has not finished
-    let (entity, timer) = parent.into_inner();
+    let (entity, timer) = *player;
     if let Some(timer) = timer
         && !timer.0.is_finished()
     {

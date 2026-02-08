@@ -61,7 +61,7 @@ pub(crate) fn spawn_characters<T, A, B>(
             &mut procgen_rng,
             &mut commands,
             &mut character_cache,
-            level.entity(),
+            *level,
             &animations,
             &collision_set,
             chunk_pos,

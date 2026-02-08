@@ -150,7 +150,7 @@ fn on_melee_attack<T>(
     };
 
     // Collect all entities within attack range
-    let shape_half_size = Vec2::new(melee.range.0.into_inner(), melee.range.1.into_inner()) / 2.;
+    let shape_half_size = Vec2::new(*melee.range.0, *melee.range.1) / 2.;
     let offset = extent + shape_half_size.x;
     let shape_pos = pos + direction * offset;
     let shape_rot = direction.to_angle();
@@ -168,12 +168,11 @@ fn on_melee_attack<T>(
     });
 
     // Apply attack
-    let damage = stats.damage_factor * melee.damage.into_inner();
+    let damage = stats.damage_factor * *melee.damage;
     commands.trigger(Damage { targets, damage });
-    let cooldown_secs = melee.cooldown_secs.into_inner();
     commands.trigger(DelayAttack {
         entity: origin,
-        cooldown_secs,
+        cooldown_secs: *melee.cooldown_secs,
     });
     commands.trigger(SpawnParticleOnce {
         pos: shape_pos.extend(OVERLAY_Z),

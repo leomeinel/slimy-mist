@@ -61,7 +61,7 @@ pub(crate) fn spawn_chunks<T, A, B>(
             spawn_chunk::<T, A>(
                 &mut commands,
                 &mut cache,
-                level.entity(),
+                *level,
                 &assets,
                 IVec2::new(x, y),
                 tile_data.tile_size,

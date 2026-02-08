@@ -7,16 +7,16 @@
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  */
 
+pub(crate) mod lighting;
 pub(crate) mod ysort;
 
-use bevy::{color::palettes::tailwind, prelude::*, window::WindowResized};
-use bevy_light_2d::prelude::*;
+use bevy::{prelude::*, window::WindowResized};
 
 use crate::{AppSystems, PausableSystems, characters::player::Player, screens::Screen};
 
 pub(super) fn plugin(app: &mut App) {
     // Add child plugins
-    app.add_plugins(ysort::plugin);
+    app.add_plugins((lighting::plugin, ysort::plugin));
 
     // Spawn the main camera.
     app.add_systems(Startup, spawn_camera);
@@ -65,9 +65,6 @@ pub(crate) fn center_camera_on_player(
     camera.translation = target_pos;
 }
 
-/// Color for the ambient light: rgb(254, 243, 199)
-const AMBIENT_LIGHT_COLOR: Srgba = tailwind::AMBER_100;
-
 /// Spawn [`Camera2d`]
 fn spawn_camera(mut commands: Commands) {
     commands.spawn((
@@ -75,12 +72,6 @@ fn spawn_camera(mut commands: Commands) {
         Camera2d,
         Msaa::Off,
         CanvasCamera,
-        Light2d {
-            ambient_light: AmbientLight2d {
-                color: AMBIENT_LIGHT_COLOR.into(),
-                ..default()
-            },
-        },
     ));
 }
 

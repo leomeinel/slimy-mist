@@ -24,6 +24,9 @@ pub(crate) const ERR_LOADING_TILE_DATA: &str =
 pub(crate) const ERR_INVALID_ATTACKER: &str = "The attacker is invalid. This is a bug.";
 /// Error message if an error has been encountered while processing [`bevy::prelude::Children`].
 pub(crate) const ERR_INVALID_CHILDREN: &str = "The processed children are invalid. This is a bug.";
+/// Error message if the domain for [`bevy::prelude::EasingCurve`] is invalid.
+pub(crate) const ERR_INVALID_DOMAIN_EASING: &str =
+    "The specified domain for an easing curve is invalid. This is a bug.";
 /// Error message if a layer map is invalid.
 pub(crate) const ERR_INVALID_IMAGE: &str = "The processed image is invalid. This might be due to an invalid image with no data having been referenced in any '*.ron'";
 /// Error message if a layer map is invalid.

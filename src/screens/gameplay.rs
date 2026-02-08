@@ -18,7 +18,7 @@ use crate::mobile::spawn_joystick;
 use crate::{
     Pause,
     animations::setup_animations,
-    camera::center_camera_on_player,
+    camera::{center_camera_on_player, lighting::DayTimer},
     characters::{nav::NavTargetPosMap, npc::Slime, player::Player},
     levels::overworld::{Overworld, OverworldProcGen, spawn_overworld},
     menus::Menu,
@@ -143,6 +143,7 @@ pub(crate) fn insert_display_image<T>(
 
 /// Insert [`Resource`]s
 fn insert_resources(mut commands: Commands) {
+    commands.init_resource::<DayTimer>();
     commands.init_resource::<NavTargetPosMap>();
     commands.init_resource::<ProcGenCache<OverworldProcGen>>();
     commands.init_resource::<ProcGenCache<Slime>>();
@@ -150,9 +151,10 @@ fn insert_resources(mut commands: Commands) {
 
 /// Remove [`Resource`]s
 fn remove_resources(mut commands: Commands) {
+    commands.remove_resource::<DayTimer>();
+    commands.remove_resource::<DisplayImage<Player>>();
+    commands.remove_resource::<DisplayImage<Slime>>();
     commands.remove_resource::<NavTargetPosMap>();
     commands.remove_resource::<ProcGenCache<OverworldProcGen>>();
     commands.remove_resource::<ProcGenCache<Slime>>();
-    commands.remove_resource::<DisplayImage<Player>>();
-    commands.remove_resource::<DisplayImage<Slime>>();
 }

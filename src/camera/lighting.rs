@@ -79,7 +79,7 @@ fn update_ambient_brightness(
     mut last_update: Local<f32>,
 ) {
     // Return if not on correct update interval
-    if timer.0.elapsed_secs() - *last_update >= UPDATE_INTERVAL_SECS {
+    if timer.0.elapsed_secs() - *last_update < UPDATE_INTERVAL_SECS {
         return;
     }
 

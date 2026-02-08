@@ -18,6 +18,10 @@ pub(super) fn plugin(app: &mut App) {
     app.init_state::<OverrideInteraction>();
 
     // Visualize ui interactions with color palette
+    app.add_systems(
+        OnEnter(OverrideInteraction(false)),
+        refresh_interaction_palette,
+    );
     app.add_systems(Update, apply_interaction_palette);
 
     // Play sound effects
@@ -59,7 +63,7 @@ pub(crate) struct InteractionAssets {
     click: Handle<AudioSource>,
 }
 
-/// Apply color from palette mapped to [`Interaction`] or [`InteractionOverride`].
+/// Apply [`BackgroundColor`] from palette mapped to [`Interaction`] or [`InteractionOverride`].
 ///
 /// This also sets [`OverrideInteraction`] to false if any [`Interaction`] that is not [`Interaction::None`] occurred.
 pub(crate) fn apply_interaction_palette(
@@ -80,16 +84,31 @@ pub(crate) fn apply_interaction_palette(
                 InteractionOverride::Hovered => palette.hovered,
                 InteractionOverride::None => palette.none,
             },
-            Interaction::Hovered => {
+            _ => {
                 next_state.set(OverrideInteraction(false));
-                palette.hovered
-            }
-            Interaction::Pressed => {
-                next_state.set(OverrideInteraction(false));
-                palette.pressed
+                match interaction {
+                    Interaction::Hovered => palette.hovered,
+                    Interaction::Pressed => palette.pressed,
+                    _ => unreachable!(),
+                }
             }
         }
         .into();
+    }
+}
+
+/// Reset [`BackgroundColor`] from palette mapped to [`Interaction`].
+///
+/// This sets the appropriate [`BackgroundColor`] for all [`Interaction::None`].
+///
+/// This allows [`Interaction`] to override [`OverrideInteraction`] in certain scenarios.
+pub(crate) fn refresh_interaction_palette(
+    query: Query<(&Interaction, &InteractionPalette, &mut BackgroundColor)>,
+) {
+    for (interaction, palette, mut background) in query {
+        if *interaction == Interaction::None {
+            *background = palette.none.into();
+        }
     }
 }
 

@@ -89,14 +89,14 @@ pub(crate) fn on_procgen_chunks<T, A, B>(
     let container = commands.spawn(T::default()).id();
     cache.chunk_positions.insert(container, event.chunk_pos);
     let mut storage = TileStorage::empty(CHUNK_SIZE.into());
-    // FIXME: Currently this just chooses from a range of random numbers.
-    //        Make this choose from tiles in a way that makes sense with noise.
-    let texture_index = TileTextureIndex(rng.random_range(0..8));
 
     // Spawn a `TileBundle` mapped to the container entity for each x/y in `CHUNK_SIZE`,
     // add as child to container entity and add to storage.
     for x in 0..CHUNK_SIZE.x {
         for y in 0..CHUNK_SIZE.y {
+            // FIXME: Currently this just chooses from a range of random numbers.
+            //        Make this choose from tiles in a way that makes sense with noise.
+            let texture_index = TileTextureIndex(rng.random_range(0..8));
             let tile_pos = TilePos { x, y };
             let entity = commands
                 .spawn((TileBundle {

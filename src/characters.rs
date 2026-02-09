@@ -19,12 +19,13 @@ use std::marker::PhantomData;
 
 use bevy::{prelude::*, reflect::Reflectable};
 use bevy_asset_loader::asset_collection::AssetCollection;
+use bevy_light_2d::prelude::*;
 use bevy_rapier2d::prelude::*;
 use bevy_spritesheet_animation::prelude::SpritesheetAnimation;
 
 use crate::{
-    AppSystems, animations::Animations, logging::warn::WARN_INCOMPLETE_COLLISION_DATA_FALLBACK,
-    screens::Screen,
+    AppSystems, animations::Animations, camera::BACKGROUND_Z_DELTA,
+    logging::warn::WARN_INCOMPLETE_COLLISION_DATA, screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -95,19 +96,45 @@ where
         )
     }
 
+    fn shadow_bundle(
+        &self,
+        collision_set: &(Option<String>, Option<f32>, Option<f32>),
+    ) -> impl Bundle {
+        let (_, Some(width), Some(height)) = collision_set else {
+            // Return default collider if data is not complete
+            warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA);
+            return (LightOccluder2d::default(), Transform::default());
+        };
+
+        (
+            LightOccluder2d {
+                // FIXME: Use ellipse.
+                //        Wait for: https://github.com/jgayfer/bevy_light_2d/issues/41
+                shape: LightOccluder2dShape::Rectangle {
+                    // NOTE: We are dividing height by 4 because of 2:1 pixel ratio
+                    half_size: Vec2::new(width / 2., height / 4.),
+                },
+            },
+            Transform::from_xyz(0., -height / 2., BACKGROUND_Z_DELTA),
+        )
+    }
+
     fn spawn(
+        &self,
         commands: &mut Commands,
         collision_set: &(Option<String>, Option<f32>, Option<f32>),
         pos: Vec2,
         animations: &Res<Animations<Self>>,
         animation_delay: f32,
     ) -> Entity {
-        let character = Self::default();
         let container = commands
-            .spawn(character.container_bundle(animation_delay, collision_set, pos))
+            .spawn(self.container_bundle(animation_delay, collision_set, pos))
             .id();
-        let animation = commands.spawn(character.animation_bundle(animations)).id();
-        commands.entity(container).add_child(animation);
+        let animation = commands.spawn(self.animation_bundle(animations)).id();
+        let shadow = commands.spawn(self.shadow_bundle(collision_set)).id();
+        commands
+            .entity(container)
+            .add_children(&[animation, shadow]);
 
         container
     }
@@ -193,17 +220,13 @@ impl Default for JumpTimer {
     }
 }
 
-/// Radius of the fallback ball collider
-const FALLBACK_BALL_COLLIDER_RADIUS: f32 = 8.;
-
 /// [`Collider`] for different shapes
 pub(crate) fn character_collider(
     collision_set: &(Option<String>, Option<f32>, Option<f32>),
 ) -> Collider {
     let (Some(shape), Some(width), Some(height)) = collision_set else {
-        // Return default collider if data is not complete
-        warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA_FALLBACK);
-        return Collider::ball(FALLBACK_BALL_COLLIDER_RADIUS);
+        warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA);
+        return Collider::ball(0.);
     };
 
     // Set correct collider for each shape

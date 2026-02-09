@@ -94,7 +94,7 @@ pub(crate) fn spawn_overworld(
         collision_data.width,
         collision_data.height,
     );
-    let player = Player::spawn(
+    let player = Player.spawn(
         &mut commands,
         &collision_set,
         PLAYER_POS,

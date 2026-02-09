@@ -7,12 +7,16 @@
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  */
 
-use bevy::prelude::*;
+use bevy::{color::palettes::tailwind, prelude::*};
 use bevy_light_2d::prelude::*;
 
 use crate::{
-    AppSystems, PausableSystems, camera::CanvasCamera, logging::error::ERR_INVALID_DOMAIN_EASING,
+    AppSystems, PausableSystems,
+    camera::{CanvasCamera, FOREGROUND_Z, ysort::YSort},
+    logging::error::ERR_INVALID_DOMAIN_EASING,
+    procgen::ProcGenerated,
     screens::Screen,
+    visual::Visible,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -37,6 +41,52 @@ pub(super) fn plugin(app: &mut App) {
             .in_set(PausableSystems),
     );
 }
+
+/// Wrapper for lights.
+pub(crate) trait LightWrapper
+where
+    Self: Component + Default + Clone,
+{
+    type Inner: Component;
+    fn into_inner(self) -> Self::Inner;
+    fn spawn(&self, commands: &mut Commands, pos: Vec2) -> Entity {
+        commands
+            .spawn((
+                // FIXME: Add sprite with animated flame that simulates a light.
+                // FIXME: Having self.clone() here twice seems unnecessary.
+                //        The problem is that we need the marker `T` and the wrapped light.
+                self.clone(),
+                self.clone().into_inner(),
+                Transform::from_translation(pos.extend(FOREGROUND_Z)),
+                YSort(FOREGROUND_Z),
+                Visibility::Inherited,
+            )) //
+            .id()
+    }
+}
+
+/// Light that is attached to a street lamp.
+#[derive(Component, Reflect, Clone)]
+pub(crate) struct StreetLight(PointLight2d);
+impl Default for StreetLight {
+    fn default() -> Self {
+        Self(PointLight2d {
+            color: tailwind::AMBER_500.into(),
+            intensity: 2.,
+            radius: 128.,
+            falloff: 4.,
+            ..default()
+        })
+    }
+}
+impl LightWrapper for StreetLight {
+    type Inner = PointLight2d;
+    fn into_inner(self) -> Self::Inner {
+        self.0
+    }
+}
+impl ProcGenerated for StreetLight {}
+impl Visible for StreetLight {}
 
 /// Seconds in a day.
 const DAY_SECS: f32 = 600.;
@@ -64,7 +114,7 @@ fn reset_ambient(mut light: Single<&mut Light2d, With<CanvasCamera>>) {
 }
 
 /// Interval in seconds to run logic in [`update_ambient_brightness`].
-const UPDATE_INTERVAL_SECS: f32 = 5.;
+const UPDATE_AMBIENT_INTERVAL_SECS: f32 = 5.;
 /// Minimum [`AmbientLight2d::brightness`].
 const MIN_AMBIENT: f32 = 0.1;
 /// Maximum [`AmbientLight2d::brightness`].
@@ -85,7 +135,7 @@ fn update_ambient_brightness(
             *last_update = None;
             return;
         }
-        if elapsed_secs - inner < UPDATE_INTERVAL_SECS {
+        if elapsed_secs - inner < UPDATE_AMBIENT_INTERVAL_SECS {
             return;
         }
     }

@@ -7,7 +7,6 @@
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  */
 
-pub(crate) mod lighting;
 pub(crate) mod ysort;
 
 use bevy::{prelude::*, window::WindowResized};
@@ -16,7 +15,7 @@ use crate::{AppSystems, PausableSystems, characters::player::Player, screens::Sc
 
 pub(super) fn plugin(app: &mut App) {
     // Add child plugins
-    app.add_plugins((lighting::plugin, ysort::plugin));
+    app.add_plugins(ysort::plugin);
 
     // Spawn the main camera.
     app.add_systems(Startup, spawn_camera);

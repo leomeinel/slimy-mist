@@ -42,7 +42,7 @@ use bevy::window::ScreenEdge;
 #[cfg(any(target_os = "android", target_os = "ios"))]
 use bevy::window::WindowMode;
 use bevy_ecs_tilemap::TilemapPlugin;
-use bevy_light_2d::prelude::*;
+use bevy_lit::prelude::*;
 use bevy_prng::WyRand;
 use bevy_rand::plugin::EntropyPlugin;
 use bevy_rapier2d::plugin::RapierPhysicsPlugin;
@@ -98,7 +98,7 @@ impl Plugin for AppPlugin {
         // Add library plugins
         app.add_plugins((
             EntropyPlugin::<WyRand>::default(),
-            Light2dPlugin,
+            Lighting2dPlugin,
             RapierPhysicsPlugin::<()>::default(),
             TilemapPlugin,
         ));

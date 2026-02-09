@@ -1033,12 +1033,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy_light_2d"
-version = "0.9.0"
-source = "git+https://github.com/leomeinel/bevy_light_2d.git?branch=update-bevy-0-18#80d7d4f3d2d00c32f09c551fd022af133b18e5f3"
+name = "bevy_lit"
+version = "0.9.1"
+source = "git+https://github.com/Totobird-Creations/bevy_lit?rev=ac7b5dad4729b3ec8e5a26bd9bd8eb755c87120b#ac7b5dad4729b3ec8e5a26bd9bd8eb755c87120b"
 dependencies = [
  "bevy",
- "smallvec",
+ "bytemuck",
+ "fixedbitset",
 ]
 
 [[package]]
@@ -4959,7 +4960,7 @@ dependencies = [
  "bevy_ecs_tilemap",
  "bevy_enhanced_input",
  "bevy_enoki",
- "bevy_light_2d",
+ "bevy_lit",
  "bevy_prng",
  "bevy_rand",
  "bevy_rapier2d",

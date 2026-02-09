@@ -5,8 +5,6 @@
  * Copyright (c) 2026 Leopold Johannes Meinel & contributors
  * SPDX ID: Apache-2.0
  * URL: https://www.apache.org/licenses/LICENSE-2.0
- * -----
- * Heavily inspired by: https://github.com/jgayfer/bevy_light_2d/blob/main/examples/dungeon.rs
  */
 
 use bevy::prelude::*;

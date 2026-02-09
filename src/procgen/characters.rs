@@ -7,13 +7,14 @@
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  */
 
+use std::marker::PhantomData;
+
 use bevy::prelude::*;
 use bevy_prng::WyRand;
-use rand::{Rng as _, seq::IndexedRandom as _};
+use rand::seq::IndexedRandom as _;
 
 use crate::{
-    animations::{ANIMATION_DELAY_RANGE_SECS, AnimationRng, Animations},
-    characters::{Character, CollisionDataCache},
+    characters::{Character, SpawnCharacter},
     levels::Level,
     procgen::{CHUNK_SIZE, ProcGen, ProcGenCache, ProcGenRng, ProcGenerated, TileDataCache},
 };
@@ -30,13 +31,9 @@ const CHARACTERS_PER_CHUNK: usize = 1;
 /// - `B` must implement [`Level`].
 pub(crate) fn on_procgen_characters<T, A, B>(
     event: On<ProcGen<T>>,
-    level: Single<Entity, With<B>>,
-    mut animation_rng: Single<&mut WyRand, (With<AnimationRng>, Without<ProcGenRng>)>,
-    mut procgen_rng: Single<&mut WyRand, (With<ProcGenRng>, Without<AnimationRng>)>,
+    mut procgen_rng: Single<&mut WyRand, With<ProcGenRng>>,
     mut commands: Commands,
     mut object_cache: ResMut<ProcGenCache<T>>,
-    animations: Res<Animations<T>>,
-    collision_data: Res<CollisionDataCache<T>>,
     tile_data: Res<TileDataCache<A>>,
 ) where
     T: Character + ProcGenerated,
@@ -56,23 +53,13 @@ pub(crate) fn on_procgen_characters<T, A, B>(
 
     for origin in target_origins {
         // Spawn entity in chosen tile and store in `object_cache`
-        let animation_delay = animation_rng.random_range(ANIMATION_DELAY_RANGE_SECS);
-        let target_pos = world_pos + origin * tile_data.tile_size;
-        let collision_set = (
-            collision_data.shape.clone(),
-            collision_data.width,
-            collision_data.height,
-        );
-        let entity = T::spawn(
-            &mut commands,
-            &collision_set,
-            target_pos,
-            &animations,
-            animation_delay,
-        );
+        let entity = commands.spawn(T::default()).id();
+        let pos = world_pos + origin * tile_data.tile_size;
+        commands.trigger(SpawnCharacter::<T, B> {
+            entity,
+            pos,
+            _phantom: PhantomData,
+        });
         object_cache.chunk_positions.insert(entity, event.chunk_pos);
-
-        // Add entity to level so that level handles despawning
-        commands.entity(*level).add_child(entity);
     }
 }

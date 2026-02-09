@@ -14,7 +14,7 @@
 //! A loading screen during which game assets are loaded if necessary.
 //! This reduces stuttering, especially for audio on Wasm.
 
-use bevy::prelude::*;
+use bevy::{color::palettes::tailwind, prelude::*};
 use bevy_asset_loader::prelude::*;
 use bevy_common_assets::ron::RonAssetPlugin;
 use iyes_progress::ProgressPlugin;
@@ -24,14 +24,18 @@ use crate::mobile::JoystickAssets;
 use crate::{
     animations::{AnimationData, AnimationDataCache, AnimationHandle},
     characters::{
-        Character, CollisionData, CollisionDataCache, CollisionHandle,
+        Character, CollisionData, CollisionDataCache, CollisionDataRelatedCache, CollisionHandle,
+        StaticShadow,
         npc::{Slime, SlimeAssets},
         player::{Player, PlayerAssets},
     },
     levels::overworld::{OverworldAssets, OverworldProcGen},
-    logging::error::{
-        ERR_LOADING_ANIMATION_DATA, ERR_LOADING_COLLISION_DATA, ERR_LOADING_LAYER_DATA,
-        ERR_LOADING_TILE_DATA,
+    logging::{
+        error::{
+            ERR_LOADING_ANIMATION_DATA, ERR_LOADING_COLLISION_DATA, ERR_LOADING_LAYER_DATA,
+            ERR_LOADING_TILE_DATA,
+        },
+        warn::WARN_INCOMPLETE_COLLISION_DATA,
     },
     menus::credits::CreditsAssets,
     procgen::{
@@ -101,8 +105,8 @@ pub(super) fn plugin(app: &mut App) {
             (
                 cache_animation_data::<Player>,
                 cache_animation_data::<Slime>,
-                cache_collision_data::<Player>,
-                cache_collision_data::<Slime>,
+                cache_collision_data_and_related::<Player>,
+                cache_collision_data_and_related::<Slime>,
                 cache_layer_data_related::<Player>,
                 cache_layer_data_related::<Slime>,
                 cache_tile_data_and_related::<OverworldProcGen>,
@@ -202,14 +206,19 @@ fn cache_animation_data<T>(
     commands.remove_resource::<AnimationHandle<T>>();
 }
 
+/// Color for cast shadows
+const SHADOW_COLOR: Srgba = tailwind::GRAY_700;
+
 /// Cache data from [`CollisionData`] in [`CollisionDataCache`]
 ///
 /// ## Traits
 ///
 /// - `T` must implement [`Character`].
-fn cache_collision_data<T>(
+fn cache_collision_data_and_related<T>(
     mut commands: Commands,
     mut data: ResMut<Assets<CollisionData<T>>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut meshes: ResMut<Assets<Mesh>>,
     handle: Res<CollisionHandle<T>>,
 ) where
     T: Character,
@@ -217,10 +226,27 @@ fn cache_collision_data<T>(
     let data = data
         .remove(handle.0.id())
         .expect(ERR_LOADING_COLLISION_DATA);
+    let (shape, width, height) = (
+        data.shape.clone().unwrap_or("ball".to_string()),
+        data.width.unwrap_or(0.),
+        data.height.unwrap_or(0.),
+    );
+    if data.shape.is_none() || data.width.is_none() || data.height.is_none() {
+        warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA);
+    };
     commands.insert_resource(CollisionDataCache::<T> {
-        shape: data.shape,
-        width: data.width,
-        height: data.height,
+        shape,
+        width,
+        height,
+        ..default()
+    });
+    commands.insert_resource(CollisionDataRelatedCache::<T> {
+        // NOTE: We are dividing height by 4 because of 2:1 pixel ratio
+        shadow: StaticShadow {
+            // NOTE: We are dividing height by 4 because of 2:1 pixel ratio
+            mesh: meshes.add(Ellipse::new(width / 2., height / 4.)),
+            material: materials.add(Color::from(SHADOW_COLOR.with_alpha(0.25))),
+        },
         ..default()
     });
 

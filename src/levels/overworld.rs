@@ -9,16 +9,17 @@
 
 //! Overworld-specific behavior.
 
+use std::marker::PhantomData;
+
 use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
 use bevy_prng::WyRand;
-use rand::{Rng as _, seq::IndexedRandom};
+use rand::seq::IndexedRandom;
 
 use crate::{
-    animations::{ANIMATION_DELAY_RANGE_SECS, AnimationRng, Animations},
     audio::music,
     camera::LEVEL_Z,
-    characters::{Character as _, CollisionDataCache, player::Player},
+    characters::{SpawnCharacter, player::Player},
     impl_level_assets,
     levels::{Level, LevelAssets, LevelRng},
     logging::warn::WARN_INCOMPLETE_ASSET_DATA,
@@ -55,11 +56,8 @@ const PLAYER_POS: Vec2 = Vec2::new(0., 0.);
 
 /// Spawn overworld with player, enemies and objects
 pub(crate) fn spawn_overworld(
-    mut animation_rng: Single<&mut WyRand, (With<AnimationRng>, Without<LevelRng>)>,
-    mut level_rng: Single<&mut WyRand, (With<LevelRng>, Without<AnimationRng>)>,
+    mut level_rng: Single<&mut WyRand, With<LevelRng>>,
     mut commands: Commands,
-    animations: Res<Animations<Player>>,
-    collision_data: Res<CollisionDataCache<Player>>,
     level_assets: Res<OverworldAssets>,
 ) {
     let level = commands
@@ -89,17 +87,10 @@ pub(crate) fn spawn_overworld(
     }
 
     // Spawn player
-    let collision_set = (
-        collision_data.shape.clone(),
-        collision_data.width,
-        collision_data.height,
-    );
-    let player = Player::spawn(
-        &mut commands,
-        &collision_set,
-        PLAYER_POS,
-        &animations,
-        animation_rng.random_range(ANIMATION_DELAY_RANGE_SECS),
-    );
-    commands.entity(level).add_child(player);
+    let entity = commands.spawn(Player).id();
+    commands.trigger(SpawnCharacter::<Player, Overworld> {
+        entity,
+        pos: PLAYER_POS,
+        _phantom: PhantomData,
+    });
 }

@@ -24,7 +24,6 @@ use crate::{
     characters::{
         Character, CharacterAssets, Movement,
         attack::{AttackStats, punch},
-        character_collider,
         health::Health,
         nav::Navigator,
     },
@@ -63,15 +62,10 @@ const SLIME_WALK_SPEED: f32 = 80.;
 #[derive(Component, Default, Reflect)]
 pub(crate) struct Slime;
 impl Character for Slime {
-    fn container_bundle(
-        &self,
-        animation_delay: f32,
-        collision_set: &(Option<String>, Option<f32>, Option<f32>),
-        pos: Vec2,
-    ) -> impl Bundle {
+    fn container_bundle(&self, animation_delay: f32, pos: Vec2) -> impl Bundle {
         (
             // Identity
-            (Name::new("Slime"), Npc, Self),
+            (Name::new("Slime"), Npc),
             // Positioning/Visibility
             (
                 Transform::from_translation(pos.extend(FOREGROUND_Z)),
@@ -79,11 +73,7 @@ impl Character for Slime {
                 Visibility::Inherited,
             ),
             // Physics
-            (
-                character_collider(collision_set),
-                RigidBody::KinematicPositionBased,
-                GravityScale(0.),
-            ),
+            (RigidBody::KinematicPositionBased, GravityScale(0.)),
             // Movement
             (
                 KinematicCharacterController::default(),

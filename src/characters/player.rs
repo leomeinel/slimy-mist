@@ -26,7 +26,6 @@ use crate::{
     characters::{
         Character, CharacterAssets, JumpTimer, Movement,
         attack::{AttackStats, punch},
-        character_collider,
         health::Health,
         nav::NavTarget,
     },
@@ -68,15 +67,10 @@ impl_character_assets!(PlayerAssets);
 #[reflect(Component)]
 pub(crate) struct Player;
 impl Character for Player {
-    fn container_bundle(
-        &self,
-        animation_delay: f32,
-        collision_set: &(Option<String>, Option<f32>, Option<f32>),
-        pos: Vec2,
-    ) -> impl Bundle {
+    fn container_bundle(&self, animation_delay: f32, pos: Vec2) -> impl Bundle {
         (
             // Identity
-            (Name::new("Player"), Self),
+            (Name::new("Player")),
             // Positioning/Visibility
             (
                 Transform::from_translation(pos.extend(FOREGROUND_Z)),
@@ -84,11 +78,7 @@ impl Character for Player {
                 Visibility::Inherited,
             ),
             // Physics
-            (
-                character_collider(collision_set),
-                RigidBody::KinematicVelocityBased,
-                GravityScale(0.),
-            ),
+            (RigidBody::KinematicVelocityBased, GravityScale(0.)),
             // Movement
             (
                 player_input(),

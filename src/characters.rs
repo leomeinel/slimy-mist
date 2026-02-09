@@ -19,11 +19,17 @@ use std::marker::PhantomData;
 
 use bevy::{prelude::*, reflect::Reflectable};
 use bevy_asset_loader::asset_collection::AssetCollection;
+use bevy_prng::WyRand;
 use bevy_rapier2d::prelude::*;
 use bevy_spritesheet_animation::prelude::SpritesheetAnimation;
+use rand::Rng as _;
 
 use crate::{
-    AppSystems, animations::Animations, logging::warn::WARN_INCOMPLETE_COLLISION_DATA_FALLBACK,
+    AppSystems,
+    animations::{ANIMATION_DELAY_RANGE_SECS, AnimationRng, Animations},
+    camera::BACKGROUND_Z_DELTA,
+    characters::{npc::Slime, player::Player},
+    levels::{Level, overworld::Overworld},
     screens::Screen,
 };
 
@@ -45,6 +51,10 @@ pub(super) fn plugin(app: &mut App) {
         PostUpdate,
         update_movement_facing.run_if(in_state(Screen::Gameplay)),
     );
+
+    // Spawn characters
+    app.add_observer(on_spawn_character::<Player, Overworld>);
+    app.add_observer(on_spawn_character::<Slime, Overworld>);
 }
 
 /// Jumping duration in seconds
@@ -81,12 +91,7 @@ pub(crate) trait Character
 where
     Self: Component + Default + Reflectable,
 {
-    fn container_bundle(
-        &self,
-        animation_delay: f32,
-        collision_set: &(Option<String>, Option<f32>, Option<f32>),
-        pos: Vec2,
-    ) -> impl Bundle;
+    fn container_bundle(&self, animation_delay: f32, pos: Vec2) -> impl Bundle;
 
     fn animation_bundle(&self, animations: &Res<Animations<Self>>) -> impl Bundle {
         (
@@ -95,21 +100,14 @@ where
         )
     }
 
-    fn spawn(
-        commands: &mut Commands,
-        collision_set: &(Option<String>, Option<f32>, Option<f32>),
-        pos: Vec2,
-        animations: &Res<Animations<Self>>,
-        animation_delay: f32,
-    ) -> Entity {
-        let character = Self::default();
-        let container = commands
-            .spawn(character.container_bundle(animation_delay, collision_set, pos))
-            .id();
-        let animation = commands.spawn(character.animation_bundle(animations)).id();
-        commands.entity(container).add_child(animation);
-
-        container
+    fn shadow_bundle(&self, height: f32, shadow: &StaticShadow) -> impl Bundle {
+        (
+            Mesh2d(shadow.mesh.clone()),
+            // FIXME: We should use `LightOccluder2d` with just `Mesh2d` instead, but even with `cast_shadows`
+            //        disabled, the performance impact is unacceptable.
+            MeshMaterial2d(shadow.material.clone()),
+            Transform::from_xyz(0., -height / 2., BACKGROUND_Z_DELTA),
+        )
     }
 }
 
@@ -155,10 +153,33 @@ pub(crate) struct CollisionDataCache<T>
 where
     T: Character,
 {
-    pub(crate) shape: Option<String>,
-    pub(crate) width: Option<f32>,
-    pub(crate) height: Option<f32>,
+    pub(crate) shape: String,
+    pub(crate) width: f32,
+    pub(crate) height: f32,
     pub(crate) _phantom: PhantomData<T>,
+}
+
+/// Cache for data that is related to [`CollisionData`]
+///
+/// This is to allow easier access.
+///
+/// ## Traits
+///
+/// - `T` must implement [`Character`].
+#[derive(Resource, Default)]
+pub(crate) struct CollisionDataRelatedCache<T>
+where
+    T: Character,
+{
+    pub(crate) shadow: StaticShadow,
+    pub(crate) _phantom: PhantomData<T>,
+}
+
+/// Artificial shadow that is not affected by lighting.
+#[derive(Default)]
+pub(crate) struct StaticShadow {
+    pub(crate) mesh: Handle<Mesh>,
+    pub(crate) material: Handle<ColorMaterial>,
 }
 
 /// Current data about movement
@@ -180,6 +201,23 @@ impl Default for Movement {
     }
 }
 
+/// [`EntityEvent`] for spawning a [`Character`].
+///
+/// ## Traits
+///
+/// - `T` must implement [`Character`].
+/// - `A` must implement [`Level`].
+#[derive(EntityEvent)]
+pub(crate) struct SpawnCharacter<T, A>
+where
+    T: Character,
+    A: Level,
+{
+    pub(crate) entity: Entity,
+    pub(crate) pos: Vec2,
+    pub(crate) _phantom: PhantomData<(T, A)>,
+}
+
 /// Timer that tracks jumping
 #[derive(Component, Debug, Clone, PartialEq, Reflect)]
 #[reflect(Component)]
@@ -193,19 +231,53 @@ impl Default for JumpTimer {
     }
 }
 
-/// Radius of the fallback ball collider
-const FALLBACK_BALL_COLLIDER_RADIUS: f32 = 8.;
+/// Spawn a single [`Character`].
+///
+/// ## Traits
+///
+/// - `T` must implement [`Character`].
+/// - `A` must implement [`Level`].
+fn on_spawn_character<T, A>(
+    event: On<SpawnCharacter<T, A>>,
+    mut animation_rng: Single<&mut WyRand, With<AnimationRng>>,
+    level: Single<Entity, With<A>>,
+    mut commands: Commands,
+    animations: Res<Animations<T>>,
+    collision_data: Res<CollisionDataCache<T>>,
+    collision_data_related: Res<CollisionDataRelatedCache<T>>,
+) where
+    T: Character,
+    A: Level,
+{
+    let character = T::default();
+    let animation_delay = animation_rng.random_range(ANIMATION_DELAY_RANGE_SECS);
+    let (shape, width, height) = (
+        collision_data.shape.clone(),
+        collision_data.width,
+        collision_data.height,
+    );
+
+    let container = commands
+        .entity(event.entity)
+        .insert((
+            character.container_bundle(animation_delay, event.pos),
+            character_collider(shape, width, height),
+        ))
+        .id();
+    let animation = commands.spawn(character.animation_bundle(&animations)).id();
+    let shadow = commands
+        .spawn(character.shadow_bundle(height, &collision_data_related.shadow))
+        .id();
+
+    // Add entity to level so that level handles despawning
+    commands
+        .entity(container)
+        .add_children(&[animation, shadow]);
+    commands.entity(*level).add_child(container);
+}
 
 /// [`Collider`] for different shapes
-pub(crate) fn character_collider(
-    collision_set: &(Option<String>, Option<f32>, Option<f32>),
-) -> Collider {
-    let (Some(shape), Some(width), Some(height)) = collision_set else {
-        // Return default collider if data is not complete
-        warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA_FALLBACK);
-        return Collider::ball(FALLBACK_BALL_COLLIDER_RADIUS);
-    };
-
+pub(crate) fn character_collider(shape: String, width: f32, height: f32) -> Collider {
     // Set correct collider for each shape
     // NOTE: For capsules, we just assume that the values are correct, meaning that for x: `width < height` and for y: `width > height`
     match shape.as_str() {

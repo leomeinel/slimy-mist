@@ -23,7 +23,7 @@ use crate::{
     },
     logging::{
         error::{ERR_INVALID_ATTACKER, ERR_INVALID_RAPIER_CONTEXT},
-        warn::{WARN_INCOMPLETE_COLLISION_DATA, WARN_INVALID_ATTACK_DATA},
+        warn::WARN_INVALID_ATTACK_DATA,
     },
     visual::particles::{ParticleHandle, ParticleMeleeAttack, SpawnParticleOnce},
 };
@@ -119,10 +119,7 @@ fn on_melee_attack<T>(
     T: Character,
 {
     let rapier_context = rapier_context.single().expect(ERR_INVALID_RAPIER_CONTEXT);
-    let (Some(width), Some(height)) = (collision_data.width, collision_data.height) else {
-        warn_once!("{}", WARN_INCOMPLETE_COLLISION_DATA);
-        return;
-    };
+    let (width, height) = (collision_data.width, collision_data.height);
 
     let (origin, event_direction) = (event.entity, event.direction);
     let (transform, movement, stats) = origin_query.get(origin).expect(ERR_INVALID_ATTACKER);

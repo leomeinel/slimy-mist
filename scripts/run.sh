@@ -34,7 +34,11 @@ run_web() {
 
 # Run specific build for given argument
 if [[ -z "${1}" ]]; then
-    cargo run --bin "${BINARY_NAME}" --no-default-features --release
+    if command -v mangohud >/dev/null 2>&1; then
+        mangohud cargo run --bin "${BINARY_NAME}" --no-default-features --release
+    else
+        cargo run --bin "${BINARY_NAME}" --no-default-features --release
+    fi
 elif [[ "${1}" == "web" ]]; then
     "${SCRIPT_DIR}"/build.sh "${1}"
     run_web "${1}"

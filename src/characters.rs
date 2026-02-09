@@ -105,6 +105,7 @@ where
             Mesh2d(shadow.mesh.clone()),
             // FIXME: We should use `LightOccluder2d` with just `Mesh2d` instead, but even with `cast_shadows`
             //        disabled, the performance impact is unacceptable.
+            //        Also see: https://github.com/malbernaz/bevy_lit/issues/25
             MeshMaterial2d(shadow.material.clone()),
             Transform::from_xyz(0., -height / 2., BACKGROUND_Z_DELTA),
         )

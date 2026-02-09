@@ -9,6 +9,7 @@
 
 // FIXME: For some reason, even though all point lights are despawned, their lighting still affects
 //        the splash screen after exiting Gameplay.
+//        Also see: https://github.com/malbernaz/bevy_lit/issues/24
 
 use bevy::{color::palettes::tailwind, prelude::*};
 use bevy_lit::prelude::*;

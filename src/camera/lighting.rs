@@ -20,7 +20,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Screen::Gameplay), add_ambient);
     app.add_systems(OnExit(Screen::Gameplay), reset_ambient);
 
-    // Update ambient brightness to simulate Day/Night cycle.
+    // Update ambient brightness to simulate a Day/Night cycle.
     app.add_systems(
         Update,
         update_ambient_brightness
@@ -39,7 +39,7 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 /// Seconds in a day.
-const DAY_SECS: f32 = 300.;
+const DAY_SECS: f32 = 600.;
 
 /// Timer that tracks splash screen
 #[derive(Resource, Debug, Clone, PartialEq, Reflect)]
@@ -72,27 +72,34 @@ const MAX_AMBIENT: f32 = 0.6;
 
 /// Update [`AmbientLight2d::brightness`] from a linear [`EasingCurve`].
 ///
-/// This is to simulate Day/Night cycle.
+/// This is to simulate a Day/Night cycle.
 fn update_ambient_brightness(
     mut light: Single<&mut Light2d, With<CanvasCamera>>,
     timer: Res<DayTimer>,
     mut last_update: Local<Option<f32>>,
 ) {
-    // Return if not on correct update interval
-    if let Some(last_update) = *last_update
-        && timer.0.elapsed_secs() - last_update < UPDATE_INTERVAL_SECS
-    {
-        return;
+    // Restrict to run only on `UPDATE_INTERVAL_SECS`
+    let elapsed_secs = timer.0.elapsed_secs();
+    if let Some(inner) = *last_update {
+        if inner > elapsed_secs {
+            *last_update = None;
+            return;
+        }
+        if elapsed_secs - inner < UPDATE_INTERVAL_SECS {
+            return;
+        }
     }
 
-    let brightness = EasingCurve::new(MIN_AMBIENT, MAX_AMBIENT, EaseFunction::Linear)
+    // NOTE: Using `SmootherStep` here is based on an approximation of the Clear-sky irradiance from https://re.jrc.ec.europa.eu/pvg_tools/en/#DR.
+    //       It does not match the Clear-sky irradiance exactly but mimics it good enough for a game.
+    let brightness = EasingCurve::new(MAX_AMBIENT, MIN_AMBIENT, EaseFunction::SmootherStep)
         .ping_pong()
         .expect(ERR_INVALID_DOMAIN_EASING);
     // NOTE: We are multiplying by 2 since `PingPongCurve` has a domain from 0 to 2.
     let brightness = brightness.sample_clamped(timer.0.fraction() * 2.);
     light.ambient_light.brightness = brightness;
 
-    *last_update = Some(timer.0.elapsed_secs());
+    *last_update = Some(elapsed_secs);
 }
 
 /// Tick [`DayTimer`]

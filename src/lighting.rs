@@ -75,7 +75,7 @@ impl Default for StreetLight {
             intensity: 2.,
             radius: 128.,
             falloff: 4.,
-            cast_shadows: true,
+            ..default()
         })
     }
 }

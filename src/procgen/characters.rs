@@ -63,7 +63,7 @@ pub(crate) fn on_procgen_characters<T, A, B>(
             collision_data.width,
             collision_data.height,
         );
-        let entity = T::default().spawn(
+        let entity = T::spawn(
             &mut commands,
             &collision_set,
             target_pos,

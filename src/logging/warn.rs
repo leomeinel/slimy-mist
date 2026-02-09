@@ -15,6 +15,9 @@ pub(crate) const WARN_INCOMPLETE_ANIMATION_DATA: &str = "The animation data is i
 pub(crate) const WARN_INCOMPLETE_ASSET_DATA: &str = "The asset data is incomplete.";
 /// Warning on incomplete [`crate::characters::CollisionData`]
 pub(crate) const WARN_INCOMPLETE_COLLISION_DATA: &str = "The collision data is incomplete.";
+/// Warning on incomplete [`crate::characters::CollisionData`] if using a fallback ball collider.
+pub(crate) const WARN_INCOMPLETE_COLLISION_DATA_FALLBACK: &str =
+    "The collision data is incomplete. Using fallback ball collider.";
 
 /// Warning on invalid [`crate::characters::attack::AttackData`]
 pub(crate) const WARN_INVALID_ATTACK_DATA: &str =

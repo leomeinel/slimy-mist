@@ -1035,7 +1035,7 @@ dependencies = [
 [[package]]
 name = "bevy_lit"
 version = "0.9.1"
-source = "git+https://github.com/leomeinel/bevy_lit.git?branch=bevy-018-webgl#7692fee65c569dd88cce072e2242a3fa334072f9"
+source = "git+https://github.com/leomeinel/bevy_lit.git?branch=bevy-0-18-webgl#05ad158e62edf2ba737b4738789ab59b06eccce0"
 dependencies = [
  "bevy",
  "bytemuck",

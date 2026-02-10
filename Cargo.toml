@@ -34,7 +34,8 @@ bevy_enhanced_input = "0.23.2"
 bevy_enoki = "0.6.0"
 # FIXME: Wait for new version to be released and PRs to be merged:
 #        - https://github.com/malbernaz/bevy_lit/pull/23
-bevy_lit = { git = "https://github.com/leomeinel/bevy_lit.git", branch = "bevy-018-webgl" }
+#        - https://github.com/malbernaz/bevy_lit/pull/26
+bevy_lit = { git = "https://github.com/leomeinel/bevy_lit.git", branch = "bevy-0-18-webgl" }
 bevy_prng = { version = "0.13.0", features = ["rand_chacha", "wyrand"] }
 bevy_rand = "0.13.0"
 # FIXME: Wait for new version to be released and PRs to be merged:

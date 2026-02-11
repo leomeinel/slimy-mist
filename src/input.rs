@@ -35,11 +35,6 @@ pub(super) fn plugin(app: &mut App) {
     // Add library plugins
     app.add_plugins(EnhancedInputPlugin);
 
-    // FIXME: Currently when walking, melee is also triggered. We will have to
-    //        Determine whether the touch was on the joystick or somewhere else.
-    //        Using states to not allow melee while using the joystick will prohibit
-    //        the player from attacking while waling and is not easily implemented
-    //        because of scheduling.
     app.add_systems(
         PreUpdate,
         (
@@ -116,6 +111,7 @@ pub(crate) fn player_input() -> impl Bundle {
             // Attack
             (
                 Action::<Melee>::new(),
+                // FIXME: We should check if the input is outside of the rect of virtual joystick.
                 Tap::new(TAP_MAX_DURATION_SECS),
                 bindings![MouseButton::Left, GamepadButton::RightTrigger],
             ),
@@ -131,11 +127,11 @@ pub(crate) fn player_input() -> impl Bundle {
     )
 }
 
-/// Use [`ActionMock`] to mock [`Walk`] from the virtual joystick
+/// Mock [`Walk`] from the virtual joystick
 #[cfg(any(target_os = "android", target_os = "ios"))]
 fn mock_walk_from_virtual_joystick(
     mut reader: MessageReader<VirtualJoystickMessage<VirtualJoystick>>,
-    walk: Single<Entity, With<Action<Walk>>>,
+    walk: Single<Entity, With<Player>>,
     mut commands: Commands,
 ) {
     for joystick in reader.read() {
@@ -147,19 +143,18 @@ fn mock_walk_from_virtual_joystick(
         if input == &Vec2::ZERO {
             continue;
         }
-        commands.entity(*walk).insert(ActionMock::once(
-            ActionState::Fired,
-            ActionValue::from(*input * PLAYER_WALK_SPEED),
-        ));
+        commands
+            .entity(*walk)
+            .mock_once::<Player, Melee>(ActionState::Fired, *input * PLAYER_WALK_SPEED);
     }
 }
 
 /// Threshold for a valid swipe action from touch input in logical pixels.
 const SWIPE_THRESHOLD: f32 = 50.;
 
-/// Use [`ActionMock`] to mock [`Jump`] from touch inputs.
+/// Mock [`Jump`] from touch inputs.
 fn mock_jump_from_touch(
-    jump: Single<Entity, With<Action<Jump>>>,
+    jump: Single<Entity, With<Player>>,
     mut commands: Commands,
     touches: Res<Touches>,
 ) {
@@ -168,33 +163,31 @@ fn mock_jump_from_touch(
         // FIXME: We should check if the input is outside of the rect of virtual joystick.
         // NOTE: We are inverting y to align with user intent because `distance` is reversed on the y axis.
         if -distance.y > SWIPE_THRESHOLD && distance.y.abs() > distance.x.abs() {
-            commands.entity(*jump).insert(ActionMock::once(
-                ActionState::Fired,
-                ActionValue::Bool(true),
-            ));
+            commands
+                .entity(*jump)
+                .mock_once::<Player, Melee>(ActionState::Fired, true);
         }
     }
 }
 
-/// Use [`ActionMock`] to mock [`Melee`] from touch inputs.
+/// Mock [`Melee`] from touch inputs.
 fn mock_melee_from_touch(
-    melee: Single<Entity, With<Action<Melee>>>,
+    melee: Single<Entity, With<Player>>,
     mut commands: Commands,
     touches: Res<Touches>,
 ) {
     // FIXME: We should check for taps within `TAP_MAX_DURATION_SECS` instead.
     // FIXME: We should check if the input is outside of the rect of virtual joystick.
     if touches.any_just_released() {
-        commands.entity(*melee).insert(ActionMock::once(
-            ActionState::Fired,
-            ActionValue::Bool(true),
-        ));
+        commands
+            .entity(*melee)
+            .mock_once::<Player, Melee>(ActionState::Fired, true);
     }
 }
 
-/// Use [`ActionMock`] to mock [`Aim`] from touch inputs.
+/// Mock [`Aim`] from touch inputs.
 fn mock_aim_from_touch(
-    aim: Single<Entity, With<Action<Aim>>>,
+    aim: Single<Entity, With<Player>>,
     camera: Single<(&Camera, &GlobalTransform), With<CanvasCamera>>,
     player_transform: Single<&Transform, With<Player>>,
     mut commands: Commands,
@@ -202,31 +195,29 @@ fn mock_aim_from_touch(
 ) {
     let (camera, camera_transform) = *camera;
 
-    // FIXME: We should check for taps within `TAP_MAX_DURATION_SECS` instead.
     // FIXME: We should check if the input is outside of the rect of virtual joystick.
     // NOTE: We are using `just_pressed` to allow use in `Melee`.
     for touch in touches.iter_just_pressed() {
         if let Ok(pos) = camera.viewport_to_world_2d(camera_transform, touch.position()) {
             let direction = pos - player_transform.translation.xy();
-            commands.entity(*aim).insert(ActionMock::new(
+            commands.entity(*aim).mock::<Player, Aim>(
                 ActionState::Fired,
-                ActionValue::from(direction.normalize_or_zero()),
+                direction.normalize_or_zero(),
                 MockSpan::Manual,
-            ));
+            );
         }
     }
 }
 
-/// Use [`ActionMock`] to mock [`Aim`] from clicks.
+/// Mock [`Aim`] from clicks.
 fn mock_aim_from_click(
-    aim: Single<Entity, With<Action<Aim>>>,
+    aim: Single<Entity, With<Player>>,
     camera: Single<(&Camera, &GlobalTransform), With<CanvasCamera>>,
     player_transform: Single<&Transform, With<Player>>,
     window: Single<&Window, With<PrimaryWindow>>,
     mut commands: Commands,
     mouse: Res<ButtonInput<MouseButton>>,
 ) {
-    // FIXME: We should check for taps within `TAP_MAX_DURATION_SECS` instead.
     // NOTE: We are using `just_pressed` to allow use in `Melee`.
     if !mouse.just_pressed(MouseButton::Left) {
         return;
@@ -239,11 +230,11 @@ fn mock_aim_from_click(
         && let Ok(pos) = camera.viewport_to_world_2d(camera_transform, pos)
     {
         let direction = pos - player_transform.translation.xy();
-        commands.entity(*aim).insert(ActionMock::new(
+        commands.entity(*aim).mock::<Player, Aim>(
             ActionState::Fired,
-            ActionValue::from(direction.normalize_or_zero()),
+            direction.normalize_or_zero(),
             MockSpan::Manual,
-        ));
+        );
     }
 }
 

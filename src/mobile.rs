@@ -14,18 +14,18 @@
 #[cfg(target_os = "android")]
 mod android;
 
-use bevy::{prelude::*, winit::WinitSettings};
+use bevy::{platform::collections::HashMap, prelude::*, winit::WinitSettings};
 use bevy_asset_loader::asset_collection::AssetCollection;
 use virtual_joystick::{
     JoystickFixed, NoAction, VirtualJoystickBundle, VirtualJoystickInteractionArea,
     VirtualJoystickNode, VirtualJoystickPlugin, VirtualJoystickUIBackground, VirtualJoystickUIKnob,
 };
 
-use crate::screens::Screen;
+use crate::{logging::error::ERR_INVALID_CHILDREN, screens::Screen};
 
 pub(super) fn plugin(app: &mut App) {
     // Add library plugins
-    app.add_plugins(VirtualJoystickPlugin::<VirtualJoystick>::default());
+    app.add_plugins(VirtualJoystickPlugin::<u8>::default());
 
     // Add child plugins
     #[cfg(target_os = "android")]
@@ -47,11 +47,52 @@ pub(crate) struct JoystickAssets {
     background_image: Handle<Image>,
 }
 
-/// Virtual joystick type that is used as [`virtual_joystick::VirtualJoystickID`]
-#[derive(Default, Debug, Reflect, Hash, Clone, PartialEq, Eq)]
-pub(crate) enum VirtualJoystick {
+/// Enum representation of a joystick ID to have a single source of truth for IDs.
+///
+/// This can be used as a [`virtual_joystick::VirtualJoystickID`] after casting to [`u8`].
+#[repr(u8)]
+#[derive(Default)]
+pub(crate) enum JoystickID {
     #[default]
     Movement,
+}
+
+/// Map of [`JoystickID`]s as [`u8`] mapped to their [`Rect`] representing [`VirtualJoystickInteractionArea`].
+#[derive(Resource, Default)]
+pub(crate) struct JoystickInteractionRectMap(HashMap<u8, Rect>);
+impl JoystickInteractionRectMap {
+    pub(crate) fn any_intersect_with(&self, point: Vec2) -> bool {
+        self.0.iter().any(|(_, v)| v.contains(point))
+    }
+}
+
+/// Setup [`Rect`] representing [`VirtualJoystickInteractionArea`] mapped to `ID` in [`JoystickInteractionRectMap`].
+///
+/// ## Traits
+///
+/// - `const ID` will be used as [`VirtualJoystickNode::id`].
+pub(crate) fn setup_joystick_interaction_rect_map<const ID: u8>(
+    node_query: Query<(&VirtualJoystickNode<u8>, &Children)>,
+    interaction_area_query: Query<
+        (&ComputedNode, &UiGlobalTransform),
+        With<VirtualJoystickInteractionArea>,
+    >,
+    mut rect_map: ResMut<JoystickInteractionRectMap>,
+) {
+    let children = node_query
+        .iter()
+        .find(|(n, _)| n.id == ID)
+        .map(|(_, c)| c)
+        .expect(ERR_INVALID_CHILDREN);
+
+    if let Some((node, transform)) = children
+        .iter()
+        .find_map(|child| interaction_area_query.get(child).ok())
+    {
+        let factor = node.inverse_scale_factor;
+        let rect = Rect::from_center_size(transform.translation * factor, node.size() * factor);
+        rect_map.0.insert(ID, rect);
+    }
 }
 
 /// Color of the joystick knob
@@ -64,8 +105,15 @@ const JOYSTICK_BACKGROUND_COLOR: Color = Color::WHITE;
 /// Size of the joystick background in pixels
 const JOYSTICK_BACKGROUND_SIZE: Vec2 = Vec2::splat(100.);
 
-/// Spawn default joystick of type [`VirtualJoystick::Movement`]
-pub(crate) fn spawn_joystick(mut commands: Commands, joystick_assets: Res<JoystickAssets>) {
+/// Spawn joystick with `ID`.
+///
+/// ## Traits
+///
+/// - `const ID` will be used as [`VirtualJoystickNode::id`].
+pub(crate) fn spawn_joystick<const ID: u8>(
+    mut commands: Commands,
+    joystick_assets: Res<JoystickAssets>,
+) {
     let style = Node {
         position_type: PositionType::Absolute,
         width: Val::Px(JOYSTICK_BACKGROUND_SIZE.x),
@@ -77,7 +125,7 @@ pub(crate) fn spawn_joystick(mut commands: Commands, joystick_assets: Res<Joysti
     commands.spawn((
         VirtualJoystickBundle::new(
             VirtualJoystickNode::default()
-                .with_id(VirtualJoystick::default())
+                .with_id(ID)
                 .with_behavior(JoystickFixed)
                 .with_action(NoAction),
         )

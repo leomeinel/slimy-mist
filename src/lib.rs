@@ -35,12 +35,9 @@ mod ui;
 mod utils;
 mod visual;
 
-use bevy::asset::AssetMetaCheck;
-use bevy::prelude::*;
-#[cfg(target_os = "ios")]
-use bevy::window::ScreenEdge;
 #[cfg(any(target_os = "android", target_os = "ios"))]
 use bevy::window::WindowMode;
+use bevy::{asset::AssetMetaCheck, prelude::*, window::ScreenEdge};
 use bevy_ecs_tilemap::TilemapPlugin;
 use bevy_lit::prelude::*;
 use bevy_prng::WyRand;
@@ -79,13 +76,9 @@ impl Plugin for AppPlugin {
                         #[cfg(any(target_os = "android", target_os = "ios"))]
                         mode: WindowMode::BorderlessFullscreen(MonitorSelection::Primary),
                         // ios only
-                        #[cfg(target_os = "ios")]
                         recognize_rotation_gesture: true,
-                        #[cfg(target_os = "ios")]
                         prefers_home_indicator_hidden: true,
-                        #[cfg(target_os = "ios")]
                         prefers_status_bar_hidden: true,
-                        #[cfg(target_os = "ios")]
                         preferred_screen_edges_deferring_system_gestures: ScreenEdge::Bottom,
                         ..default()
                     }

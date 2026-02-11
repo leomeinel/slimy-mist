@@ -38,6 +38,10 @@ pub(crate) const ERR_INVALID_MINIMUM_CHUNK_POS: &str =
 pub(crate) const ERR_INVALID_NAVMESH: &str = "The navmesh is invalid. This is a bug.";
 /// Error message if nav target is invalid
 pub(crate) const ERR_INVALID_NAV_TARGET: &str = "The navigation target is invalid. This is a bug.";
+/// Error message if [`crate::input::PointerInputCache`] is invalid
+#[cfg(any(target_os = "android", target_os = "ios"))]
+pub(crate) const ERR_INVALID_POINTER_CACHE: &str =
+    "The pointer cache data is invalid. This is a bug.";
 /// Error message if [`bevy_rapier2d::prelude::ReadRapierContext`] is invalid
 pub(crate) const ERR_INVALID_RAPIER_CONTEXT: &str = "ReadRapierContext is invalid. This is a bug.";
 /// Error message if animation data is invalid or incomplete

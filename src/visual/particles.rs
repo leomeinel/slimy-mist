@@ -17,9 +17,8 @@ use crate::{
     animations::{AnimationCache, AnimationState},
     camera::BACKGROUND_Z_DELTA,
     characters::{Character, player::Player},
-    levels::overworld::spawn_overworld,
     logging::error::ERR_INVALID_CHILDREN,
-    screens::Screen,
+    screens::{Screen, gameplay::InitGameplaySystems},
     visual::{TextureInfoCache, Visible},
 };
 
@@ -30,14 +29,14 @@ pub(super) fn plugin(app: &mut App) {
     // Add particle systems
     app.add_systems(
         OnEnter(Screen::Gameplay),
-        add_walking_dust::<Player>.after(spawn_overworld),
+        add_walking_dust::<Player>.after(InitGameplaySystems::Finalize),
     );
 
     // Update particles for character
     app.add_systems(
         Update,
         update_character_particles::<Player, ParticleWalkingDust>
-            .after(spawn_overworld)
+            .after(InitGameplaySystems::Finalize)
             .run_if(in_state(Screen::Gameplay)),
     );
 

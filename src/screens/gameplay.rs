@@ -14,15 +14,17 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
 #[cfg(any(target_os = "android", target_os = "ios"))]
-use crate::mobile::spawn_joystick;
+use crate::mobile::{
+    JoystickID, JoystickInteractionRectMap, setup_joystick_interaction_rect_map, spawn_joystick,
+};
 use crate::{
     Pause,
     animations::setup_animations,
     camera::center_camera_on_player,
     characters::{nav::NavTargetPosMap, npc::Slime, player::Player},
+    input::PointerInputCache,
     levels::overworld::{Overworld, OverworldProcGen, spawn_overworld},
-    lighting::DayTimer,
-    lighting::StreetLight,
+    lighting::{DayTimer, StreetLight},
     menus::Menu,
     procgen::{ProcGenCache, navmesh::spawn_navmesh},
     screens::Screen,
@@ -34,7 +36,17 @@ use crate::{
 };
 
 pub(super) fn plugin(app: &mut App) {
-    // Insert/Remove resources and cache deserialized data in resources
+    // Order new `InitGameplaySystems` variants by adding them here:
+    app.configure_sets(
+        OnEnter(Screen::Gameplay),
+        (
+            InitGameplaySystems::Resources,
+            InitGameplaySystems::Finalize,
+        )
+            .chain(),
+    );
+
+    // Run `InitGameplaySystems::Resources`
     app.add_systems(
         OnEnter(Screen::Gameplay),
         (
@@ -42,7 +54,7 @@ pub(super) fn plugin(app: &mut App) {
             insert_display_image::<Player>,
             insert_display_image::<Slime>,
         )
-            .in_set(PrepareGameplaySystems),
+            .in_set(InitGameplaySystems::Resources),
     );
     app.add_systems(OnExit(Screen::Gameplay), remove_resources);
 
@@ -54,7 +66,7 @@ pub(super) fn plugin(app: &mut App) {
         unpause.run_if(in_state(Screen::Gameplay)),
     );
 
-    // Spawn overworld with navmesh and run required systems
+    // Run `InitGameplaySystems::Finalize`
     app.add_systems(
         OnEnter(Screen::Gameplay),
         (
@@ -63,10 +75,20 @@ pub(super) fn plugin(app: &mut App) {
             center_camera_on_player,
             spawn_navmesh::<OverworldProcGen, Overworld>,
             #[cfg(any(target_os = "android", target_os = "ios"))]
-            spawn_joystick,
+            spawn_joystick::<{ JoystickID::Movement as u8 }>,
         )
-            .after(PrepareGameplaySystems)
+            .in_set(InitGameplaySystems::Finalize)
             .chain(),
+    );
+
+    // Setup `JoystickInteractionRectMap`
+    #[cfg(any(target_os = "android", target_os = "ios"))]
+    app.add_systems(
+        PostUpdate,
+        setup_joystick_interaction_rect_map::<{ JoystickID::Movement as u8 }>
+            .after(InitGameplaySystems::Finalize)
+            .after(TransformSystems::Propagate)
+            .run_if(in_state(Screen::Gameplay).and(run_once)),
     );
 
     // Open pause on pressing P or Escape and pause game
@@ -86,9 +108,12 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
-/// A system set for systems that inserts [`Resource`]s dynamically for [`Screen::Gameplay`]
+/// A [`SystemSet`] for systems that initialize [`Screen::Gameplay`]
 #[derive(SystemSet, Copy, Clone, Eq, PartialEq, Hash, Debug)]
-pub(crate) struct PrepareGameplaySystems;
+pub(crate) enum InitGameplaySystems {
+    Resources,
+    Finalize,
+}
 
 /// rgba(0, 0, 0, 204)
 const BACKGROUND_COLOR: Color = Color::srgba(0.0, 0.0, 0.0, 0.8);
@@ -146,7 +171,10 @@ pub(crate) fn insert_display_image<T>(
 /// Insert [`Resource`]s
 fn insert_resources(mut commands: Commands) {
     commands.init_resource::<DayTimer>();
+    commands.init_resource::<PointerInputCache>();
     commands.init_resource::<NavTargetPosMap>();
+    #[cfg(any(target_os = "android", target_os = "ios"))]
+    commands.init_resource::<JoystickInteractionRectMap>();
     commands.init_resource::<ProcGenCache<OverworldProcGen>>();
     commands.init_resource::<ProcGenCache<Slime>>();
     commands.init_resource::<ProcGenCache<StreetLight>>();
@@ -157,7 +185,10 @@ fn remove_resources(mut commands: Commands) {
     commands.remove_resource::<DayTimer>();
     commands.remove_resource::<DisplayImage<Player>>();
     commands.remove_resource::<DisplayImage<Slime>>();
+    commands.remove_resource::<PointerInputCache>();
     commands.remove_resource::<NavTargetPosMap>();
+    #[cfg(any(target_os = "android", target_os = "ios"))]
+    commands.remove_resource::<JoystickInteractionRectMap>();
     commands.remove_resource::<ProcGenCache<OverworldProcGen>>();
     commands.remove_resource::<ProcGenCache<Slime>>();
     commands.remove_resource::<ProcGenCache<StreetLight>>();

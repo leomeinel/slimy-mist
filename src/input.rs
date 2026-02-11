@@ -11,14 +11,14 @@
 
 use std::marker::PhantomData;
 
-use bevy::{prelude::*, window::PrimaryWindow};
+#[cfg(any(target_os = "android", target_os = "ios"))]
+use bevy::math::u8;
+use bevy::{input::touch::TouchPhase, prelude::*, window::PrimaryWindow};
 use bevy_enhanced_input::prelude::*;
 use bevy_rapier2d::prelude::*;
 #[cfg(any(target_os = "android", target_os = "ios"))]
 use virtual_joystick::VirtualJoystickMessage;
 
-#[cfg(any(target_os = "android", target_os = "ios"))]
-use crate::mobile::VirtualJoystick;
 use crate::{
     Pause,
     animations::{AnimationCache, AnimationState},
@@ -30,6 +30,11 @@ use crate::{
     },
     screens::Screen,
 };
+#[cfg(any(target_os = "android", target_os = "ios"))]
+use crate::{
+    logging::error::ERR_INVALID_POINTER_CACHE,
+    mobile::{JoystickID, JoystickInteractionRectMap},
+};
 
 pub(super) fn plugin(app: &mut App) {
     // Add library plugins
@@ -38,15 +43,18 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         PreUpdate,
         (
+            (update_pointer_input_cache),
             #[cfg(any(target_os = "android", target_os = "ios"))]
             mock_walk_from_virtual_joystick,
-            mock_jump_from_touch,
-            mock_melee_from_touch,
-            // Mock `Aim` from clicks or override with touch input
-            (mock_aim_from_click, mock_aim_from_touch).chain(),
+            (
+                mock_jump_from_touch,
+                (mock_melee_from_click, mock_melee_from_touch).chain(),
+                (mock_aim_from_click, mock_aim_from_touch).chain(),
+            ),
         )
             .before(EnhancedInputSystems::Update)
-            .run_if(in_state(Screen::Gameplay)),
+            .run_if(in_state(Screen::Gameplay))
+            .chain(),
     );
 
     // Handle bevy_enhanced_input with input context and observers
@@ -111,9 +119,7 @@ pub(crate) fn player_input() -> impl Bundle {
             // Attack
             (
                 Action::<Melee>::new(),
-                // FIXME: We should check if the input is outside of the rect of virtual joystick.
-                Tap::new(TAP_MAX_DURATION_SECS),
-                bindings![MouseButton::Left, GamepadButton::RightTrigger],
+                bindings![GamepadButton::RightTrigger],
             ),
             (
                 Action::<Aim>::new(),
@@ -127,15 +133,46 @@ pub(crate) fn player_input() -> impl Bundle {
     )
 }
 
+/// Info on pointer input that is not natively provided by [`bevy`].
+#[derive(Resource, Default)]
+pub(crate) struct PointerInputCache {
+    start_pos: Option<Vec2>,
+    start_time_secs: f32,
+}
+
+/// Update info in [`PointerInputCache`].
+///
+/// This prioritizes [`TouchInput`] but also handles [`ButtonInput<MouseButton>`] for [`MouseButton::Left`].
+fn update_pointer_input_cache(
+    mut reader: MessageReader<TouchInput>,
+    window: Single<&Window, With<PrimaryWindow>>,
+    mut input_cache: ResMut<PointerInputCache>,
+    mouse: Res<ButtonInput<MouseButton>>,
+    time: Res<Time>,
+) {
+    if reader.read().any(|t| t.phase == TouchPhase::Started) {
+        input_cache.start_pos = None;
+        input_cache.start_time_secs = time.elapsed_secs();
+        return;
+    }
+
+    if mouse.just_pressed(MouseButton::Left)
+        && let Some(pos) = window.cursor_position()
+    {
+        input_cache.start_pos = Some(pos);
+        input_cache.start_time_secs = time.elapsed_secs();
+    }
+}
+
 /// Mock [`Walk`] from the virtual joystick
 #[cfg(any(target_os = "android", target_os = "ios"))]
 fn mock_walk_from_virtual_joystick(
-    mut reader: MessageReader<VirtualJoystickMessage<VirtualJoystick>>,
+    mut reader: MessageReader<VirtualJoystickMessage<u8>>,
     walk: Single<Entity, With<Player>>,
     mut commands: Commands,
 ) {
     for joystick in reader.read() {
-        if joystick.id() != VirtualJoystick::Movement {
+        if joystick.id() != JoystickID::Movement as u8 {
             continue;
         }
 
@@ -145,7 +182,7 @@ fn mock_walk_from_virtual_joystick(
         }
         commands
             .entity(*walk)
-            .mock_once::<Player, Melee>(ActionState::Fired, *input * PLAYER_WALK_SPEED);
+            .mock_once::<Player, Walk>(ActionState::Fired, *input * PLAYER_WALK_SPEED);
     }
 }
 
@@ -157,15 +194,20 @@ fn mock_jump_from_touch(
     jump: Single<Entity, With<Player>>,
     mut commands: Commands,
     touches: Res<Touches>,
+    #[cfg(any(target_os = "android", target_os = "ios"))] rect_map: Res<JoystickInteractionRectMap>,
 ) {
     for touch in touches.iter_just_released() {
+        #[cfg(any(target_os = "android", target_os = "ios"))]
+        if rect_map.any_intersect_with(touch.start_position()) {
+            continue;
+        }
+
         let distance = touch.distance();
-        // FIXME: We should check if the input is outside of the rect of virtual joystick.
         // NOTE: We are inverting y to align with user intent because `distance` is reversed on the y axis.
         if -distance.y > SWIPE_THRESHOLD && distance.y.abs() > distance.x.abs() {
             commands
                 .entity(*jump)
-                .mock_once::<Player, Melee>(ActionState::Fired, true);
+                .mock_once::<Player, Jump>(ActionState::Fired, true);
         }
     }
 }
@@ -175,9 +217,21 @@ fn mock_melee_from_touch(
     melee: Single<Entity, With<Player>>,
     mut commands: Commands,
     touches: Res<Touches>,
+    input_cache: Res<PointerInputCache>,
+    #[cfg(any(target_os = "android", target_os = "ios"))] rect_map: Res<JoystickInteractionRectMap>,
+    time: Res<Time>,
 ) {
-    // FIXME: We should check for taps within `TAP_MAX_DURATION_SECS` instead.
-    // FIXME: We should check if the input is outside of the rect of virtual joystick.
+    if time.elapsed_secs() - input_cache.start_time_secs > TAP_MAX_DURATION_SECS {
+        return;
+    }
+    #[cfg(any(target_os = "android", target_os = "ios"))]
+    if touches
+        .iter_just_released()
+        .any(|t| rect_map.any_intersect_with(t.start_position()))
+    {
+        return;
+    }
+
     if touches.any_just_released() {
         commands
             .entity(*melee)
@@ -192,13 +246,18 @@ fn mock_aim_from_touch(
     player_transform: Single<&Transform, With<Player>>,
     mut commands: Commands,
     touches: Res<Touches>,
+    #[cfg(any(target_os = "android", target_os = "ios"))] rect_map: Res<JoystickInteractionRectMap>,
 ) {
     let (camera, camera_transform) = *camera;
 
-    // FIXME: We should check if the input is outside of the rect of virtual joystick.
     // NOTE: We are using `just_pressed` to allow use in `Melee`.
     for touch in touches.iter_just_pressed() {
         if let Ok(pos) = camera.viewport_to_world_2d(camera_transform, touch.position()) {
+            #[cfg(any(target_os = "android", target_os = "ios"))]
+            if rect_map.any_intersect_with(pos) {
+                continue;
+            }
+
             let direction = pos - player_transform.translation.xy();
             commands.entity(*aim).mock::<Player, Aim>(
                 ActionState::Fired,
@@ -209,6 +268,30 @@ fn mock_aim_from_touch(
     }
 }
 
+/// Mock [`Melee`] from clicks.
+fn mock_melee_from_click(
+    melee: Single<Entity, With<Player>>,
+    mut commands: Commands,
+    input_cache: Res<PointerInputCache>,
+    mouse: Res<ButtonInput<MouseButton>>,
+    #[cfg(any(target_os = "android", target_os = "ios"))] rect_map: Res<JoystickInteractionRectMap>,
+    time: Res<Time>,
+) {
+    if !mouse.just_released(MouseButton::Left)
+        || time.elapsed_secs() - input_cache.start_time_secs > TAP_MAX_DURATION_SECS
+    {
+        return;
+    }
+    #[cfg(any(target_os = "android", target_os = "ios"))]
+    if rect_map.any_intersect_with(input_cache.pos.expect(ERR_INVALID_POINTER_CACHE)) {
+        return;
+    }
+
+    commands
+        .entity(*melee)
+        .mock_once::<Player, Melee>(ActionState::Fired, true);
+}
+
 /// Mock [`Aim`] from clicks.
 fn mock_aim_from_click(
     aim: Single<Entity, With<Player>>,
@@ -217,6 +300,7 @@ fn mock_aim_from_click(
     window: Single<&Window, With<PrimaryWindow>>,
     mut commands: Commands,
     mouse: Res<ButtonInput<MouseButton>>,
+    #[cfg(any(target_os = "android", target_os = "ios"))] rect_map: Res<JoystickInteractionRectMap>,
 ) {
     // NOTE: We are using `just_pressed` to allow use in `Melee`.
     if !mouse.just_pressed(MouseButton::Left) {
@@ -225,10 +309,14 @@ fn mock_aim_from_click(
 
     let (camera, camera_transform) = *camera;
 
-    // FIXME: We should check if the input is outside of the rect of virtual joystick.
     if let Some(pos) = window.cursor_position()
         && let Ok(pos) = camera.viewport_to_world_2d(camera_transform, pos)
     {
+        #[cfg(any(target_os = "android", target_os = "ios"))]
+        if rect_map.any_intersect_with(pos) {
+            return;
+        }
+
         let direction = pos - player_transform.translation.xy();
         commands.entity(*aim).mock::<Player, Aim>(
             ActionState::Fired,

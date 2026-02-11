@@ -32,6 +32,7 @@ bevy_common_assets = { version = "0.15.0", features = ["ron"] }
 bevy_ecs_tilemap = "0.18.1"
 bevy_enhanced_input = "0.23.2"
 bevy_enoki = "0.6.0"
+bevy-inspector-egui = { version = "0.36.0", optional = true }
 # FIXME: Wait for new version to be released and PRs to be merged:
 #        - https://github.com/malbernaz/bevy_lit/pull/23
 #        - https://github.com/malbernaz/bevy_lit/pull/26
@@ -42,7 +43,12 @@ bevy_prng = { version = "0.13.0", features = ["rand_chacha", "wyrand"] }
 bevy_rand = "0.13.0"
 # FIXME: Wait for new version to be released and PRs to be merged:
 #        - https://github.com/dimforge/bevy_rapier/pull/686
-bevy_rapier2d = { git = "https://github.com/Buncys/bevy_rapier.git", rev = "4ab7e7dcc9a5772dcba0defb3625350eff2bd822" }
+bevy_rapier2d = { git = "https://github.com/Buncys/bevy_rapier.git", rev = "4ab7e7dcc9a5772dcba0defb3625350eff2bd822", default-features = false, features = [
+ "dim2",
+ "async-collider",
+ "picking-backend",
+ "to-bevy-mesh",
+] }
 bevy_spritesheet_animation = "6.1.0"
 iyes_progress = "0.16.0"
 ordered-float = "5.1.0"
@@ -91,6 +97,8 @@ dev = [
  "bevy/bevy_ui_debug",
  # Improve error messages coming from Bevy
  "bevy/track_location",
+ "bevy-inspector-egui",
+ "bevy_rapier2d/debug-render-2d",
 ]
 dev_native = [
  "dev",

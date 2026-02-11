@@ -17,6 +17,7 @@ use bevy::{
     color::palettes::tailwind, dev_tools::states::log_transitions, gizmos::gizmos::GizmoBuffer,
     input::common_conditions::input_just_pressed, prelude::*,
 };
+use bevy_inspector_egui::{bevy_egui::EguiPlugin, quick::WorldInspectorPlugin};
 use bevy_rapier2d::render::{DebugRenderContext, RapierDebugRenderPlugin};
 use vleue_navigator::prelude::*;
 
@@ -28,10 +29,11 @@ use crate::{
 
 pub(super) fn plugin(app: &mut App) {
     // Add library plugins
-    app.add_plugins(RapierDebugRenderPlugin {
-        enabled: false,
-        ..default()
-    });
+    app.add_plugins((
+        EguiPlugin::default(),
+        WorldInspectorPlugin::default().run_if(in_state(Debugging(true))),
+        RapierDebugRenderPlugin::default().disabled(),
+    ));
 
     // Insert states
     app.init_state::<Debugging>();

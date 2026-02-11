@@ -283,7 +283,7 @@ fn mock_melee_from_click(
         return;
     }
     #[cfg(any(target_os = "android", target_os = "ios"))]
-    if rect_map.any_intersect_with(input_cache.pos.expect(ERR_INVALID_POINTER_CACHE)) {
+    if rect_map.any_intersect_with(input_cache.start_pos.expect(ERR_INVALID_POINTER_CACHE)) {
         return;
     }
 

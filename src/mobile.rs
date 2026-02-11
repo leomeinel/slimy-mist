@@ -57,27 +57,27 @@ pub(crate) enum JoystickID {
     Movement,
 }
 
-/// Map of [`JoystickID`]s as [`u8`] mapped to their [`Rect`] representing [`VirtualJoystickInteractionArea`].
+/// Map of [`JoystickID`]s as [`u8`] mapped to their [`Rect`].
 #[derive(Resource, Default)]
-pub(crate) struct JoystickInteractionRectMap(HashMap<u8, Rect>);
-impl JoystickInteractionRectMap {
+pub(crate) struct JoystickRectMap(HashMap<u8, Rect>);
+impl JoystickRectMap {
     pub(crate) fn any_intersect_with(&self, point: Vec2) -> bool {
         self.0.iter().any(|(_, v)| v.contains(point))
     }
 }
 
-/// Setup [`Rect`] representing [`VirtualJoystickInteractionArea`] mapped to `ID` in [`JoystickInteractionRectMap`].
+/// Update [`Rect`] representing [`VirtualJoystickInteractionArea`] mapped to `ID` in [`JoystickRectMap`].
 ///
 /// ## Traits
 ///
 /// - `const ID` will be used as [`VirtualJoystickNode::id`].
-pub(crate) fn setup_joystick_interaction_rect_map<const ID: u8>(
+pub(crate) fn update_joystick_rect_map<const ID: u8>(
     node_query: Query<(&VirtualJoystickNode<u8>, &Children)>,
     interaction_area_query: Query<
         (&ComputedNode, &UiGlobalTransform),
         With<VirtualJoystickInteractionArea>,
     >,
-    mut rect_map: ResMut<JoystickInteractionRectMap>,
+    mut rect_map: ResMut<JoystickRectMap>,
 ) {
     let children = node_query
         .iter()

@@ -11,12 +11,12 @@
 
 //! The screen state for the main gameplay.
 
+#[cfg(any(target_os = "android", target_os = "ios"))]
+use bevy::window::WindowResized;
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
 #[cfg(any(target_os = "android", target_os = "ios"))]
-use crate::mobile::{
-    JoystickID, JoystickInteractionRectMap, setup_joystick_interaction_rect_map, spawn_joystick,
-};
+use crate::mobile::{JoystickID, JoystickRectMap, spawn_joystick, update_joystick_rect_map};
 use crate::{
     Pause,
     animations::setup_animations,
@@ -81,14 +81,20 @@ pub(super) fn plugin(app: &mut App) {
             .chain(),
     );
 
-    // Setup `JoystickInteractionRectMap`
+    // Update `JoystickRectMap`
     #[cfg(any(target_os = "android", target_os = "ios"))]
     app.add_systems(
         PostUpdate,
-        setup_joystick_interaction_rect_map::<{ JoystickID::Movement as u8 }>
+        (
+            // Run once in `Screen::Gameplay`.
+            update_joystick_rect_map::<{ JoystickID::Movement as u8 }>
+                .run_if(in_state(Screen::Gameplay).and(run_once)),
+            // Run on `WindowResized`.
+            update_joystick_rect_map::<{ JoystickID::Movement as u8 }>
+                .run_if(in_state(Screen::Gameplay).and(on_message::<WindowResized>)),
+        )
             .after(InitGameplaySystems::Finalize)
-            .after(TransformSystems::Propagate)
-            .run_if(in_state(Screen::Gameplay).and(run_once)),
+            .after(TransformSystems::Propagate),
     );
 
     // Open pause on pressing P or Escape and pause game
@@ -174,7 +180,7 @@ fn insert_resources(mut commands: Commands) {
     commands.init_resource::<PointerInputCache>();
     commands.init_resource::<NavTargetPosMap>();
     #[cfg(any(target_os = "android", target_os = "ios"))]
-    commands.init_resource::<JoystickInteractionRectMap>();
+    commands.init_resource::<JoystickRectMap>();
     commands.init_resource::<ProcGenCache<OverworldProcGen>>();
     commands.init_resource::<ProcGenCache<Slime>>();
     commands.init_resource::<ProcGenCache<StreetLight>>();
@@ -188,7 +194,7 @@ fn remove_resources(mut commands: Commands) {
     commands.remove_resource::<PointerInputCache>();
     commands.remove_resource::<NavTargetPosMap>();
     #[cfg(any(target_os = "android", target_os = "ios"))]
-    commands.remove_resource::<JoystickInteractionRectMap>();
+    commands.remove_resource::<JoystickRectMap>();
     commands.remove_resource::<ProcGenCache<OverworldProcGen>>();
     commands.remove_resource::<ProcGenCache<Slime>>();
     commands.remove_resource::<ProcGenCache<StreetLight>>();

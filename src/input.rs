@@ -33,7 +33,7 @@ use crate::{
 #[cfg(any(target_os = "android", target_os = "ios"))]
 use crate::{
     logging::error::ERR_INVALID_POINTER_CACHE,
-    mobile::{JoystickID, JoystickInteractionRectMap},
+    mobile::{JoystickID, JoystickRectMap},
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -43,7 +43,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         PreUpdate,
         (
-            (update_pointer_input_cache),
+            update_pointer_input_cache,
             #[cfg(any(target_os = "android", target_os = "ios"))]
             mock_walk_from_virtual_joystick,
             (
@@ -194,7 +194,7 @@ fn mock_jump_from_touch(
     jump: Single<Entity, With<Player>>,
     mut commands: Commands,
     touches: Res<Touches>,
-    #[cfg(any(target_os = "android", target_os = "ios"))] rect_map: Res<JoystickInteractionRectMap>,
+    #[cfg(any(target_os = "android", target_os = "ios"))] rect_map: Res<JoystickRectMap>,
 ) {
     for touch in touches.iter_just_released() {
         #[cfg(any(target_os = "android", target_os = "ios"))]
@@ -218,7 +218,7 @@ fn mock_melee_from_touch(
     mut commands: Commands,
     touches: Res<Touches>,
     input_cache: Res<PointerInputCache>,
-    #[cfg(any(target_os = "android", target_os = "ios"))] rect_map: Res<JoystickInteractionRectMap>,
+    #[cfg(any(target_os = "android", target_os = "ios"))] rect_map: Res<JoystickRectMap>,
     time: Res<Time>,
 ) {
     if time.elapsed_secs() - input_cache.start_time_secs > TAP_MAX_DURATION_SECS {
@@ -246,7 +246,7 @@ fn mock_aim_from_touch(
     player_transform: Single<&Transform, With<Player>>,
     mut commands: Commands,
     touches: Res<Touches>,
-    #[cfg(any(target_os = "android", target_os = "ios"))] rect_map: Res<JoystickInteractionRectMap>,
+    #[cfg(any(target_os = "android", target_os = "ios"))] rect_map: Res<JoystickRectMap>,
 ) {
     let (camera, camera_transform) = *camera;
 
@@ -274,7 +274,7 @@ fn mock_melee_from_click(
     mut commands: Commands,
     input_cache: Res<PointerInputCache>,
     mouse: Res<ButtonInput<MouseButton>>,
-    #[cfg(any(target_os = "android", target_os = "ios"))] rect_map: Res<JoystickInteractionRectMap>,
+    #[cfg(any(target_os = "android", target_os = "ios"))] rect_map: Res<JoystickRectMap>,
     time: Res<Time>,
 ) {
     if !mouse.just_released(MouseButton::Left)
@@ -300,7 +300,7 @@ fn mock_aim_from_click(
     window: Single<&Window, With<PrimaryWindow>>,
     mut commands: Commands,
     mouse: Res<ButtonInput<MouseButton>>,
-    #[cfg(any(target_os = "android", target_os = "ios"))] rect_map: Res<JoystickInteractionRectMap>,
+    #[cfg(any(target_os = "android", target_os = "ios"))] rect_map: Res<JoystickRectMap>,
 ) {
     // NOTE: We are using `just_pressed` to allow use in `Melee`.
     if !mouse.just_pressed(MouseButton::Left) {

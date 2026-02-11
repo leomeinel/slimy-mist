@@ -42,7 +42,7 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
-/// This contains a map of target entities mapped to their last updated position
+/// Map of target entities mapped to their last updated position.
 #[derive(Resource, Default)]
 pub(crate) struct NavTargetPosMap(HashMap<Entity, Vec2>);
 

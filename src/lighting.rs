@@ -128,7 +128,7 @@ const MIN_AMBIENT: f32 = 0.01;
 /// Maximum [`AmbientLight2d::intensity`].
 const MAX_AMBIENT: f32 = 0.5;
 
-/// Update [`AmbientLight2d::intensity`] from a linear [`EasingCurve`].
+/// Update [`AmbientLight2d::intensity`] from [`EaseFunction::SmootherStep`].
 ///
 /// This is to simulate a Day/Night cycle.
 fn update_ambient_intensity(

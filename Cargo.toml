@@ -67,7 +67,7 @@ vleue_navigator = "0.15.0"
 #        - https://github.com/SergioRibera/virtual_joystick/pull/38
 #        - https://github.com/SergioRibera/virtual_joystick/pull/40
 [target.'cfg(any(target_os = "android", target_os = "ios"))'.dependencies]
-virtual_joystick = { git = "https://github.com/leomeinel/virtual_joystick.git", branch = "update-bevy-0-18-fix-39" }
+virtual_joystick = { git = "https://github.com/leomeinel/virtual_joystick.git", branch = "refactor" }
 
 [target.'cfg(all(target_family = "wasm", any(target_os = "unknown", target_os = "none")))'.dependencies]
 bevy_rand = { version = "0.13.0", features = ["wasm_js"] }

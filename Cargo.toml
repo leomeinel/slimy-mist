@@ -3,7 +3,7 @@
 [package]
 name = "slimy_mist"
 # NOTE: Update with full semantic version on each release
-version = "0.16.3"
+version = "0.16.4"
 edition = "2024"
 license = "Apache-2.0"
 

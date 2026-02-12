@@ -241,7 +241,6 @@ fn cache_collision_data_and_related<T>(
         ..default()
     });
     commands.insert_resource(CollisionDataRelatedCache::<T> {
-        // NOTE: We are dividing height by 4 because of 2:1 pixel ratio
         shadow: StaticShadow {
             // NOTE: We are dividing height by 4 because of 2:1 pixel ratio
             mesh: meshes.add(Ellipse::new(width / 2., height / 4.)),

@@ -13,7 +13,11 @@ use std::marker::PhantomData;
 
 #[cfg(any(target_os = "android", target_os = "ios"))]
 use bevy::math::u8;
-use bevy::{input::touch::TouchPhase, prelude::*, window::PrimaryWindow};
+use bevy::{
+    input::touch::{Touch, TouchPhase},
+    prelude::*,
+    window::PrimaryWindow,
+};
 use bevy_enhanced_input::prelude::*;
 use bevy_rapier2d::prelude::*;
 #[cfg(any(target_os = "android", target_os = "ios"))]
@@ -44,9 +48,9 @@ pub(super) fn plugin(app: &mut App) {
         PreUpdate,
         (
             update_pointer_input_cache,
-            #[cfg(any(target_os = "android", target_os = "ios"))]
-            mock_walk_from_virtual_joystick,
             (
+                #[cfg(any(target_os = "android", target_os = "ios"))]
+                mock_walk_from_virtual_joystick,
                 mock_jump_from_touch,
                 (mock_melee_from_click, mock_melee_from_touch).chain(),
                 (mock_aim_from_click, mock_aim_from_touch).chain(),
@@ -64,6 +68,25 @@ pub(super) fn plugin(app: &mut App) {
     app.add_observer(set_jump);
     app.add_observer(trigger_melee_attack);
     app.add_observer(reset_aim);
+}
+
+/// Threshold for a valid swipe action from touch input in logical pixels.
+const SWIPE_THRESHOLD: f32 = 50.;
+
+/// Trait for determining if input is a swipe.
+pub(crate) trait Swipe {
+    fn is_vertical_swipe(&self) -> bool;
+    fn is_swipe_up(&self) -> bool;
+}
+impl Swipe for Touch {
+    fn is_vertical_swipe(&self) -> bool {
+        let d = self.distance();
+        d.y.abs() > SWIPE_THRESHOLD && d.y.abs() > d.x.abs()
+    }
+    fn is_swipe_up(&self) -> bool {
+        // NOTE: We are inverting y to align with user intent because `distance` is reversed on the y axis.
+        self.is_vertical_swipe() && self.distance().y < 0.
+    }
 }
 
 /// Walk [`InputAction`]
@@ -85,9 +108,6 @@ pub(crate) struct Melee;
 #[derive(InputAction)]
 #[action_output(Vec2)]
 pub(crate) struct Aim;
-
-/// Max duration for a tap to be recognized.
-const TAP_MAX_DURATION_SECS: f32 = 0.5;
 
 /// Walk speed of [`Player`].
 const PLAYER_WALK_SPEED: f32 = 80.;
@@ -133,11 +153,19 @@ pub(crate) fn player_input() -> impl Bundle {
     )
 }
 
+/// Max duration for a tap to be recognized.
+const TAP_MAX_DURATION_SECS: f32 = 0.5;
+
 /// Info on pointer input that is not natively provided by [`bevy`].
 #[derive(Resource, Default)]
 pub(crate) struct PointerInputCache {
     start_pos: Option<Vec2>,
     start_time_secs: f32,
+}
+impl PointerInputCache {
+    fn is_tap(&self, time_secs: f32) -> bool {
+        time_secs - self.start_time_secs <= TAP_MAX_DURATION_SECS
+    }
 }
 
 /// Update info in [`PointerInputCache`].
@@ -186,9 +214,6 @@ fn mock_walk_from_virtual_joystick(
     }
 }
 
-/// Threshold for a valid swipe action from touch input in logical pixels.
-const SWIPE_THRESHOLD: f32 = 50.;
-
 /// Mock [`Jump`] from touch inputs.
 fn mock_jump_from_touch(
     jump: Single<Entity, With<Player>>,
@@ -202,9 +227,7 @@ fn mock_jump_from_touch(
             continue;
         }
 
-        let distance = touch.distance();
-        // NOTE: We are inverting y to align with user intent because `distance` is reversed on the y axis.
-        if -distance.y > SWIPE_THRESHOLD && distance.y.abs() > distance.x.abs() {
+        if touch.is_swipe_up() {
             commands
                 .entity(*jump)
                 .mock_once::<Player, Jump>(ActionState::Fired, true);
@@ -221,7 +244,7 @@ fn mock_melee_from_touch(
     #[cfg(any(target_os = "android", target_os = "ios"))] rect_map: Res<JoystickRectMap>,
     time: Res<Time>,
 ) {
-    if time.elapsed_secs() - input_cache.start_time_secs > TAP_MAX_DURATION_SECS {
+    if !input_cache.is_tap(time.elapsed_secs()) {
         return;
     }
     #[cfg(any(target_os = "android", target_os = "ios"))]
@@ -232,7 +255,7 @@ fn mock_melee_from_touch(
         return;
     }
 
-    if touches.any_just_released() {
+    if touches.iter_just_released().any(|t| !t.is_vertical_swipe()) {
         commands
             .entity(*melee)
             .mock_once::<Player, Melee>(ActionState::Fired, true);
@@ -277,9 +300,7 @@ fn mock_melee_from_click(
     #[cfg(any(target_os = "android", target_os = "ios"))] rect_map: Res<JoystickRectMap>,
     time: Res<Time>,
 ) {
-    if !mouse.just_released(MouseButton::Left)
-        || time.elapsed_secs() - input_cache.start_time_secs > TAP_MAX_DURATION_SECS
-    {
+    if !mouse.just_released(MouseButton::Left) || !input_cache.is_tap(time.elapsed_secs()) {
         return;
     }
     #[cfg(any(target_os = "android", target_os = "ios"))]

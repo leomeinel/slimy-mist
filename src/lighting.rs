@@ -76,7 +76,7 @@ impl Default for StreetLight {
     fn default() -> Self {
         Self(PointLight2d {
             color: tailwind::AMBER_500.into(),
-            intensity: 2.,
+            intensity: 1.,
             outer_radius: 128.,
             falloff: 4.,
             ..default()
@@ -124,9 +124,9 @@ fn remove_settings(
 /// Interval in seconds to run logic in [`update_ambient_intensity`].
 const UPDATE_AMBIENT_INTERVAL_SECS: f32 = 5.;
 /// Minimum [`AmbientLight2d::intensity`].
-const MIN_AMBIENT: f32 = 0.1;
+const MIN_AMBIENT: f32 = 0.01;
 /// Maximum [`AmbientLight2d::intensity`].
-const MAX_AMBIENT: f32 = 0.6;
+const MAX_AMBIENT: f32 = 0.5;
 
 /// Update [`AmbientLight2d::intensity`] from a linear [`EasingCurve`].
 ///

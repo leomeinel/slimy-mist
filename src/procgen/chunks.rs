@@ -12,7 +12,7 @@ use std::marker::PhantomData;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use bevy_prng::WyRand;
-use rand::Rng as _;
+use rand::RngExt as _;
 
 use crate::{
     camera::LEVEL_Z,

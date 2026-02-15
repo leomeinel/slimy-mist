@@ -22,7 +22,7 @@ use bevy_asset_loader::asset_collection::AssetCollection;
 use bevy_prng::WyRand;
 use bevy_rapier2d::prelude::*;
 use bevy_spritesheet_animation::prelude::SpritesheetAnimation;
-use rand::Rng as _;
+use rand::RngExt as _;
 
 use crate::{
     AppSystems,

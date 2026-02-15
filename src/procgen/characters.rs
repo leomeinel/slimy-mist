@@ -47,7 +47,7 @@ pub(crate) fn on_procgen_characters<T, A, B>(
         .flat_map(|x| (0..CHUNK_SIZE.y).map(move |y| (x, y)))
         .collect();
     let target_origins: Vec<Vec2> = target_origins
-        .choose_multiple(&mut procgen_rng, CHARACTERS_PER_CHUNK)
+        .sample(&mut procgen_rng, CHARACTERS_PER_CHUNK)
         .map(|&(x, y)| Vec2::new(x as f32, y as f32))
         .collect();
 

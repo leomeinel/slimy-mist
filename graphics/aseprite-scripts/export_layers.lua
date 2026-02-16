@@ -12,13 +12,69 @@ Further Contributors:
     - Demonkiller8973
 --]]
 
--- Import main.
-local err = dofile("main.lua")
-if err ~= 0 then return err end
+-- Auxiliary functions
 
--- Variable to keep track of the number of layers exported.
-local n_layers = 0
+-- Path handling.
 
+-- Return the path to the dir containing a file.
+-- Source: https://stackoverflow.com/questions/9102126/lua-return-directory-path-from-path
+local function dirName(str)
+   return str:match("(.*" .. Sep .. ")")
+end
+
+-- Return the name of a file given its full path..
+-- Source: https://codereview.stackexchange.com/questions/90177/get-file-name-with-extension-and-get-only-extension
+local function baseName(str)
+   return str:match("^.*" .. Sep .. "(.+)$") or str
+end
+
+-- Return the name of a file excluding the extension, this being, everything after the dot.
+-- Source: https://stackoverflow.com/questions/18884396/extracting-filename-only-with-pattern-matching
+local function removeExtension(str)
+   return str:match("(.+)%..+")
+end
+
+-- sprite handling.
+
+-- Hides all layers and sub-layers inside a group, returning a list with all
+-- initial states of each layer's visibility.
+local function hideLayers(sprite)
+   local data = {} -- Save visibility status of each layer here.
+   for i,layer in ipairs(sprite.layers) do
+      if layer.isGroup then
+         -- Recursive for groups.
+         data[i] = hideLayers(layer)
+      else
+         data[i] = layer.isVisible
+         layer.isVisible = false
+      end
+   end
+   return data
+end
+
+-- Restore layers visibility.
+local function restoreLayersVisibility(sprite, data)
+   for i,layer in ipairs(sprite.layers) do
+      if layer.isGroup then
+         -- Recursive for groups.
+         restoreLayersVisibility(layer, data[i])
+      else
+         layer.isVisible = data[i]
+      end
+   end
+end
+
+-- Dialog
+local function msgDialog(title, msg)
+   local dialog = Dialog(title)
+   dialog:label{
+      id = "msg",
+      text = msg
+   }
+   dialog:newrow()
+   dialog:button{id = "close", text = "Close", onclick = function() dialog:close() end }
+   return dialog
+end
 
 -- Function to calculate the bounding box of the non-transparent pixels in a layer
 local function calculateBoundingBox(layer)
@@ -42,6 +98,9 @@ local function calculateBoundingBox(layer)
     end
     return Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1)
 end
+
+-- Variable to keep track of the number of layers exported.
+local n_layers = 0
 
 -- Exports every layer individually.
 local function exportLayers(sprite, root_layer, filename, group_sep, data)
@@ -70,7 +129,7 @@ local function exportLayers(sprite, root_layer, filename, group_sep, data)
             layer.isVisible = true
             filename = filename:gsub("{layergroups}", "")
             filename = filename:gsub("{layername}", layer.name)
-            os.execute("mkdir \"" .. Dirname(filename) .. "\"")
+            os.execute("mkdir \"" .. dirName(filename) .. "\"")
             if data.spritesheet then
                 local sheettype=SpriteSheetType.HORIZONTAL
                 if (data.tagsplit == "To Rows") then
@@ -112,17 +171,17 @@ local function exportLayers(sprite, root_layer, filename, group_sep, data)
                 -- make a selection on the active layer
                 app.activeLayer = layer;
                 sprite.selection = Selection(boundingRect);
-                
+
                 -- create a new sprite from that selection
                 app.command.NewSpriteFromSelection()
-                
+
                 -- save it as png
                 app.command.SaveFile {
                     ui=false,
                     filename=filename
                 }
                 app.command.CloseFile()
-                
+
                 app.activeSprite = layer.sprite  -- Set the active sprite to the current layer's sprite
                 sprite.selection = Selection();
             else
@@ -135,160 +194,195 @@ local function exportLayers(sprite, root_layer, filename, group_sep, data)
     end
 end
 
+-- Current sprite.
+local sprite = app.activeSprite
+if sprite == nil then
+   -- Show error, no sprite active.
+   local dialog = msgDialog("Error", "No sprite is currently active. Please, open a sprite first and run again.")
+   dialog:show()
+   return 1
+end
+
+-- Identify operative system.
+Sep = string.sub(sprite.filename, 1, 1) == "/" and "/" or "\\"
+
+if dirName(sprite.filename) == nil then
+   -- Error, can't identify OS when the sprite isn't saved somewhere.
+   local dialog = msgDialog("Error", "Current sprite is not associated to a file. Please, save your sprite and run again.")
+   dialog:show()
+   return 1
+end
+
 -- Open main dialog.
-local dlg = Dialog("Export layers")
-dlg:file{
+local dialog = Dialog("Export layers")
+dialog:file{
     id = "directory",
     label = "Output directory:",
-    filename = Sprite.filename,
+    filename = sprite.filename,
     open = false
 }
-dlg:entry{
+dialog:entry{
     id = "filename",
     label = "File name format:",
     text = "{layergroups}{layername}"
 }
-dlg:combobox{
+dialog:combobox{
     id = 'format',
     label = 'Export Format:',
     option = 'webp',
     options = {'webp', 'png', 'gif', 'jpg'}
 }
-dlg:combobox{
+dialog:combobox{
     id = 'group_sep',
     label = 'Group separator:',
     option = Sep,
     options = {Sep, '-', '_'}
 }
-dlg:slider{id = 'scale', label = 'Export Scale:', min = 1, max = 10, value = 1}
-dlg:check{
+dialog:slider{id = 'scale', label = 'Export Scale:', min = 1, max = 10, value = 1}
+dialog:check{
     id = "spritesheet",
     label = "Export as spritesheet:",
-    selected = false,
+    selected = true,
     onclick = function()
         -- Hide these options when spritesheet is checked.
-        dlg:modify{
+        dialog:modify{
             id = "trim",
-            visible = not dlg.data.spritesheet
+            visible = not dialog.data.spritesheet
         }
         -- Show these options when spritesheet is checked.
-        dlg:modify{
+        dialog:modify{
             id = "trimSprite",
-            visible = dlg.data.spritesheet
+            visible = dialog.data.spritesheet
         }
-        dlg:modify{
+        dialog:modify{
             id = "trimCells",
-            visible = dlg.data.spritesheet
+            visible = dialog.data.spritesheet
         }
-        dlg:modify{
+        dialog:modify{
             id = "mergeDuplicates",
-            visible = dlg.data.spritesheet
+            visible = dialog.data.spritesheet
         }
-        dlg:modify{
+        dialog:modify{
             id = "tagsplit",
-            visible = dlg.data.spritesheet
+            visible = dialog.data.spritesheet
         }
     end
 }
-dlg:check{
+dialog:check{
     id = "trim",
     label = "Trim:",
+    visible = true,
     selected = false
 }
-dlg:check{
+dialog:check{
     id = "trimSprite",
-    label = "  Trim Sprite:",
+    label = "  Trim sprite:",
     selected = false,
-    visible = false,
+    visible = true,
     onclick = function()
-        dlg:modify{
+        dialog:modify{
             id = "trimByGrid",
-            visible = dlg.data.trimSprite or dlg.data.trimCells,
+            visible = dialog.data.trimSprite or dialog.data.trimCells,
         }
     end
 }
-dlg:check{
+dialog:check{
     id = "trimCells",
     label = "  Trim Cells:",
     selected = false,
-    visible = false,
+    visible = true,
     onclick = function()
-        dlg:modify{
+        dialog:modify{
             id = "trimByGrid",
-            visible = dlg.data.trimSprite or dlg.data.trimCells,
+            visible = dialog.data.trimSprite or dialog.data.trimCells,
         }
     end
 }
-dlg:check{
+dialog:check{
     id = "trimByGrid",
     label = "  Trim Grid:",
     selected = false,
-    visible = false
+    visible = true
 }
-dlg:combobox{ -- Spritesheet export only option
+dialog:combobox{ -- Spritesheet export only option
     id = "tagsplit",
     label = "  Split Tags:",
-    visible = false,
-    option = 'No',
+    visible = true,
+    option = 'To Rows',
     options = {'No', 'To Rows', 'To Columns'}
 }
-dlg:check{ -- Spritesheet export only option
+dialog:check{ -- Spritesheet export only option
     id = "mergeDuplicates",
     label = "  Merge duplicates:",
     selected = false,
     visible = false
 }
-dlg:check{
+dialog:check{
     id = "exclude_prefix",
     label = "Exclude layers with prefix",
     selected = false,
     onclick = function()
-        dlg:modify{
+        dialog:modify{
             id = "exclusion_prefix",
-            visible = dlg.data.exclude_prefix
+            visible = dialog.data.exclude_prefix
         }
     end
 }
-dlg:entry{
+dialog:entry{
     id = "exclusion_prefix",
     label = "  Prefix:",
     text = "_",
     visible = false
 }
-dlg:check{id = "save", label = "Save sprite:", selected = false}
-dlg:button{id = "ok", text = "Export"}
-dlg:button{id = "cancel", text = "Cancel"}
-dlg:show()
+dialog:check{id = "save", label = "Save sprite:", selected = false}
+dialog:button{id = "ok", text = "Export"}
+dialog:button{id = "cancel", text = "Cancel"}
+dialog:show()
 
-if not dlg.data.ok then return 0 end
+if not dialog.data.ok then return 0 end
 
 -- Get path and filename
-local output_path = Dirname(dlg.data.directory)
-local filename = dlg.data.filename .. "." .. dlg.data.format
+local output_path = dirName(dialog.data.directory)
+local filename = dialog.data.filename .. "." .. dialog.data.format
 
 if output_path == nil then
-    local dlg = MsgDialog("Error", "No output directory was specified.")
-    dlg:show()
+    local dialog = msgDialog("Error", "No output directory was specified.")
+    dialog:show()
     return 1
 end
 
-local group_sep = dlg.data.group_sep
+-- Switch to RGB if necessary
+local colorMode = sprite.colorMode
+if sprite.colorMode == ColorMode.INDEXED then
+    app.command.ChangePixelFormat {
+        format="rgb"
+    }
+end
+
+local group_sep = dialog.data.group_sep
 filename = filename:gsub("{spritename}",
-                         RemoveExtension(Basename(Sprite.filename)))
+                         removeExtension(baseName(sprite.filename)))
 filename = filename:gsub("{groupseparator}", group_sep)
 
 -- Finally, perform everything.
-Sprite:resize(Sprite.width * dlg.data.scale, Sprite.height * dlg.data.scale)
-local layers_visibility_data = HideLayers(Sprite)
-exportLayers(Sprite, Sprite, output_path .. filename, group_sep, dlg.data)
-RestoreLayersVisibility(Sprite, layers_visibility_data)
-Sprite:resize(Sprite.width / dlg.data.scale, Sprite.height / dlg.data.scale)
+sprite:resize(sprite.width * dialog.data.scale, sprite.height * dialog.data.scale)
+local layers_visibility_data = hideLayers(sprite)
+exportLayers(sprite, sprite, output_path .. filename, group_sep, dialog.data)
+restoreLayersVisibility(sprite, layers_visibility_data)
+sprite:resize(sprite.width / dialog.data.scale, sprite.height / dialog.data.scale)
+
+-- Switch back to INDEXED if necessary
+if sprite.colorMode ~= colorMode then
+    app.command.ChangePixelFormat {
+        format="indexed"
+    }
+end
 
 -- Save the original file if specified
-if dlg.data.save then Sprite:saveAs(dlg.data.directory) end
+if dialog.data.save then sprite:saveAs(dialog.data.directory) end
 
 -- Success dialog.
-local dlg = MsgDialog("Success!", "Exported " .. n_layers .. " layers.")
-dlg:show()
+local dialog = msgDialog("Success!", "Exported " .. n_layers .. " layers.")
+dialog:show()
 
 return 0

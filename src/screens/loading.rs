@@ -32,12 +32,11 @@ use crate::{
     levels::overworld::{OverworldAssets, OverworldProcGen},
     logging::{
         error::{
-            ERR_LOADING_ANIMATION_DATA, ERR_LOADING_COLLISION_DATA, ERR_LOADING_LAYER_DATA,
-            ERR_LOADING_TILE_DATA,
+            ERR_LOADING_ANIMATION_DATA, ERR_LOADING_COLLISION_DATA, ERR_LOADING_CREDITS_DATA, ERR_LOADING_LAYER_DATA, ERR_LOADING_TILE_DATA
         },
         warn::WARN_INCOMPLETE_COLLISION_DATA,
     },
-    menus::credits::CreditsAssets,
+    menus::credits::{CreditsAssets, CreditsData, CreditsDataCache, CreditsHandle},
     procgen::{
         CHUNK_SIZE, PROCGEN_DISTANCE, ProcGenerated, TileData, TileDataCache, TileDataRelatedCache,
         TileHandle,
@@ -58,15 +57,14 @@ pub(super) fn plugin(app: &mut App) {
         // NOTE: This advances to `Screen::LoadingCache` to cache data
         ProgressPlugin::<Screen>::new()
             .with_state_transition(Screen::Loading, Screen::LoadingCache),
-        // Levels
-        RonAssetPlugin::<TileData<OverworldProcGen>>::new(&["tiles.ron"]),
-        // Characters
         RonAssetPlugin::<AnimationData<Player>>::new(&["animation.ron"]),
-        RonAssetPlugin::<CollisionData<Player>>::new(&["collision.ron"]),
-        RonAssetPlugin::<LayerData<Player>>::new(&["layers.ron"]),
         RonAssetPlugin::<AnimationData<Slime>>::new(&["animation.ron"]),
+        RonAssetPlugin::<CollisionData<Player>>::new(&["collision.ron"]),
         RonAssetPlugin::<CollisionData<Slime>>::new(&["collision.ron"]),
+        RonAssetPlugin::<CreditsData>::new(&["credits.ron"]),
+        RonAssetPlugin::<LayerData<Player>>::new(&["layers.ron"]),
         RonAssetPlugin::<LayerData<Slime>>::new(&["layers.ron"]),
+        RonAssetPlugin::<TileData<OverworldProcGen>>::new(&["tiles.ron"]),
     ));
 
     // Add loading states via bevy_asset_loader
@@ -107,6 +105,7 @@ pub(super) fn plugin(app: &mut App) {
                 cache_animation_data::<Slime>,
                 cache_collision_data_and_related::<Player>,
                 cache_collision_data_and_related::<Slime>,
+                cache_credits_data,
                 cache_layer_data_related::<Player>,
                 cache_layer_data_related::<Slime>,
                 cache_tile_data_and_related::<OverworldProcGen>,
@@ -152,6 +151,9 @@ fn insert_handle_resources(mut commands: Commands, assets: Res<AssetServer>) {
     commands.insert_resource(LayerHandle::<Slime>(
         assets.load("data/characters/npc/slime.layers.ron"),
     ));
+
+    // `CreditsData`
+    commands.insert_resource(CreditsHandle(assets.load("data/menus/credits.ron")));
 
     // `TileData`
     commands.insert_resource(TileHandle::<OverworldProcGen>(
@@ -251,6 +253,29 @@ fn cache_collision_data_and_related<T>(
 
     // Remove handle after caching since it is no longer needed
     commands.remove_resource::<CollisionHandle<T>>();
+}
+
+/// Cache data from [`CreditsData`] in [`CreditsDataCache`]
+///
+/// ## Traits
+///
+/// - `T` must implement [`Character`].
+fn cache_credits_data(
+    mut commands: Commands,
+    mut data: ResMut<Assets<CreditsData>>,
+    handle: Res<CreditsHandle>,
+) {
+    let data = data
+        .remove(handle.0.id())
+        .expect(ERR_LOADING_CREDITS_DATA);
+    commands.insert_resource(CreditsDataCache {
+        created_by: data.created_by,
+        assets: data.assets,
+        code: data.code,
+    });
+
+    // Remove handle after caching since it is no longer needed
+    commands.remove_resource::<CreditsHandle>();
 }
 
 /// Cache data from [`LayerData`] in [`LayerDataRelatedCache`]

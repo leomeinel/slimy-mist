@@ -32,6 +32,31 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
+/// Credits data deserialized from a ron file as a generic.
+#[derive(serde::Deserialize, Asset, TypePath, Default)]
+pub(crate) struct CreditsData {
+    #[serde(default)]
+    pub(crate) created_by: Vec<[String; 2]>,
+    #[serde(default)]
+    pub(crate) assets: Vec<[String; 2]>,
+    #[serde(default)]
+    pub(crate) code: Vec<[String; 2]>,
+}
+
+/// Handle for [`CreditsData`] as a generic
+#[derive(Resource)]
+pub(crate) struct CreditsHandle(pub(crate) Handle<CreditsData>);
+
+/// Cache for [`CreditsData`]
+///
+/// This is to allow easier access.
+#[derive(Resource, Default)]
+pub(crate) struct CreditsDataCache {
+    pub(crate) created_by: Vec<[String; 2]>,
+    pub(crate) assets: Vec<[String; 2]>,
+    pub(crate) code: Vec<[String; 2]>,
+}
+
 /// Assets for credits
 #[derive(AssetCollection, Resource)]
 pub(crate) struct CreditsAssets {
@@ -40,52 +65,25 @@ pub(crate) struct CreditsAssets {
 }
 
 /// Spawn menu with credits for assets and creators of the game
-fn spawn_credits_menu(mut commands: Commands) {
+fn spawn_credits_menu(mut commands: Commands, credits_data: Res<CreditsDataCache>) {
     commands.spawn((
         widgets::ui_root("Credits Menu"),
         GlobalZIndex(2),
         DespawnOnExit(Menu::Credits),
         children![
             widgets::header("Created by"),
-            created_by(),
+            grid(credits_data.created_by.clone()),
             widgets::header("Assets"),
-            assets(),
+            grid(credits_data.assets.clone()),
+            widgets::header("Code"),
+            grid(credits_data.code.clone()),
             widgets::button("Back", go_back_on_click),
         ],
     ));
 }
 
-// FIXME: Get data from ron instead of having it in code.
-/// Grid for created by section
-fn created_by() -> impl Bundle {
-    grid(vec![
-        ["Leopold Meinel", "Game design and programming"],
-        ["Shave", "Sprites published under CC0-1.0"],
-    ])
-}
-
-// FIXME: Get data from ron instead of having it in code.
-/// Grid for assets section
-fn assets() -> impl Bundle {
-    grid(vec![
-        [
-            "Code & Structure",
-            "CC0-1.0/Apache-2.0/MIT by bevy_new_2d and contributors",
-        ],
-        [
-            "Code & Game Engine",
-            "Apache-2.0/MIT by bevyengine and contributors",
-        ],
-        ["Music", "CC0-1.0 by freepd.com and creators"],
-        ["SFX", "CC0-1.0 by Jaszunio15"],
-        ["SFX", "CC0-1.0 by OwlishMedia"],
-        ["SFX", "CC-BY-4.0/CC-BY-3.0 by leohpaz"],
-        ["Fonts", "OFL-1.1 by Google Fonts"],
-    ])
-}
-
 /// Grid with custom settings that fit the credits screen
-fn grid(content: Vec<[&'static str; 2]>) -> impl Bundle {
+fn grid(content: Vec<[String; 2]>) -> impl Bundle {
     (
         Name::new("Grid"),
         Node {

@@ -13,6 +13,9 @@ pub(crate) const ERR_LOADING_ANIMATION_DATA: &str =
 /// Error message if loading collision data failed
 pub(crate) const ERR_LOADING_COLLISION_DATA: &str =
     "Could not load collision data. The file is probably missing.";
+/// Error message if loading animation data failed
+pub(crate) const ERR_LOADING_CREDITS_DATA: &str =
+    "Could not load credits data. The file is probably missing.";
 /// Error message if loading layer data failed
 pub(crate) const ERR_LOADING_LAYER_DATA: &str =
     "Could not load layer data. The file is probably missing.";

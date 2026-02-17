@@ -52,11 +52,11 @@ This repository is not entirely licensed as Apache-2.0. See [Credits](#Credits) 
 | Contribution  | Author(s)                                                                                                                                                                                                               |
 | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Color palette | [Free to use](https://www.reddit.com/r/gamedev/comments/qsasc4/lospeccom_color_palettes_licensing/) by [Otterisk 96](https://lospec.com/palette-list/otterisk-96) contributors                                          |
-| Music         | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/legalcode) by [freepd.com & creators](https://freepd.com/)                                                                                                  |
 | Fonts         | [OFL-1.1](https://opensource.org/license/OFL-1.1) by [Google Fonts](https://fonts.google.com)                                                                                                                           |
+| Music         | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/legalcode) by [freepd.com & creators](https://freepd.com/)                                                                                                  |
+| SFX           | [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/legalcode)/[CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/legalcode) by [leohpaz](https://opengameart.org/content/12-player-movement-sfx)              |
 | SFX           | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/legalcode) by [Jaszunio15](https://freesound.org/people/Jaszunio15/packs/23837/)                                                                            |
 | SFX           | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/legalcode) by OwlishMedia from [here](https://opengameart.org/content/sound-effects-pack) & [here](https://opengameart.org/content/8-bit-sound-effect-pack) |
-| SFX           | [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/legalcode)/[CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/legalcode) by [leohpaz](https://opengameart.org/content/12-player-movement-sfx)              |
 
 ## Code/Dependencies
 

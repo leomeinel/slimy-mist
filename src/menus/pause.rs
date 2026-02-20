@@ -13,7 +13,11 @@
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
-use crate::{menus::Menu, screens::Screen, ui::widgets};
+use crate::{
+    menus::Menu,
+    screens::Screen,
+    ui::widgets::{self, UiFontHandle},
+};
 
 pub(super) fn plugin(app: &mut App) {
     // Open pause menu
@@ -27,16 +31,16 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 /// Spawn pause menu
-fn spawn_pause_menu(mut commands: Commands) {
+fn spawn_pause_menu(mut commands: Commands, font: Res<UiFontHandle>) {
     commands.spawn((
         widgets::ui_root("Pause Menu"),
         GlobalZIndex(2),
         DespawnOnExit(Menu::Pause),
         children![
-            widgets::header("Game paused"),
-            widgets::button("Continue", close_menu),
-            widgets::button("Settings", open_settings_menu),
-            widgets::button("Quit to title", quit_to_title),
+            widgets::header("Game paused", font.0.clone()),
+            widgets::button_large("Continue", font.0.clone(), close_menu),
+            widgets::button_large("Settings", font.0.clone(), open_settings_menu),
+            widgets::button_large("Quit to title", font.0.clone(), quit_to_title),
         ],
     ));
 }

@@ -11,14 +11,18 @@
 
 //! A splash screen that plays briefly at startup.
 
-use bevy::{color::palettes::tailwind, input::common_conditions::input_just_pressed, prelude::*};
+use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use bevy_asset_loader::prelude::*;
 
-use crate::{AppSystems, screens::Screen, ui::prelude::*};
+use crate::{
+    AppSystems,
+    screens::Screen,
+    ui::{palette::*, prelude::*},
+};
 
 pub(super) fn plugin(app: &mut App) {
     // Insert resources
-    app.insert_resource(ClearColor(SPLASH_BACKGROUND_COLOR.into()));
+    app.insert_resource(ClearColor(CLEAR_BACKGROUND.into()));
 
     // Open splash screen
     app.add_systems(OnEnter(Screen::Splash), spawn_splash_screen);
@@ -93,12 +97,8 @@ impl Default for SplashTimer {
     }
 }
 
-/// rgb(38, 38, 38)
-const SPLASH_BACKGROUND_COLOR: Srgba = tailwind::NEUTRAL_800;
-
 /// Default display duration of the splash screen
 const SPLASH_DURATION_SECS: f32 = 1.8;
-
 /// Fade duration of the splash screen
 const SPLASH_FADE_DURATION_SECS: f32 = 0.6;
 
@@ -106,12 +106,12 @@ const SPLASH_FADE_DURATION_SECS: f32 = 0.6;
 fn spawn_splash_screen(mut commands: Commands, splash_assets: Res<SplashAssets>) {
     commands.spawn((
         widgets::ui_root("Splash Screen"),
-        BackgroundColor(SPLASH_BACKGROUND_COLOR.into()),
+        BackgroundColor(CLEAR_BACKGROUND.into()),
         DespawnOnExit(Screen::Splash),
         children![(
             Name::new("Splash image"),
             Node {
-                margin: UiRect::all(Val::Auto),
+                margin: UiRect::all(auto()),
                 width: percent(70),
                 ..default()
             },

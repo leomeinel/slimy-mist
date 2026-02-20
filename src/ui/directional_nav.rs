@@ -61,7 +61,7 @@ pub(super) fn plugin(app: &mut App) {
 
     app.add_systems(
         Update,
-        interact_with_focused_button.run_if(in_state(OverrideInteraction(true))),
+        (hover_focused, click_focused).run_if(in_state(OverrideInteraction(true))),
     );
 
     // Set `OverrideInteraction` to false
@@ -174,20 +174,54 @@ fn navigate(mut navigator: AutoDirectionalNavigator, action_set: Res<Directional
     }
 }
 
-/// Trigger [`Pointer<Click>`] for focused buttons mapped to [`DirectionalNavAction::Select`] in [`DirectionalNavActionSet`].
-fn interact_with_focused_button(
+/// Trigger [`Pointer<Over>`] on focused [`Entity`]s.
+fn hover_focused(
+    mut commands: Commands,
+    input_focus: Res<InputFocus>,
+    mut last_entity: Local<Option<Entity>>,
+) {
+    if input_focus.0 != *last_entity
+        && let Some(entity) = input_focus.0
+    {
+        // NOTE: Since we only need to trigger the pointer hover for the entity,
+        //       we are mostly using placeholder values.
+        commands.trigger(Pointer::<Over> {
+            entity,
+            pointer_id: PointerId::Mouse,
+            pointer_location: Location {
+                target: NormalizedRenderTarget::None {
+                    width: 0,
+                    height: 0,
+                },
+                position: Vec2::ZERO,
+            },
+            event: Over {
+                hit: HitData {
+                    camera: Entity::PLACEHOLDER,
+                    depth: 0.0,
+                    position: None,
+                    normal: None,
+                },
+            },
+        });
+        *last_entity = Some(entity);
+    }
+}
+
+/// Trigger [`Pointer<Click>`] on focused [`Entity`]s mapped to [`DirectionalNavAction::Select`] in [`DirectionalNavActionSet`].
+fn click_focused(
     mut commands: Commands,
     action_set: Res<DirectionalNavActionSet>,
     input_focus: Res<InputFocus>,
 ) {
     if action_set.0.contains(&DirectionalNavAction::Select)
-        && let Some(focused_entity) = input_focus.0
+        && let Some(entity) = input_focus.0
     {
+        // NOTE: Since we only need to trigger the pointer click for the entity,
+        //       we are mostly using placeholder values.
         commands.trigger(Pointer::<Click> {
-            entity: focused_entity,
+            entity,
             pointer_id: PointerId::Mouse,
-            // NOTE: Since we only need to trigger the pointer click for the entity,
-            //       we are using placeholder values here.
             pointer_location: Location {
                 target: NormalizedRenderTarget::None {
                     width: 0,
@@ -197,8 +231,6 @@ fn interact_with_focused_button(
             },
             event: Click {
                 button: PointerButton::Primary,
-                // NOTE: Since we only need to trigger the pointer click for the entity,
-                //       we are using placeholder values here.
                 hit: HitData {
                     camera: Entity::PLACEHOLDER,
                     depth: 0.0,

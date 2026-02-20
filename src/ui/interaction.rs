@@ -9,9 +9,10 @@
  * Heavily inspired by: https://github.com/TheBevyFlock/bevy_new_2d
  */
 
-use crate::audio::sound_effect;
 use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
+
+use crate::{audio::sound_effect, ui::widgets::NodeOffset};
 
 pub(super) fn plugin(app: &mut App) {
     // Insert states
@@ -22,7 +23,7 @@ pub(super) fn plugin(app: &mut App) {
         OnEnter(OverrideInteraction(false)),
         refresh_interaction_palette,
     );
-    app.add_systems(Update, apply_interaction_palette);
+    app.add_systems(Update, visualize_interaction);
 
     // Play sound effects
     app.add_observer(play_on_hover_sound_effect);
@@ -63,22 +64,36 @@ pub(crate) struct InteractionAssets {
     click: Handle<AudioSource>,
 }
 
-/// Apply [`BackgroundColor`] from palette mapped to [`Interaction`] or [`InteractionOverride`].
+/// Visualize [`Interaction`] and [`InteractionOverride`].
 ///
-/// This also sets [`OverrideInteraction`] to false if any [`Interaction`] that is not [`Interaction::None`] occurred.
-pub(crate) fn apply_interaction_palette(
+/// ## Actions
+///
+/// - Moves [`Node`] based on [`NodeOffset`] according to [`Interaction`].
+/// - Applies [`BackgroundColor`] from palette mapped to [`Interaction`] or [`InteractionOverride`].
+/// - Sets [`OverrideInteraction`] to false if any [`Interaction`] that is not [`Interaction::None`] occurred.
+pub(crate) fn visualize_interaction(
     query: Query<
         (
             &Interaction,
             &InteractionOverride,
             &InteractionPalette,
+            &NodeOffset,
             &mut BackgroundColor,
+            &mut Node,
         ),
         Or<(Changed<Interaction>, Changed<InteractionOverride>)>,
     >,
     mut next_state: ResMut<NextState<OverrideInteraction>>,
 ) {
-    for (interaction, interaction_override, palette, mut background) in query {
+    for (interaction, interaction_override, palette, offset, mut background, mut node) in query {
+        // Move node based on `Interaction`
+        if *interaction == Interaction::Pressed {
+            node.bottom = px(0);
+        } else {
+            node.bottom = px(offset.0.y);
+        }
+
+        // Change background based on `Interaction`
         *background = match interaction {
             Interaction::None => match interaction_override {
                 InteractionOverride::Hovered => palette.hovered,
@@ -115,7 +130,7 @@ pub(crate) fn refresh_interaction_palette(
 /// Play sound effect on hover
 fn play_on_hover_sound_effect(
     event: On<Pointer<Over>>,
-    query: Query<(), With<Interaction>>,
+    query: Query<(), Or<(With<Interaction>, With<InteractionOverride>)>>,
     mut commands: Commands,
     interaction_assets: If<Res<InteractionAssets>>,
 ) {
@@ -127,7 +142,7 @@ fn play_on_hover_sound_effect(
 /// Play sound effect on click
 fn play_on_click_sound_effect(
     event: On<Pointer<Click>>,
-    query: Query<(), With<Interaction>>,
+    query: Query<(), Or<(With<Interaction>, With<InteractionOverride>)>>,
     mut commands: Commands,
     interaction_assets: If<Res<InteractionAssets>>,
 ) {

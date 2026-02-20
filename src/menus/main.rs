@@ -13,14 +13,18 @@
 
 use bevy::prelude::*;
 
-use crate::{menus::Menu, screens::Screen, ui::widgets};
+use crate::{
+    menus::Menu,
+    screens::Screen,
+    ui::widgets::{self, UiFontHandle},
+};
 
 pub(super) fn plugin(app: &mut App) {
     // Open main menu
     app.add_systems(OnEnter(Menu::Main), spawn_main_menu);
 }
 
-fn spawn_main_menu(mut commands: Commands) {
+fn spawn_main_menu(mut commands: Commands, font: Res<UiFontHandle>) {
     // Spawn Main menu with state changing buttons
     commands.spawn((
         widgets::ui_root("Main Menu"),
@@ -28,17 +32,17 @@ fn spawn_main_menu(mut commands: Commands) {
         DespawnOnExit(Menu::Main),
         #[cfg(not(any(target_family = "wasm", target_os = "android", target_os = "ios")))]
         children![
-            widgets::button("Play", enter_gameplay_screen),
-            widgets::button("Settings", open_settings_menu),
-            widgets::button("Credits", open_credits_menu),
-            widgets::button("Exit", exit_app),
+            widgets::button_large("Play", font.0.clone(), enter_gameplay_screen),
+            widgets::button_large("Settings", font.0.clone(), open_settings_menu),
+            widgets::button_large("Credits", font.0.clone(), open_credits_menu),
+            widgets::button_large("Exit", font.0.clone(), exit_app),
         ],
         // Do not add exit button for wasm, android and ios
         #[cfg(any(target_family = "wasm", target_os = "android", target_os = "ios"))]
         children![
-            widgets::button("Play", enter_gameplay_screen),
-            widgets::button("Settings", open_settings_menu),
-            widgets::button("Credits", open_credits_menu),
+            widgets::button("Play", font.0.clone(), enter_gameplay_screen),
+            widgets::button("Settings", font.0.clone(), open_settings_menu),
+            widgets::button("Credits", font.0.clone(), open_credits_menu),
         ],
     ));
 }

@@ -21,7 +21,7 @@ use virtual_joystick::{
     VirtualJoystickNode, VirtualJoystickPlugin, VirtualJoystickUIBackground, VirtualJoystickUIKnob,
 };
 
-use crate::{logging::error::ERR_INVALID_CHILDREN, screens::Screen};
+use crate::{logging::error::ERR_INVALID_CHILDREN, screens::Screen, ui::palette::*};
 
 pub(super) fn plugin(app: &mut App) {
     // Add library plugins
@@ -95,13 +95,8 @@ pub(crate) fn update_joystick_rect_map<const ID: u8>(
     }
 }
 
-/// Color of the joystick knob
-const JOYSTICK_KNOB_COLOR: Color = Color::WHITE;
 /// Size of the joystick knob in pixels
 const JOYSTICK_KNOB_SIZE: Vec2 = Vec2::splat(50.);
-
-/// Color of the joystick background
-const JOYSTICK_BACKGROUND_COLOR: Color = Color::WHITE;
 /// Size of the joystick background in pixels
 const JOYSTICK_BACKGROUND_SIZE: Vec2 = Vec2::splat(100.);
 
@@ -116,10 +111,10 @@ pub(crate) fn spawn_joystick<const ID: u8>(
 ) {
     let style = Node {
         position_type: PositionType::Absolute,
-        width: Val::Px(JOYSTICK_BACKGROUND_SIZE.x),
-        height: Val::Px(JOYSTICK_BACKGROUND_SIZE.y),
-        left: Val::VMin(10.),
-        bottom: Val::VMin(10.),
+        width: px(JOYSTICK_BACKGROUND_SIZE.x),
+        height: px(JOYSTICK_BACKGROUND_SIZE.y),
+        left: vmin(10.),
+        bottom: vmin(10.),
         ..default()
     };
     commands.spawn((
@@ -135,22 +130,22 @@ pub(crate) fn spawn_joystick<const ID: u8>(
             (
                 VirtualJoystickInteractionArea,
                 Node {
-                    width: Val::Percent(100.),
-                    height: Val::Percent(100.),
+                    width: percent(100.),
+                    height: percent(100.),
                     ..default()
                 },
             ),
             (
                 VirtualJoystickUIBackground,
                 ImageNode {
-                    color: JOYSTICK_BACKGROUND_COLOR,
+                    color: JOYSTICK_IMAGE.into(),
                     image: joystick_assets.background_image.clone(),
                     ..default()
                 },
                 Node {
                     position_type: PositionType::Absolute,
-                    width: Val::Px(JOYSTICK_BACKGROUND_SIZE.x),
-                    height: Val::Px(JOYSTICK_BACKGROUND_SIZE.y),
+                    width: px(JOYSTICK_BACKGROUND_SIZE.x),
+                    height: px(JOYSTICK_BACKGROUND_SIZE.y),
                     ..default()
                 },
                 ZIndex(0),
@@ -158,14 +153,14 @@ pub(crate) fn spawn_joystick<const ID: u8>(
             (
                 VirtualJoystickUIKnob,
                 ImageNode {
-                    color: JOYSTICK_KNOB_COLOR,
+                    color: JOYSTICK_IMAGE.into(),
                     image: joystick_assets.knob_image.clone(),
                     ..default()
                 },
                 Node {
                     position_type: PositionType::Absolute,
-                    width: Val::Px(JOYSTICK_KNOB_SIZE.x),
-                    height: Val::Px(JOYSTICK_KNOB_SIZE.y),
+                    width: px(JOYSTICK_KNOB_SIZE.x),
+                    height: px(JOYSTICK_KNOB_SIZE.y),
                     ..default()
                 },
                 ZIndex(1),

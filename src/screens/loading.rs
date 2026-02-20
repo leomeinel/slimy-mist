@@ -32,7 +32,8 @@ use crate::{
     levels::overworld::{OverworldAssets, OverworldProcGen},
     logging::{
         error::{
-            ERR_LOADING_ANIMATION_DATA, ERR_LOADING_COLLISION_DATA, ERR_LOADING_CREDITS_DATA, ERR_LOADING_LAYER_DATA, ERR_LOADING_TILE_DATA
+            ERR_LOADING_ANIMATION_DATA, ERR_LOADING_COLLISION_DATA, ERR_LOADING_CREDITS_DATA,
+            ERR_LOADING_LAYER_DATA, ERR_LOADING_TILE_DATA,
         },
         warn::WARN_INCOMPLETE_COLLISION_DATA,
     },
@@ -42,7 +43,7 @@ use crate::{
         TileHandle,
     },
     screens::{Screen, splash::SplashAssets},
-    ui::{interaction::InteractionAssets, prelude::*},
+    ui::{interaction::InteractionAssets, prelude::*, widgets::UiFontHandle},
     visual::{
         Visible,
         layers::{LayerData, LayerDataRelatedCache, LayerHandle},
@@ -92,10 +93,11 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         OnEnter(Screen::Loading),
         (
-            spawn_loading_screen,
             // After initial `LoadingState<Screen::Loading>` insert resources with handles for data
             insert_handle_resources.after(LoadingStateSet(Screen::Loading)),
-        ),
+            spawn_loading_screen,
+        )
+            .chain(),
     );
     app.add_systems(
         OnEnter(Screen::LoadingCache),
@@ -117,11 +119,11 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 /// Display loading screen
-fn spawn_loading_screen(mut commands: Commands) {
+fn spawn_loading_screen(mut commands: Commands, font: Res<UiFontHandle>) {
     commands.spawn((
         widgets::ui_root("Loading Screen"),
         DespawnOnExit(Screen::Loading),
-        children![widgets::label("Loading...")],
+        children![widgets::label("Loading...", font.0.clone())],
     ));
 }
 
@@ -169,6 +171,9 @@ fn insert_handle_resources(mut commands: Commands, assets: Res<AssetServer>) {
         handle: assets.load("data/particles/melee-attack.particle.ron"),
         ..default()
     });
+
+    // `ParticleHandle` not needing a custom data struct
+    commands.insert_resource(UiFontHandle(assets.load("fonts/Pixeloid/PixeloidSans.ttf")));
 }
 
 /// Cache data from [`AnimationData`] in [`AnimationDataCache`]
@@ -265,9 +270,7 @@ fn cache_credits_data(
     mut data: ResMut<Assets<CreditsData>>,
     handle: Res<CreditsHandle>,
 ) {
-    let data = data
-        .remove(handle.0.id())
-        .expect(ERR_LOADING_CREDITS_DATA);
+    let data = data.remove(handle.0.id()).expect(ERR_LOADING_CREDITS_DATA);
     commands.insert_resource(CreditsDataCache {
         created_by: data.created_by,
         assets: data.assets,

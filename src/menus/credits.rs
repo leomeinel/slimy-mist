@@ -16,7 +16,11 @@
 use bevy::{ecs::spawn::SpawnIter, input::common_conditions::input_just_pressed, prelude::*};
 use bevy_asset_loader::prelude::*;
 
-use crate::{audio::music, menus::Menu, ui::prelude::*};
+use crate::{
+    audio::music,
+    menus::Menu,
+    ui::{prelude::*, widgets::UiFontHandle},
+};
 
 pub(super) fn plugin(app: &mut App) {
     // Open credits menu and start music
@@ -65,25 +69,29 @@ pub(crate) struct CreditsAssets {
 }
 
 /// Spawn menu with credits for assets and creators of the game
-fn spawn_credits_menu(mut commands: Commands, credits_data: Res<CreditsDataCache>) {
+fn spawn_credits_menu(
+    mut commands: Commands,
+    credits_data: Res<CreditsDataCache>,
+    font: Res<UiFontHandle>,
+) {
     commands.spawn((
         widgets::ui_root("Credits Menu"),
         GlobalZIndex(2),
         DespawnOnExit(Menu::Credits),
         children![
-            widgets::header("Created by"),
-            grid(credits_data.created_by.clone()),
-            widgets::header("Assets"),
-            grid(credits_data.assets.clone()),
-            widgets::header("Code"),
-            grid(credits_data.code.clone()),
-            widgets::button("Back", go_back_on_click),
+            widgets::header("Created by", font.0.clone()),
+            grid(credits_data.created_by.clone(), font.0.clone()),
+            widgets::header("Assets", font.0.clone()),
+            grid(credits_data.assets.clone(), font.0.clone()),
+            widgets::header("Code", font.0.clone()),
+            grid(credits_data.code.clone(), font.0.clone()),
+            widgets::button_large("Back", font.0.clone(), go_back_on_click),
         ],
     ));
 }
 
 /// Grid with custom settings that fit the credits screen
-fn grid(content: Vec<[String; 2]>) -> impl Bundle {
+fn grid(content: Vec<[String; 2]>, font: Handle<Font>) -> impl Bundle {
     (
         Name::new("Grid"),
         Node {
@@ -94,9 +102,9 @@ fn grid(content: Vec<[String; 2]>) -> impl Bundle {
             ..default()
         },
         Children::spawn(SpawnIter(content.into_iter().flatten().enumerate().map(
-            |(i, text)| {
+            move |(i, text)| {
                 (
-                    widgets::label(text),
+                    widgets::label(text, font.clone()),
                     Node {
                         justify_self: if i.is_multiple_of(2) {
                             JustifySelf::End

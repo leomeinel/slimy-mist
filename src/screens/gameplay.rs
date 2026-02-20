@@ -28,6 +28,7 @@ use crate::{
     menus::Menu,
     procgen::{ProcGenCache, navmesh::spawn_navmesh},
     screens::Screen,
+    ui::palette::*,
     utils::run_conditions::window_unfocused,
     visual::{
         Visible,
@@ -121,9 +122,6 @@ pub(crate) enum InitGameplaySystems {
     Finalize,
 }
 
-/// rgba(0, 0, 0, 204)
-const BACKGROUND_COLOR: Color = Color::srgba(0.0, 0.0, 0.0, 0.8);
-
 /// Spawn pause overlay
 fn spawn_pause_overlay(mut commands: Commands) {
     commands.spawn((
@@ -134,7 +132,7 @@ fn spawn_pause_overlay(mut commands: Commands) {
             ..default()
         },
         GlobalZIndex(1),
-        BackgroundColor(BACKGROUND_COLOR),
+        BackgroundColor(PAUSE_BACKGROUND),
         DespawnOnExit(Pause(true)),
     ));
 }

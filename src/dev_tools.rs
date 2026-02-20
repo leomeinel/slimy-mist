@@ -14,7 +14,7 @@
 //! Development tools for the game. This plugin is only enabled in dev builds.
 
 use bevy::{
-    color::palettes::tailwind, dev_tools::states::log_transitions, gizmos::gizmos::GizmoBuffer,
+    dev_tools::states::log_transitions, gizmos::gizmos::GizmoBuffer,
     input::common_conditions::input_just_pressed, prelude::*,
 };
 use bevy_inspector_egui::{bevy_egui::EguiPlugin, quick::WorldInspectorPlugin};
@@ -25,6 +25,7 @@ use crate::{
     characters::nav::Path,
     procgen::{ProcGenDespawning, ProcGenInit, ProcGenState},
     screens::Screen,
+    ui::palette::*,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -98,9 +99,6 @@ fn toggle_debug_colliders(
     render_context.enabled = debug_state.0;
 }
 
-/// Color for the debug navmesh
-const DEBUG_NAVMESH_COLOR: Srgba = tailwind::AMBER_500;
-
 /// Toggle debug navmeshes
 fn toggle_debug_navmeshes(
     debug_query: Query<Entity, With<NavMeshDebug>>,
@@ -119,12 +117,9 @@ fn toggle_debug_navmeshes(
     for entity in query {
         commands
             .entity(entity)
-            .insert(NavMeshDebug(DEBUG_NAVMESH_COLOR.into()));
+            .insert(NavMeshDebug(DEBUG_NAVMESH.into()));
     }
 }
-
-/// Color for the debug path used in the debug navmesh
-const DEBUG_PATH_COLOR: Srgba = tailwind::FUCHSIA_500;
 
 /// Display [`Path`]s
 pub fn display_navigator_path(navigator: Query<(&Transform, &Path)>, mut gizmos: Gizmos) {
@@ -134,13 +129,10 @@ pub fn display_navigator_path(navigator: Query<(&Transform, &Path)>, mut gizmos:
         to_display.push(transform.translation.xy());
         to_display.reverse();
         if !to_display.is_empty() {
-            gizmos.linestrip_2d(to_display, Color::from(DEBUG_PATH_COLOR));
+            gizmos.linestrip_2d(to_display, DEBUG_PATH);
         }
     }
 }
-
-/// Color for the debug obstacle used in the debug navmesh
-const DEBUG_OBSTACLE_COLOR: Srgba = tailwind::VIOLET_800;
 
 /// Display [`PrimitiveObstacle`]s
 fn display_prim_obstacles(mut gizmos: Gizmos, query: Query<(&PrimitiveObstacle, &Transform)>) {
@@ -175,6 +167,6 @@ where
             transform.translation.xy(),
             Rot2::radians(transform.rotation.to_axis_angle().1),
         ),
-        Color::from(DEBUG_OBSTACLE_COLOR),
+        DEBUG_OBSTACLE,
     );
 }

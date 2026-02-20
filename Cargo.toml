@@ -30,7 +30,7 @@ bevy_asset_loader = { version = "0.25.0", features = [
 ] }
 bevy_common_assets = { version = "0.15.0", features = ["ron"] }
 bevy_ecs_tilemap = "0.18.1"
-bevy_enhanced_input = "0.23.2"
+bevy_enhanced_input = "0.24.0"
 bevy_enoki = "0.6.0"
 bevy-inspector-egui = { version = "0.36.0", optional = true }
 # FIXME: Wait for new version to be released and PRs to be merged:
@@ -62,13 +62,8 @@ tracing = { version = "0.1.44", features = [
 ] }
 vleue_navigator = "0.15.0"
 
-# FIXME: Wait for new version to be released and PRs to be merged:
-#        - https://github.com/SergioRibera/virtual_joystick/pull/41
-#        - https://github.com/SergioRibera/virtual_joystick/pull/42
-#        - https://github.com/SergioRibera/virtual_joystick/pull/44
-#        - https://github.com/SergioRibera/virtual_joystick/pull/46
 [target.'cfg(any(target_os = "android", target_os = "ios"))'.dependencies]
-virtual_joystick = { git = "https://github.com/leomeinel/virtual_joystick.git", branch = "refactor" }
+virtual_joystick = "2.7.1"
 
 [target.'cfg(all(target_family = "wasm", any(target_os = "unknown", target_os = "none")))'.dependencies]
 bevy_rand = { version = "0.14.0", features = ["wasm_js"] }

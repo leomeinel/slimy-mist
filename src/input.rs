@@ -210,7 +210,7 @@ fn mock_walk_from_virtual_joystick(
         }
         commands
             .entity(*walk)
-            .mock_once::<Player, Walk>(ActionState::Fired, *input * PLAYER_WALK_SPEED);
+            .mock_once::<Player, Walk>(TriggerState::Fired, *input * PLAYER_WALK_SPEED);
     }
 }
 
@@ -230,7 +230,7 @@ fn mock_jump_from_touch(
         if touch.is_swipe_up() {
             commands
                 .entity(*jump)
-                .mock_once::<Player, Jump>(ActionState::Fired, true);
+                .mock_once::<Player, Jump>(TriggerState::Fired, true);
         }
     }
 }
@@ -258,7 +258,7 @@ fn mock_melee_from_touch(
     if touches.iter_just_released().any(|t| !t.is_vertical_swipe()) {
         commands
             .entity(*melee)
-            .mock_once::<Player, Melee>(ActionState::Fired, true);
+            .mock_once::<Player, Melee>(TriggerState::Fired, true);
     }
 }
 
@@ -283,7 +283,7 @@ fn mock_aim_from_touch(
 
             let direction = pos - player_transform.translation.xy();
             commands.entity(*aim).mock::<Player, Aim>(
-                ActionState::Fired,
+                TriggerState::Fired,
                 direction.normalize_or_zero(),
                 MockSpan::Manual,
             );
@@ -310,7 +310,7 @@ fn mock_melee_from_click(
 
     commands
         .entity(*melee)
-        .mock_once::<Player, Melee>(ActionState::Fired, true);
+        .mock_once::<Player, Melee>(TriggerState::Fired, true);
 }
 
 /// Mock [`Aim`] from clicks.
@@ -340,7 +340,7 @@ fn mock_aim_from_click(
 
         let direction = pos - player_transform.translation.xy();
         commands.entity(*aim).mock::<Player, Aim>(
-            ActionState::Fired,
+            TriggerState::Fired,
             direction.normalize_or_zero(),
             MockSpan::Manual,
         );

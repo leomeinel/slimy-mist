@@ -21,7 +21,7 @@ use virtual_joystick::{
     VirtualJoystickNode, VirtualJoystickPlugin, VirtualJoystickUIBackground, VirtualJoystickUIKnob,
 };
 
-use crate::{logging::error::ERR_INVALID_CHILDREN, screens::Screen, ui::palette::*};
+use crate::{logging::error::*, screens::Screen, ui::prelude::*};
 
 pub(super) fn plugin(app: &mut App) {
     // Add library plugins

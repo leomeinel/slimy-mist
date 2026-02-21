@@ -16,11 +16,7 @@
 use bevy::{ecs::spawn::SpawnIter, input::common_conditions::input_just_pressed, prelude::*};
 use bevy_asset_loader::prelude::*;
 
-use crate::{
-    audio::music,
-    menus::Menu,
-    ui::{prelude::*, widgets::UiFontHandle},
-};
+use crate::{audio::music, menus::Menu, ui::prelude::*};
 
 pub(super) fn plugin(app: &mut App) {
     // Open credits menu and start music

@@ -17,7 +17,7 @@ use crate::{
     animations::{AnimationCache, AnimationState},
     camera::BACKGROUND_Z_DELTA,
     characters::{Character, player::Player},
-    logging::error::ERR_INVALID_CHILDREN,
+    logging::error::*,
     screens::{Screen, gameplay::InitGameplaySystems},
     visual::{TextureInfoCache, Visible},
 };

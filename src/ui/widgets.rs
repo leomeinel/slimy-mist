@@ -19,22 +19,8 @@ use bevy::{
     ui::auto_directional_navigation::AutoDirectionalNavigation,
 };
 
-use crate::ui::{palette::*, prelude::*};
+use crate::ui::{prelude::*, scroll::AutoScroll};
 
-/// Font size for any header.
-pub(crate) const HEADER_FONT_SIZE: f32 = 36.;
-/// Font size for any body.
-pub(crate) const BODY_FONT_SIZE: f32 = 18.;
-
-/// Wrapper for [`Handle<Font>`] for the ui.
-#[derive(Resource, Default)]
-pub(crate) struct UiFontHandle(pub(crate) Handle<Font>);
-
-/// Offset that stores the offset for a [`Node`].
-///
-/// Can apply to [`Node::left`] and [`Node::bottom`] according to [`Self::0`].
-#[derive(Component, Default)]
-pub(crate) struct NodeOffset(pub(crate) IVec2);
 /// A root UI node that fills the window and centers its content.
 pub(crate) fn ui_root(name: impl Into<Cow<'static, str>>) -> impl Bundle {
     (

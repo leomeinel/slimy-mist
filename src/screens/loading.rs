@@ -30,20 +30,14 @@ use crate::{
         player::{Player, PlayerAssets},
     },
     levels::overworld::{OverworldAssets, OverworldProcGen},
-    logging::{
-        error::{
-            ERR_LOADING_ANIMATION_DATA, ERR_LOADING_COLLISION_DATA, ERR_LOADING_CREDITS_DATA,
-            ERR_LOADING_LAYER_DATA, ERR_LOADING_TILE_DATA,
-        },
-        warn::WARN_INCOMPLETE_COLLISION_DATA,
-    },
+    logging::{error::*, warn::*},
     menus::credits::{CreditsAssets, CreditsData, CreditsDataCache, CreditsHandle},
     procgen::{
         CHUNK_SIZE, PROCGEN_DISTANCE, ProcGenerated, TileData, TileDataCache, TileDataRelatedCache,
         TileHandle,
     },
     screens::{Screen, splash::SplashAssets},
-    ui::{interaction::InteractionAssets, prelude::*, widgets::UiFontHandle},
+    ui::{interaction::InteractionAssets, prelude::*},
     visual::{
         Visible,
         layers::{LayerData, LayerDataRelatedCache, LayerHandle},

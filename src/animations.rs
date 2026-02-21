@@ -32,13 +32,7 @@ use crate::{
         npc::{Slime, SlimeAssets},
         player::{Player, PlayerAssets},
     },
-    logging::{
-        error::{
-            ERR_INVALID_CHILDREN, ERR_INVALID_REQUIRED_ANIMATION_DATA, ERR_INVALID_TEXTURE_ATLAS,
-            ERR_NOT_LOADED_SPRITE_IMAGE, ERR_UNINITIALIZED_REQUIRED_ANIMATION,
-        },
-        warn::{WARN_INCOMPLETE_ANIMATION_DATA, WARN_INCOMPLETE_ASSET_DATA},
-    },
+    logging::{error::*, warn::*},
     screens::Screen,
     utils::rng::{ForkedRng, setup_rng},
     visual::{TextureInfoCache, Visible, layers::DisplayImage},

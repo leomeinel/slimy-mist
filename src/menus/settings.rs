@@ -15,11 +15,7 @@
 
 use bevy::{audio::Volume, input::common_conditions::input_just_pressed, prelude::*};
 
-use crate::{
-    menus::Menu,
-    screens::Screen,
-    ui::{prelude::*, widgets::UiFontHandle},
-};
+use crate::{menus::Menu, screens::Screen, ui::prelude::*};
 
 pub(super) fn plugin(app: &mut App) {
     // Open settings menu on state

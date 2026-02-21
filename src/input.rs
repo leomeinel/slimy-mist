@@ -36,7 +36,7 @@ use crate::{
 };
 #[cfg(any(target_os = "android", target_os = "ios"))]
 use crate::{
-    logging::error::ERR_INVALID_POINTER_CACHE,
+    logging::error::*,
     mobile::{JoystickID, JoystickRectMap},
 };
 

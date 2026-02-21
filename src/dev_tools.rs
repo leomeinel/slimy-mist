@@ -25,7 +25,7 @@ use crate::{
     characters::nav::Path,
     procgen::{ProcGenDespawning, ProcGenInit, ProcGenState},
     screens::Screen,
-    ui::palette::*,
+    ui::prelude::*,
 };
 
 pub(super) fn plugin(app: &mut App) {

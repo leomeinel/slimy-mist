@@ -20,7 +20,7 @@ use crate::{
     animations::{AnimationCache, AnimationState},
     characters::Movement,
     levels::overworld::OverworldProcGen,
-    logging::error::{ERR_INVALID_NAV_TARGET, ERR_INVALID_NAVMESH},
+    logging::error::*,
     procgen::{ProcGenDespawning, ProcGenInit, ProcGenerated, TileDataCache},
     screens::Screen,
 };

@@ -43,7 +43,7 @@ use crate::{
         overworld::{Overworld, OverworldAssets, OverworldProcGen},
     },
     lighting::StreetLight,
-    logging::error::ERR_INVALID_MINIMUM_CHUNK_POS,
+    logging::error::*,
     procgen::{
         characters::on_procgen_characters,
         chunks::{on_procgen_chunks, spawn_chunks},

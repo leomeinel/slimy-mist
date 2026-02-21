@@ -17,7 +17,7 @@ use bevy_lit::prelude::*;
 use crate::{
     AppSystems, PausableSystems,
     camera::{CanvasCamera, FOREGROUND_Z, ysort::YSort},
-    logging::error::ERR_INVALID_DOMAIN_EASING,
+    logging::error::*,
     procgen::ProcGenerated,
     screens::Screen,
     visual::Visible,

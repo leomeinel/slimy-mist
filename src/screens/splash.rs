@@ -14,11 +14,7 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use bevy_asset_loader::prelude::*;
 
-use crate::{
-    AppSystems,
-    screens::Screen,
-    ui::{palette::*, prelude::*},
-};
+use crate::{AppSystems, screens::Screen, ui::prelude::*};
 
 pub(super) fn plugin(app: &mut App) {
     // Insert resources

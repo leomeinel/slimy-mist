@@ -13,10 +13,7 @@ use std::marker::PhantomData;
 
 use bevy::{asset::RenderAssetUsages, prelude::*};
 
-use crate::{
-    logging::error::{ERR_INVALID_IMAGE, ERR_INVALID_LAYER_MAP},
-    visual::Visible,
-};
+use crate::{logging::error::*, visual::Visible};
 
 /// Layer data deserialized from a ron file as a generic
 ///

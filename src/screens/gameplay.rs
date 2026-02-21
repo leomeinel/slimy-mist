@@ -28,7 +28,7 @@ use crate::{
     menus::Menu,
     procgen::{ProcGenCache, navmesh::spawn_navmesh},
     screens::Screen,
-    ui::palette::*,
+    ui::prelude::*,
     utils::run_conditions::window_unfocused,
     visual::{
         Visible,

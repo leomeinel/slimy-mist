@@ -12,7 +12,7 @@
 use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
 
-use crate::{audio::sound_effect, ui::widgets::NodeOffset};
+use crate::{audio::sound_effect, ui::prelude::*};
 
 pub(super) fn plugin(app: &mut App) {
     // Insert states

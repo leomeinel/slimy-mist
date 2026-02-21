@@ -13,11 +13,7 @@
 
 use bevy::prelude::*;
 
-use crate::{
-    menus::Menu,
-    screens::Screen,
-    ui::widgets::{self, UiFontHandle},
-};
+use crate::{menus::Menu, screens::Screen, ui::prelude::*};
 
 pub(super) fn plugin(app: &mut App) {
     // Open main menu

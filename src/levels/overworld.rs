@@ -22,7 +22,7 @@ use crate::{
     characters::{SpawnCharacter, player::Player},
     impl_level_assets,
     levels::{Level, LevelAssets, LevelRng},
-    logging::warn::WARN_INCOMPLETE_ASSET_DATA,
+    logging::warn::*,
     procgen::ProcGenerated,
     screens::Screen,
 };

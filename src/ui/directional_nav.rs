@@ -28,7 +28,7 @@ use bevy::{
 };
 
 use crate::{
-    logging::warn::WARN_INVALID_UI_NAV,
+    logging::warn::*,
     ui::interaction::{InteractionOverride, OverrideInteraction},
     utils::run_conditions::component_is_present,
 };

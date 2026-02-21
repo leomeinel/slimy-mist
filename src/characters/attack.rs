@@ -99,7 +99,7 @@ pub(crate) fn punch() -> AttackData {
     }
 }
 
-/// On a triggered [`Attack<MeleeAttack>`] fire [`Damage`] on [Entity]s within range.
+/// On a triggered [`Attack<MeleeAttack>`], fire [`Damage`] on [Entity]s within range.
 ///
 /// ## Traits
 ///

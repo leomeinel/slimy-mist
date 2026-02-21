@@ -40,9 +40,9 @@ fn spawn_main_menu(mut commands: Commands, font: Res<UiFontHandle>) {
         // Do not add exit button for wasm, android and ios
         #[cfg(any(target_family = "wasm", target_os = "android", target_os = "ios"))]
         children![
-            widgets::button("Play", font.0.clone(), enter_gameplay_screen),
-            widgets::button("Settings", font.0.clone(), open_settings_menu),
-            widgets::button("Credits", font.0.clone(), open_credits_menu),
+            widgets::button_large("Play", font.0.clone(), enter_gameplay_screen),
+            widgets::button_large("Settings", font.0.clone(), open_settings_menu),
+            widgets::button_large("Credits", font.0.clone(), open_credits_menu),
         ],
     ));
 }

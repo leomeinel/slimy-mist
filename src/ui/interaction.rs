@@ -9,7 +9,10 @@
  * Heavily inspired by: https://github.com/TheBevyFlock/bevy_new_2d
  */
 
-use bevy::prelude::*;
+use bevy::{
+    prelude::*,
+    window::{CursorIcon, PrimaryWindow, SystemCursorIcon},
+};
 use bevy_asset_loader::prelude::*;
 
 use crate::{audio::sound_effect, ui::prelude::*};
@@ -18,12 +21,19 @@ pub(super) fn plugin(app: &mut App) {
     // Insert states
     app.init_state::<OverrideInteraction>();
 
-    // Visualize ui interactions with color palette
+    // Visualize ui interactions
+    app.add_systems(OnEnter(OverrideInteraction(false)), reset_palette);
     app.add_systems(
-        OnEnter(OverrideInteraction(false)),
-        refresh_interaction_palette,
+        Update,
+        (
+            apply_palette,
+            visualize_button_hover,
+            visualize_button_pressed,
+        ),
     );
-    app.add_systems(Update, visualize_interaction);
+
+    // Reset `CursorIcon`
+    app.add_observer(on_remove_button);
 
     // Play sound effects
     app.add_observer(play_on_hover_sound_effect);
@@ -64,66 +74,91 @@ pub(crate) struct InteractionAssets {
     click: Handle<AudioSource>,
 }
 
-/// Visualize [`Interaction`] and [`InteractionOverride`].
-///
-/// ## Actions
-///
-/// - Moves [`Node`] based on [`NodeOffset`] according to [`Interaction`].
-/// - Applies [`BackgroundColor`] from palette mapped to [`Interaction`] or [`InteractionOverride`].
-/// - Sets [`OverrideInteraction`] to false if any [`Interaction`] that is not [`Interaction::None`] occurred.
-pub(crate) fn visualize_interaction(
-    query: Query<
-        (
-            &Interaction,
-            &InteractionOverride,
-            &InteractionPalette,
-            &NodeOffset,
-            &mut BackgroundColor,
-            &mut Node,
-        ),
-        Or<(Changed<Interaction>, Changed<InteractionOverride>)>,
-    >,
-    mut next_state: ResMut<NextState<OverrideInteraction>>,
-) {
-    for (interaction, interaction_override, palette, offset, mut background, mut node) in query {
-        // Move node based on `Interaction`
-        if *interaction == Interaction::Pressed {
-            node.bottom = px(0);
-        } else {
-            node.bottom = px(offset.0.y);
-        }
-
-        // Change background based on `Interaction`
-        *background = match interaction {
-            Interaction::None => match interaction_override {
-                InteractionOverride::Hovered => palette.hovered,
-                InteractionOverride::None => palette.none,
-            },
-            _ => {
-                next_state.set(OverrideInteraction(false));
-                match interaction {
-                    Interaction::Hovered => palette.hovered,
-                    Interaction::Pressed => palette.pressed,
-                    _ => unreachable!(),
-                }
-            }
-        }
-        .into();
-    }
-}
-
 /// Reset [`BackgroundColor`] from palette mapped to [`Interaction`].
 ///
 /// This sets the appropriate [`BackgroundColor`] for all [`Interaction::None`].
 ///
 /// This allows [`Interaction`] to override [`OverrideInteraction`] in certain scenarios.
-pub(crate) fn refresh_interaction_palette(
+pub(crate) fn reset_palette(
     query: Query<(&Interaction, &InteractionPalette, &mut BackgroundColor)>,
 ) {
     for (interaction, palette, mut background) in query {
         if *interaction == Interaction::None {
             *background = palette.none.into();
         }
+    }
+}
+
+/// Apply [`BackgroundColor`] from palette mapped to [`Interaction`] or [`InteractionOverride`].
+pub(crate) fn apply_palette(
+    query: Query<
+        (
+            &Interaction,
+            &InteractionOverride,
+            &InteractionPalette,
+            &mut BackgroundColor,
+        ),
+        Or<(Changed<Interaction>, Changed<InteractionOverride>)>,
+    >,
+) {
+    for (interaction, interaction_override, palette, mut background) in query {
+        *background = match interaction {
+            Interaction::None => match interaction_override {
+                InteractionOverride::Hovered => palette.hovered,
+                InteractionOverride::None => palette.none,
+            },
+            Interaction::Hovered => palette.hovered,
+            Interaction::Pressed => palette.pressed,
+        }
+        .into();
+    }
+}
+
+/// Set [`CursorIcon`] according to [`Interaction`].
+pub(crate) fn visualize_button_hover(
+    window: Single<(Entity, Option<&CursorIcon>), With<PrimaryWindow>>,
+    query: Query<&Interaction, (Changed<Interaction>, With<Button>)>,
+    mut commands: Commands,
+) {
+    if query.is_empty() {
+        return;
+    }
+
+    let target_icon = if query.iter().any(|i| *i == Interaction::Hovered) {
+        CursorIcon::System(SystemCursorIcon::Pointer)
+    } else {
+        CursorIcon::default()
+    };
+    let (entity, icon) = window.into_inner();
+
+    if Some(&target_icon) != icon {
+        commands.entity(entity).insert(target_icon);
+    }
+}
+
+/// Move [`Node`] based on [`NodeOffset`] according to [`Interaction`].
+pub(crate) fn visualize_button_pressed(
+    query: Query<(&Interaction, &NodeOffset, &mut Node), (Changed<Interaction>, With<Button>)>,
+) {
+    for (interaction, offset, mut node) in query {
+        if *interaction == Interaction::Pressed {
+            node.bottom = px(0);
+        } else {
+            node.bottom = px(offset.0.y);
+        }
+    }
+}
+
+/// Reset [`CursorIcon`].
+fn on_remove_button(
+    _: On<Remove, Button>,
+    window: Single<(Entity, Option<&CursorIcon>), With<PrimaryWindow>>,
+    mut commands: Commands,
+) {
+    let (entity, icon) = window.into_inner();
+    let target_icon = CursorIcon::default();
+    if Some(&target_icon) != icon {
+        commands.entity(entity).insert(target_icon);
     }
 }
 

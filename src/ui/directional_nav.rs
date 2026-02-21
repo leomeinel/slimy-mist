@@ -48,10 +48,12 @@ pub(super) fn plugin(app: &mut App) {
 
     // Process inputs, override `Interaction` and navigate
     app.add_systems(OnEnter(OverrideInteraction(true)), set_input_focus);
+    app.add_systems(OnEnter(OverrideInteraction(false)), reset_overrides);
     app.add_systems(
         PreUpdate,
         (
             process_inputs.run_if(component_is_present::<AutoDirectionalNavigation>),
+            reset_override_state.run_if(in_state(OverrideInteraction(true))),
             (override_interaction_on_focus, navigate)
                 .run_if(in_state(OverrideInteraction(true)))
                 .chain(),
@@ -65,7 +67,7 @@ pub(super) fn plugin(app: &mut App) {
     );
 
     // Set `OverrideInteraction` to false
-    app.add_observer(on_remove_button);
+    app.add_observer(on_remove_nav);
 }
 
 /// Action for directional navigation.
@@ -111,6 +113,13 @@ impl DirectionalNavAction {
 #[derive(Default, Resource)]
 struct DirectionalNavActionSet(HashSet<DirectionalNavAction>);
 
+/// Reset all [`InteractionOverride`]s.
+fn reset_overrides(query: Query<&mut InteractionOverride, With<AutoDirectionalNavigation>>) {
+    for mut interaction_override in query {
+        interaction_override.set_if_neq(InteractionOverride::None);
+    }
+}
+
 /// Process inputs and add correct [`DirectionalNavAction`] to [`DirectionalNavActionSet`].
 ///
 /// This also sets [`OverrideInteraction`] to true if any input has been pressed.
@@ -137,6 +146,16 @@ fn process_inputs(
 
     if *state != OverrideInteraction(true) && any_pressed {
         next_state.set(OverrideInteraction(true));
+    }
+}
+
+/// Set [`OverrideInteraction`] to false if any [`Interaction`] with [`AutoDirectionalNavigation`] is not [`Interaction::None`].
+fn reset_override_state(
+    query: Query<&Interaction, With<AutoDirectionalNavigation>>,
+    mut next_state: ResMut<NextState<OverrideInteraction>>,
+) {
+    if query.iter().any(|i| *i != Interaction::None) {
+        next_state.set(OverrideInteraction(false));
     }
 }
 
@@ -263,8 +282,8 @@ fn set_input_focus(
     }
 }
 
-/// Set [`OverrideInteraction`] to false if no [`AutoDirectionalNavigation`] is present.
-fn on_remove_button(
+/// Set [`OverrideInteraction`] to false.
+fn on_remove_nav(
     _: On<Remove, AutoDirectionalNavigation>,
     mut next_state: ResMut<NextState<OverrideInteraction>>,
     state: Res<State<OverrideInteraction>>,

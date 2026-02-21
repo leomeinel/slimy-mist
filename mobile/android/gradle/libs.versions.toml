@@ -1,7 +1,7 @@
 # Heavily inspired by: https://github.com/bevyengine/bevy/tree/main/examples/mobile
 
 [versions]
-agp = "9.0.0"
+agp = "9.0.1"
 appcompat = "1.7.1"
 core = "1.17.0"
 gamesActivity = "4.0.0"

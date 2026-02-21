@@ -74,7 +74,7 @@ fn reset_auto_scroll_nodes(query: Query<(&mut Node, &ComputedNode), With<AutoScr
     }
 }
 
-/// Scroll [`Entity`] from [`Scroll`].
+/// On a triggered [`Scroll`], scroll associated [`Node`].
 fn on_scroll(
     mut scroll: On<Scroll>,
     mut query: Query<(&mut ScrollPosition, &Node, &ComputedNode)>,

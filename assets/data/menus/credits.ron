@@ -4,8 +4,8 @@ CreditsData (
         ("Sprites", "Shave"),
     ],
     assets: [
-        ("Color palette", "Otterisk 96"),
-        ("Fonts", "Google Fonts"),
+        ("Color Palette", "Otterisk"),
+        ("Fonts", "GGBotNet"),
         ("Music", "freepd.com & Creators"),
         ("SFX", "Jaszunio15"),
         ("SFX", "leohpaz"),

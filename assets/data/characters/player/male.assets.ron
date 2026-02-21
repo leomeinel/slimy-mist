@@ -4,7 +4,6 @@
             "audio/sound-effects/movement/player-walk-hard0.ogg",
             "audio/sound-effects/movement/player-walk-hard1.ogg",
             "audio/sound-effects/movement/player-walk-hard2.ogg",
-            "audio/sound-effects/movement/player-walk-hard3.ogg",
         ],
     ),
     "male.jump_sounds": Files (

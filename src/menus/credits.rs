@@ -11,8 +11,6 @@
 
 //! The credits menu.
 
-// FIXME: Add auto scrolling, also prevent overflow on small displays, make adaptive.
-
 use bevy::{ecs::spawn::SpawnIter, input::common_conditions::input_just_pressed, prelude::*};
 use bevy_asset_loader::prelude::*;
 
@@ -71,7 +69,7 @@ fn spawn_credits_menu(
     font: Res<UiFontHandle>,
 ) {
     commands.spawn((
-        widgets::ui_root("Credits Menu"),
+        widgets::ui_root_auto_scroll("Credits Menu"),
         GlobalZIndex(2),
         DespawnOnExit(Menu::Credits),
         children![

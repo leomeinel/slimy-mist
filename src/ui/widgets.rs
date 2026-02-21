@@ -21,23 +21,42 @@ use bevy::{
 
 use crate::ui::{prelude::*, scroll::AutoScroll};
 
-/// A root UI node that fills the window and centers its content.
+/// A [`Bundle`] containing a root UI [`Node`] that fills the window and centers its content.
 pub(crate) fn ui_root(name: impl Into<Cow<'static, str>>) -> impl Bundle {
     (
         Name::new(name),
-        Node {
-            position_type: PositionType::Absolute,
-            width: percent(100),
-            height: percent(100),
-            align_items: AlignItems::Center,
-            justify_content: JustifyContent::Center,
-            flex_direction: FlexDirection::Column,
-            row_gap: px(20),
-            ..default()
-        },
+        ui_root_node(),
         // Don't block picking events for other UI roots.
         Pickable::IGNORE,
     )
+}
+
+/// A [`Bundle`] containing a scrollable root UI [`Node`] that fills the window and centers its content.
+pub(crate) fn ui_root_auto_scroll(name: impl Into<Cow<'static, str>>) -> impl Bundle {
+    (
+        Name::new(name),
+        Node {
+            overflow: Overflow::scroll_y(),
+            ..ui_root_node()
+        },
+        AutoScroll(Vec2::new(0., BODY_FONT_SIZE / 100.)),
+        // Don't block picking events for other UI roots.
+        Pickable::IGNORE,
+    )
+}
+
+/// A root UI [`Node`] that fills the window and centers its content.
+fn ui_root_node() -> Node {
+    Node {
+        position_type: PositionType::Absolute,
+        width: percent(100),
+        height: percent(100),
+        align_items: AlignItems::Center,
+        justify_content: JustifyContent::Center,
+        flex_direction: FlexDirection::Column,
+        row_gap: px(20),
+        ..default()
+    }
 }
 
 /// A simple header label. Bigger than [`label`].

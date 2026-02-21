@@ -24,7 +24,7 @@ pub(crate) struct Damage {
     pub(crate) damage: f32,
 }
 
-/// Apply damage to [`Health`] and handle despawning.
+/// Apply [`Damage`] to [`Health`] and handle despawning.
 fn on_damage(event: On<Damage>, mut target_query: Query<&mut Health>, mut commands: Commands) {
     for entity in &event.targets {
         let Ok(mut health) = target_query.get_mut(*entity) else {

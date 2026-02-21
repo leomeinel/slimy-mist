@@ -33,7 +33,7 @@ pub(super) fn plugin(app: &mut App) {
     );
 
     // Reset `CursorIcon`
-    app.add_observer(on_remove_button);
+    app.add_observer(reset_cursor_on_remove_button);
 
     // Play sound effects
     app.add_observer(play_on_hover_sound_effect);
@@ -150,7 +150,7 @@ pub(crate) fn visualize_button_pressed(
 }
 
 /// Reset [`CursorIcon`].
-fn on_remove_button(
+fn reset_cursor_on_remove_button(
     _: On<Remove, Button>,
     window: Single<(Entity, Option<&CursorIcon>), With<PrimaryWindow>>,
     mut commands: Commands,

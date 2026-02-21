@@ -28,7 +28,7 @@ const LIGHTS_PER_CHUNK: usize = 4;
 /// - `T` must implement [`LightWrapper`] + [`ProcGenerated`] + [`Visible`] and is used as the procedurally generated object associated with a [`ProcGenCache<T>`].
 /// - `A` must implement [`ProcGenerated`] and is used as a level's procedurally generated item.
 /// - `B` must implement [`Level`].
-pub(crate) fn on_procgen_lights<T, A, B>(
+pub(crate) fn spawn_on_procgen_lights<T, A, B>(
     event: On<ProcGen<T>>,
     level: Single<Entity, With<B>>,
     mut procgen_rng: Single<&mut WyRand, With<ProcGenRng>>,

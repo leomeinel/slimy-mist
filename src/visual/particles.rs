@@ -107,7 +107,7 @@ where
 #[reflect(Component)]
 struct ParticleTimer(Timer);
 
-/// Spawn and despawn a particle once.
+/// Spawn and despawn a [`Particle`] once.
 ///
 /// ## Traits
 ///

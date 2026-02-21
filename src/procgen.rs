@@ -45,9 +45,9 @@ use crate::{
     lighting::StreetLight,
     logging::error::*,
     procgen::{
-        characters::on_procgen_characters,
-        chunks::{on_procgen_chunks, spawn_chunks},
-        lighting::on_procgen_lights,
+        characters::spawn_on_procgen_characters,
+        chunks::{spawn_chunks, spawn_on_procgen_chunks},
+        lighting::spawn_on_procgen_lights,
         navmesh::move_navmesh,
     },
     screens::Screen,
@@ -126,9 +126,9 @@ pub(super) fn plugin(app: &mut App) {
         move_navmesh::<OverworldProcGen>.run_if(in_state(Screen::Gameplay)),
     );
 
-    app.add_observer(on_procgen_chunks::<OverworldProcGen, OverworldAssets, Overworld>);
-    app.add_observer(on_procgen_characters::<Slime, OverworldProcGen, Overworld>);
-    app.add_observer(on_procgen_lights::<StreetLight, OverworldProcGen, Overworld>);
+    app.add_observer(spawn_on_procgen_chunks::<OverworldProcGen, OverworldAssets, Overworld>);
+    app.add_observer(spawn_on_procgen_characters::<Slime, OverworldProcGen, Overworld>);
+    app.add_observer(spawn_on_procgen_lights::<StreetLight, OverworldProcGen, Overworld>);
 }
 
 /// Size of a single chunk

@@ -29,7 +29,7 @@ const CHARACTERS_PER_CHUNK: usize = 1;
 /// - `T` must implement [`Character`] + [`ProcGenerated`] and is used as the procedurally generated object associated with a [`ProcGenCache<T>`].
 /// - `A` must implement [`ProcGenerated`] and is used as a level's procedurally generated item.
 /// - `B` must implement [`Level`].
-pub(crate) fn on_procgen_characters<T, A, B>(
+pub(crate) fn spawn_on_procgen_characters<T, A, B>(
     event: On<ProcGen<T>>,
     mut procgen_rng: Single<&mut WyRand, With<ProcGenRng>>,
     mut commands: Commands,

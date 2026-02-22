@@ -249,7 +249,7 @@ jobs:
           cache: "gradle"
 
       - name: Copy README.md and LICENSE to assets
-        if: ${{ env.is_platform_enabled == 'true' && matrix.platform == 'web' }}
+        if: ${{ env.is_platform_enabled == 'true' }}
         run: cp ./{README.md,LICENSE} ./'${{ env.assets_path }}' || true
 
       - name: Build and add binaries to app (Android)

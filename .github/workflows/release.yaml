@@ -248,6 +248,10 @@ jobs:
           java-version: "17"
           cache: "gradle"
 
+      - name: Copy README.md and LICENSE to assets
+        if: ${{ env.is_platform_enabled == 'true' && matrix.platform == 'web' }}
+        run: cp ./{README.md,LICENSE} ./'${{ env.assets_path }}' || true
+
       - name: Build and add binaries to app (Android)
         if: ${{ env.is_platform_enabled == 'true' && matrix.platform == 'android' }}
         env:
@@ -318,7 +322,7 @@ jobs:
 
       - name: Add assets to app (non-Android/non-Ios)
         if: ${{ env.is_platform_enabled == 'true' && matrix.platform != 'android' && matrix.platform != 'ios' }}
-        run: cp -R ./'${{ env.assets_path }}' '${{ env.app }}' || true # Ignore error if assets folder does not exist.
+        run: cp -R ./'${{ env.assets_path }}' '${{ env.app }}' || true
 
       - name: Add platform libraries (non-Android/non-Web/non-Ios)
         if: ${{ env.is_platform_enabled == 'true' && matrix.platform != 'android' && matrix.platform != 'web' && matrix.platform != 'ios' }}

@@ -240,7 +240,7 @@ fn update_joystick_button(
         .find(|e| text_query.contains(*e))
         .expect(ERR_INVALID_CHILDREN);
     let mut text = text_query.get_mut(child).expect(ERR_INVALID_CHILDREN);
-    text.0 = new_text.to_string();
+    text.0 = new_text.to_uppercase();
 }
 
 /// Call [`go_back`] on pointer click.

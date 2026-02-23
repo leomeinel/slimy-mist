@@ -32,7 +32,10 @@ pub(super) fn plugin(app: &mut App) {
             .after(InitGameplaySystems::Finalize)
             .run_if(not(in_state(
                 JoystickState::<{ JoystickID::Movement as u8 }>::None,
-            ))),
+            )
+            .or(in_state(
+                JoystickState::<{ JoystickID::Movement as u8 }>::Toggled(false),
+            )))),
     );
     app.add_systems(
         OnEnter(JoystickState::<{ JoystickID::Movement as u8 }>::Toggled(

@@ -189,6 +189,7 @@ fn toggle_joystick_on_click(
     ));
 }
 
+// FIXME: When using keyboard and thus not triggering an Interaction update on select, the hover color does not change.
 /// Update global volume label that displays volume
 fn update_joystick_button(
     children: Single<&Children, With<ToggleJoystickButton<{ JoystickID::Movement as u8 }>>>,

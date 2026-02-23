@@ -100,7 +100,7 @@ impl<const ID: u8> Default for JoystickState<ID> {
     }
     #[cfg(any(target_os = "android", target_os = "ios"))]
     fn default() -> Self {
-        Self::Toggled
+        Self::Toggled(true)
     }
 }
 impl<const ID: u8> JoystickState<ID> {

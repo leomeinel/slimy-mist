@@ -11,18 +11,17 @@
 
 //! The screen state for the main gameplay.
 
-#[cfg(any(target_os = "android", target_os = "ios"))]
-use bevy::window::WindowResized;
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
-#[cfg(any(target_os = "android", target_os = "ios"))]
-use crate::mobile::{JoystickID, JoystickRectMap, spawn_joystick, update_joystick_rect_map};
 use crate::{
     Pause,
     animations::setup_animations,
     camera::center_camera_on_player,
     characters::{nav::NavTargetPosMap, npc::Slime, player::Player},
-    input::PointerInputCache,
+    input::{
+        joystick::{JoystickID, JoystickMap, JoystickRect},
+        pointer::{MouseDrag, PointerStartTimeSecs},
+    },
     levels::overworld::{Overworld, OverworldProcGen, spawn_overworld},
     lighting::{DayTimer, StreetLight},
     menus::Menu,
@@ -75,27 +74,9 @@ pub(super) fn plugin(app: &mut App) {
             spawn_overworld,
             center_camera_on_player,
             spawn_navmesh::<OverworldProcGen, Overworld>,
-            #[cfg(any(target_os = "android", target_os = "ios"))]
-            spawn_joystick::<{ JoystickID::Movement as u8 }>,
         )
             .in_set(InitGameplaySystems::Finalize)
             .chain(),
-    );
-
-    // Update `JoystickRectMap`
-    #[cfg(any(target_os = "android", target_os = "ios"))]
-    app.add_systems(
-        PostUpdate,
-        (
-            // Run once in `Screen::Gameplay`.
-            update_joystick_rect_map::<{ JoystickID::Movement as u8 }>
-                .run_if(in_state(Screen::Gameplay).and(run_once)),
-            // Run on `WindowResized`.
-            update_joystick_rect_map::<{ JoystickID::Movement as u8 }>
-                .run_if(in_state(Screen::Gameplay).and(on_message::<WindowResized>)),
-        )
-            .after(InitGameplaySystems::Finalize)
-            .after(TransformSystems::Propagate),
     );
 
     // Open pause on pressing P or Escape and pause game
@@ -175,10 +156,11 @@ pub(crate) fn insert_display_image<T>(
 /// Insert [`Resource`]s
 fn insert_resources(mut commands: Commands) {
     commands.init_resource::<DayTimer>();
-    commands.init_resource::<PointerInputCache>();
+    commands.init_resource::<JoystickMap>();
+    commands.init_resource::<JoystickRect<{ JoystickID::Movement as u8 }>>();
+    commands.init_resource::<MouseDrag>();
     commands.init_resource::<NavTargetPosMap>();
-    #[cfg(any(target_os = "android", target_os = "ios"))]
-    commands.init_resource::<JoystickRectMap>();
+    commands.init_resource::<PointerStartTimeSecs>();
     commands.init_resource::<ProcGenCache<OverworldProcGen>>();
     commands.init_resource::<ProcGenCache<Slime>>();
     commands.init_resource::<ProcGenCache<StreetLight>>();
@@ -189,10 +171,11 @@ fn remove_resources(mut commands: Commands) {
     commands.remove_resource::<DayTimer>();
     commands.remove_resource::<DisplayImage<Player>>();
     commands.remove_resource::<DisplayImage<Slime>>();
-    commands.remove_resource::<PointerInputCache>();
+    commands.remove_resource::<JoystickMap>();
+    commands.remove_resource::<JoystickRect<{ JoystickID::Movement as u8 }>>();
+    commands.remove_resource::<MouseDrag>();
     commands.remove_resource::<NavTargetPosMap>();
-    #[cfg(any(target_os = "android", target_os = "ios"))]
-    commands.remove_resource::<JoystickRectMap>();
+    commands.remove_resource::<PointerStartTimeSecs>();
     commands.remove_resource::<ProcGenCache<OverworldProcGen>>();
     commands.remove_resource::<ProcGenCache<Slime>>();
     commands.remove_resource::<ProcGenCache<StreetLight>>();

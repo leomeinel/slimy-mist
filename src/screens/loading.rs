@@ -19,8 +19,6 @@ use bevy_asset_loader::prelude::*;
 use bevy_common_assets::ron::RonAssetPlugin;
 use iyes_progress::ProgressPlugin;
 
-#[cfg(any(target_os = "android", target_os = "ios"))]
-use crate::mobile::JoystickAssets;
 use crate::{
     animations::{AnimationData, AnimationDataCache, AnimationHandle},
     characters::{
@@ -29,6 +27,7 @@ use crate::{
         npc::{Slime, SlimeAssets},
         player::{Player, PlayerAssets},
     },
+    input::joystick::JoystickAssets,
     levels::overworld::{OverworldAssets, OverworldProcGen},
     logging::{error::*, warn::*},
     menus::credits::{CreditsAssets, CreditsData, CreditsDataCache, CreditsHandle},
@@ -78,9 +77,8 @@ pub(super) fn plugin(app: &mut App) {
         .with_dynamic_assets_file::<StandardDynamicAssetCollection>(
             "data/characters/npc/slime.assets.ron",
         )
-        .load_collection::<SlimeAssets>();
-    #[cfg(any(target_os = "android", target_os = "ios"))]
-    let loading_state = loading_state.load_collection::<JoystickAssets>();
+        .load_collection::<SlimeAssets>()
+        .load_collection::<JoystickAssets>();
     app.add_loading_state(loading_state);
 
     // Spawn loading screen and load custom resources

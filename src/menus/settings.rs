@@ -15,7 +15,17 @@
 
 use bevy::{audio::Volume, input::common_conditions::input_just_pressed, prelude::*};
 
-use crate::{menus::Menu, screens::Screen, ui::prelude::*};
+use crate::{
+    input::joystick::{JoystickID, JoystickState},
+    logging::error::*,
+    menus::Menu,
+    screens::Screen,
+    ui::{
+        interaction::apply_palette,
+        prelude::*,
+        widgets::{ButtonBase, ButtonText},
+    },
+};
 
 pub(super) fn plugin(app: &mut App) {
     // Open settings menu on state
@@ -26,10 +36,15 @@ pub(super) fn plugin(app: &mut App) {
         Update,
         go_back.run_if(in_state(Menu::Settings).and(input_just_pressed(KeyCode::Escape))),
     );
-    // Handle changes to global volume from settings menu
+
+    // Handle changes to settings
     app.add_systems(
         Update,
-        update_global_volume_label.run_if(in_state(Menu::Settings)),
+        (
+            update_joystick_button.before(apply_palette),
+            update_global_volume_label,
+        )
+            .run_if(in_state(Menu::Settings)),
     );
 }
 
@@ -37,6 +52,11 @@ pub(super) fn plugin(app: &mut App) {
 #[derive(Component, Reflect)]
 #[reflect(Component)]
 struct GlobalVolumeLabel;
+
+/// Toggle joystick button marker
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+struct ToggleJoystickButton<const ID: u8>;
 
 /// Spawn settings menu
 fn spawn_settings_menu(mut commands: Commands, font: Res<UiFontHandle>) {
@@ -46,14 +66,14 @@ fn spawn_settings_menu(mut commands: Commands, font: Res<UiFontHandle>) {
         DespawnOnExit(Menu::Settings),
         children![
             widgets::header("Settings", font.0.clone()),
-            grid(font.0.clone()),
+            settings_grid(font.0.clone()),
             widgets::button_large("Back", font.0.clone(), go_back_on_click),
         ],
     ));
 }
 
-/// Grid with custom settings that fit the settings screen
-fn grid(font: Handle<Font>) -> impl Bundle {
+/// Custom settings grid
+fn settings_grid(font: Handle<Font>) -> impl Bundle {
     (
         Name::new("Settings Grid"),
         Node {
@@ -64,15 +84,22 @@ fn grid(font: Handle<Font>) -> impl Bundle {
             ..default()
         },
         children![
-            (
-                widgets::label("Master Volume", font.clone()),
-                Node {
-                    justify_self: JustifySelf::End,
-                    ..default()
-                }
-            ),
-            global_volume_widget(font),
+            settings_label(font.clone(), "Master Volume"),
+            global_volume_widget(font.clone()),
+            settings_label(font.clone(), "Joystick"),
+            toggle_joystick_widget(font.clone()),
         ],
+    )
+}
+
+/// Label for configuration in settings.
+fn settings_label(font: Handle<Font>, label: &'static str) -> (impl Bundle, Node) {
+    (
+        widgets::label(label, font.clone()),
+        Node {
+            justify_self: JustifySelf::End,
+            ..default()
+        },
     )
 }
 
@@ -85,17 +112,18 @@ fn global_volume_widget(font: Handle<Font>) -> impl Bundle {
             ..default()
         },
         children![
-            widgets::button_small("-", font.clone(), lower_global_volume),
+            widgets::button_small("-", font.clone(), lower_global_volume_on_click),
             (
                 Name::new("Current Volume"),
                 Node {
+                    // FIXME: Horizontal alignment is currently incorrect and should not be hardcoded.
                     padding: UiRect::horizontal(px(10)),
                     justify_content: JustifyContent::Center,
                     ..default()
                 },
-                children![(widgets::label("", font.clone()), GlobalVolumeLabel)],
+                children![(GlobalVolumeLabel, widgets::label("", font.clone()))],
             ),
-            widgets::button_small("+", font.clone(), raise_global_volume),
+            widgets::button_small("+", font.clone(), raise_global_volume_on_click),
         ],
     )
 }
@@ -106,13 +134,13 @@ const MIN_VOLUME: f32 = 0.0;
 const MAX_VOLUME: f32 = 3.0;
 
 /// Lower global volume
-fn lower_global_volume(_: On<Pointer<Click>>, mut global_volume: ResMut<GlobalVolume>) {
+fn lower_global_volume_on_click(_: On<Pointer<Click>>, mut global_volume: ResMut<GlobalVolume>) {
     let linear = (global_volume.volume.to_linear() - 0.1).max(MIN_VOLUME);
     global_volume.volume = Volume::Linear(linear);
 }
 
 /// Raise global volume
-fn raise_global_volume(_: On<Pointer<Click>>, mut global_volume: ResMut<GlobalVolume>) {
+fn raise_global_volume_on_click(_: On<Pointer<Click>>, mut global_volume: ResMut<GlobalVolume>) {
     let linear = (global_volume.volume.to_linear() + 0.1).min(MAX_VOLUME);
     global_volume.volume = Volume::Linear(linear);
 }
@@ -124,6 +152,94 @@ fn update_global_volume_label(
 ) {
     let percent = 100.0 * global_volume.volume.to_linear();
     label.0 = format!("{percent:3.0}%");
+}
+
+/// Widget to toggle movement joystick
+fn toggle_joystick_widget(font: Handle<Font>) -> impl Bundle {
+    (
+        Name::new("Toggle Joystick Widget"),
+        Node {
+            justify_self: JustifySelf::Start,
+            ..default()
+        },
+        children![(
+            Name::new("Toggle Joystick Button"),
+            Node {
+                // FIXME: Horizontal alignment is currently incorrect and should not be hardcoded.
+                padding: UiRect::horizontal(px(40)),
+                justify_content: JustifyContent::Center,
+                ..default()
+            },
+            children![(
+                ToggleJoystickButton::<{ JoystickID::Movement as u8 }>,
+                widgets::switch_medium("", font.clone(), toggle_joystick_on_click),
+            )]
+        )],
+    )
+}
+
+/// Toggle [`JoystickState<ID>`].
+fn toggle_joystick_on_click(
+    _: On<Pointer<Click>>,
+    mut next_state: ResMut<NextState<JoystickState<{ JoystickID::Movement as u8 }>>>,
+    state: Res<State<JoystickState<{ JoystickID::Movement as u8 }>>>,
+) {
+    (*next_state).set_if_neq(JoystickState::<{ JoystickID::Movement as u8 }>::Toggled(
+        !state.is_active(),
+    ));
+}
+
+/// Update global volume label that displays volume
+fn update_joystick_button(
+    children: Single<&Children, With<ToggleJoystickButton<{ JoystickID::Movement as u8 }>>>,
+    mut base_query: Query<(&mut BackgroundColor, &Children), (With<ButtonBase>, Without<Button>)>,
+    mut surface_query: Query<
+        (&mut InteractionPalette, &Children),
+        (With<Button>, Without<ButtonBase>),
+    >,
+    mut text_query: Query<&mut Text, With<ButtonText>>,
+    state: Res<State<JoystickState<{ JoystickID::Movement as u8 }>>>,
+) {
+    let (base_color, surface_color, hover_color, new_text) = if state.is_active() {
+        (
+            SWITCH_BASE_ON_BACKGROUND,
+            SWITCH_ON_BACKGROUND,
+            SWITCH_ON_HOVERED_BACKGROUND,
+            "On",
+        )
+    } else {
+        (
+            SWITCH_BASE_OFF_BACKGROUND,
+            SWITCH_OFF_BACKGROUND,
+            SWITCH_OFF_HOVERED_BACKGROUND,
+            "Off",
+        )
+    };
+
+    // `ButtonBase`
+    let child = children
+        .iter()
+        .find(|e| base_query.contains(*e))
+        .expect(ERR_INVALID_CHILDREN);
+    let (mut background, children) = base_query.get_mut(child).expect(ERR_INVALID_CHILDREN);
+    background.0 = base_color.into();
+
+    // `Button`
+    let child = children
+        .iter()
+        .find(|e| surface_query.contains(*e))
+        .expect(ERR_INVALID_CHILDREN);
+    let (mut palette, children) = surface_query.get_mut(child).expect(ERR_INVALID_CHILDREN);
+    palette.none = surface_color.into();
+    palette.hovered = hover_color.into();
+
+    // `ButtonText`
+    let child = children
+        .iter()
+        .find(|e| text_query.contains(*e))
+        .expect(ERR_INVALID_CHILDREN);
+    let mut text = text_query.get_mut(child).expect(ERR_INVALID_CHILDREN);
+    text.0 = new_text.to_string();
 }
 
 /// Call [`go_back`] on pointer click.

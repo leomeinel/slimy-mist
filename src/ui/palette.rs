@@ -25,13 +25,28 @@ pub(crate) const BUTTON_BACKGROUND: Srgba = tailwind::SKY_500;
 /// Background color for button if hovered
 pub(crate) const BUTTON_HOVERED_BACKGROUND: Srgba = tailwind::SKY_300;
 /// Background color for button if pressed
-pub(crate) const BUTTON_PRESSED_BACKGROUND: Color = /*Color::NONE*/
-    Color::srgba(0., 0., 0., 0.8);
+pub(crate) const BUTTON_PRESSED_BACKGROUND: Color = Color::NONE;
+
+/// Background color for switch button base if toggled on
+pub(crate) const SWITCH_BASE_ON_BACKGROUND: Srgba = tailwind::GREEN_700;
+/// Background color for switch button if toggled on
+pub(crate) const SWITCH_ON_BACKGROUND: Srgba = tailwind::GREEN_500;
+/// Background color for switch button if toggled on and hovered
+pub(crate) const SWITCH_ON_HOVERED_BACKGROUND: Srgba = tailwind::GREEN_300;
+/// Background color for switch button base if toggled off
+pub(crate) const SWITCH_BASE_OFF_BACKGROUND: Srgba = tailwind::RED_700;
+/// Background color for switch button if toggled off
+pub(crate) const SWITCH_OFF_BACKGROUND: Srgba = tailwind::RED_500;
+/// Background color for switch button if toggled off and hovered
+pub(crate) const SWITCH_OFF_HOVERED_BACKGROUND: Srgba = tailwind::RED_300;
 
 /// Background color for the pause screen.
 pub(crate) const PAUSE_BACKGROUND: Color = Color::srgba(0., 0., 0., 0.8);
 /// Background color for the splash screen.
 pub(crate) const CLEAR_BACKGROUND: Srgba = tailwind::SLATE_500;
+
+/// Color for the joystick image
+pub(crate) const JOYSTICK_IMAGE: Srgba = tailwind::NEUTRAL_50;
 
 /// Color for the debug navmesh
 #[cfg(feature = "dev")]
@@ -42,7 +57,3 @@ pub(crate) const DEBUG_OBSTACLE: Srgba = tailwind::VIOLET_800;
 /// Color for the debug path used in the debug navmesh
 #[cfg(feature = "dev")]
 pub(crate) const DEBUG_PATH: Srgba = tailwind::FUCHSIA_500;
-
-/// Color for the joystick image
-#[cfg(any(target_os = "android", target_os = "ios"))]
-pub(crate) const JOYSTICK_IMAGE: Srgba = tailwind::NEUTRAL_50;

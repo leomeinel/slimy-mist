@@ -30,7 +30,7 @@ use crate::{
         nav::NavTarget,
     },
     impl_character_assets,
-    input::player_input,
+    input::actions::player_input,
     logging::error::*,
     visual::Visible,
 };
@@ -47,6 +47,9 @@ pub(super) fn plugin(app: &mut App) {
             .in_set(AppSystems::Update),
     );
 }
+
+/// Walk speed of [`Player`].
+pub(crate) const PLAYER_WALK_SPEED: f32 = 80.;
 
 /// Assets that are serialized from a ron file
 #[derive(AssetCollection, Resource, Reflect, Default)]

@@ -22,10 +22,13 @@ use bevy_rapier2d::render::{DebugRenderContext, RapierDebugRenderPlugin};
 use vleue_navigator::prelude::*;
 
 use crate::{
+    Pause,
     characters::nav::Path,
+    input::joystick::{JoystickID, JoystickState},
+    menus::Menu,
     procgen::{ProcGenDespawning, ProcGenInit, ProcGenState},
     screens::Screen,
-    ui::prelude::*,
+    ui::{interaction::OverrideInteraction, prelude::*},
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -63,10 +66,15 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         (
-            log_transitions::<Screen>,
-            log_transitions::<ProcGenState>,
-            log_transitions::<ProcGenInit>,
+            log_transitions::<Debugging>,
+            log_transitions::<JoystickState<{ JoystickID::Movement as u8 }>>,
+            log_transitions::<Menu>,
+            log_transitions::<OverrideInteraction>,
+            log_transitions::<Pause>,
             log_transitions::<ProcGenDespawning>,
+            log_transitions::<ProcGenInit>,
+            log_transitions::<ProcGenState>,
+            log_transitions::<Screen>,
         ),
     );
 }

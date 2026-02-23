@@ -9,6 +9,8 @@
  * Heavily inspired by: https://github.com/TheBevyFlock/bevy_new_2d
  */
 
+// FIXME: Reduce duplicated code
+
 //! Helper functions for creating common widgets.
 
 use std::borrow::Cow;
@@ -20,6 +22,16 @@ use bevy::{
 };
 
 use crate::ui::{prelude::*, scroll::AutoScroll};
+
+/// Button base marker
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+pub(crate) struct ButtonBase;
+
+/// Button base marker
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+pub(crate) struct ButtonText;
 
 /// A [`Bundle`] containing a root UI [`Node`] that fills the window and centers its content.
 pub(crate) fn ui_root(name: impl Into<Cow<'static, str>>) -> impl Bundle {
@@ -79,7 +91,7 @@ pub(crate) fn label(text: impl Into<String>, font: Handle<Font>) -> impl Bundle 
     )
 }
 
-/// A large rounded button with text and an action defined as an [`Observer`].
+/// A large rounded [`Button`] with text and an action defined as an [`Observer`].
 ///
 /// ## Traits
 ///
@@ -124,9 +136,7 @@ where
     )
 }
 
-//FIXME: Change cursor to pointer on button hover
-
-/// A small rounded button with text and an action defined as an [`Observer`].
+/// A small [`Button`] button with text and an action defined as an [`Observer`].
 ///
 /// ## Traits
 ///
@@ -171,7 +181,7 @@ where
     )
 }
 
-/// A button with text and an action defined as an [`Observer`].
+/// A [`Button`] with text and an action defined as an [`Observer`].
 ///
 /// ## Traits
 ///
@@ -199,6 +209,7 @@ where
             parent
                 .spawn((
                     Name::new("Button Base"),
+                    ButtonBase,
                     BackgroundColor(BUTTON_BASE_BACKGROUND.into()),
                     base,
                     ZIndex(0),
@@ -219,8 +230,118 @@ where
                         ZIndex(1),
                         children![(
                             Name::new("Button Text"),
+                            ButtonText,
                             Text(text),
                             TextFont::from(font).with_font_size(HEADER_FONT_SIZE),
+                            TextColor(BUTTON_TEXT.into()),
+                            // Don't bubble picking events from the text up to the button.
+                            Pickable::IGNORE,
+                            ZIndex(2),
+                        )],
+                    ))
+                    .observe(action);
+                });
+        })),
+    )
+}
+
+/// A medium rounded [`Button`] with text and an action defined as an [`Observer`].
+///
+/// ## Traits
+///
+/// - `E` must implement [`EntityEvent`].
+/// - `B` must implement [`Bundle`].
+/// - `I` must implement [`IntoObserverSystem<E, B, M>`].
+pub(crate) fn switch_medium<E, B, M, I>(
+    text: impl Into<String>,
+    font: Handle<Font>,
+    action: I,
+) -> impl Bundle
+where
+    E: EntityEvent,
+    B: Bundle,
+    I: IntoObserverSystem<E, B, M>,
+{
+    let offset = 4;
+    let node = Node {
+        width: px(60),
+        aspect_ratio: Some(2.),
+        align_items: AlignItems::Center,
+        justify_content: JustifyContent::Center,
+        border_radius: BorderRadius::all(px(30)),
+        ..default()
+    };
+    switch(
+        text,
+        font,
+        action,
+        Node {
+            overflow: Overflow::visible(),
+            ..node.clone()
+        },
+        (
+            Node {
+                bottom: px(offset),
+                position_type: PositionType::Absolute,
+                ..node
+            },
+            NodeOffset(IVec2::new(0, offset)),
+        ),
+    )
+}
+
+/// A switch [`Button`] with text and an action defined as an [`Observer`].
+///
+/// ## Traits
+///
+/// - `E` must implement [`EntityEvent`].
+/// - `B` must implement [`Bundle`].
+/// - `I` must implement [`IntoObserverSystem<E, B, M>`].
+fn switch<E, B, M, I>(
+    text: impl Into<String>,
+    font: Handle<Font>,
+    action: I,
+    base: impl Bundle,
+    surface: impl Bundle,
+) -> impl Bundle
+where
+    E: EntityEvent,
+    B: Bundle,
+    I: IntoObserverSystem<E, B, M>,
+{
+    let text = text.into().to_uppercase();
+    let action = IntoObserverSystem::into_system(action);
+    (
+        Name::new("Switch"),
+        Node::default(),
+        Children::spawn(SpawnWith(|parent: &mut ChildSpawner| {
+            parent
+                .spawn((
+                    Name::new("Switch Base"),
+                    ButtonBase,
+                    BackgroundColor(SWITCH_BASE_OFF_BACKGROUND.into()),
+                    base,
+                    ZIndex(0),
+                ))
+                .with_children(|base| {
+                    base.spawn((
+                        Name::new("Switch Surface"),
+                        Button,
+                        BackgroundColor(SWITCH_OFF_BACKGROUND.into()),
+                        InteractionPalette {
+                            none: SWITCH_OFF_BACKGROUND.into(),
+                            hovered: SWITCH_OFF_HOVERED_BACKGROUND.into(),
+                            pressed: BUTTON_PRESSED_BACKGROUND,
+                        },
+                        InteractionOverride::default(),
+                        AutoDirectionalNavigation::default(),
+                        surface,
+                        ZIndex(1),
+                        children![(
+                            Name::new("Switch Text"),
+                            ButtonText,
+                            Text(text),
+                            TextFont::from(font).with_font_size(BODY_FONT_SIZE),
                             TextColor(BUTTON_TEXT.into()),
                             // Don't bubble picking events from the text up to the button.
                             Pickable::IGNORE,

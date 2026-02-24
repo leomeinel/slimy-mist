@@ -11,8 +11,6 @@
 
 //! Helper functions for creating common widgets.
 
-use std::borrow::Cow;
-
 use bevy::{
     ecs::{spawn::SpawnWith, system::IntoObserverSystem},
     prelude::*,
@@ -124,12 +122,12 @@ impl ButtonBuilder {
 }
 
 /// A non-scrolling root UI [`Bundle`] that fills the window and centers its content.
-pub(crate) fn ui_root(name: impl Into<Cow<'static, str>>) -> impl Bundle {
+pub(crate) fn ui_root(name: &'static str) -> impl Bundle {
     ui_root_bundle(name, Overflow::DEFAULT)
 }
 
 /// An auto-scrolling root UI [`Bundle`] that fills the window and centers its content.
-pub(crate) fn ui_root_auto_scroll(name: impl Into<Cow<'static, str>>) -> impl Bundle {
+pub(crate) fn ui_root_auto_scroll(name: &'static str) -> impl Bundle {
     (
         ui_root_bundle(name, Overflow::scroll_y()),
         AutoScroll(Vec2::new(0., BODY_FONT_SIZE / 100.)),
@@ -137,7 +135,7 @@ pub(crate) fn ui_root_auto_scroll(name: impl Into<Cow<'static, str>>) -> impl Bu
 }
 
 /// A root UI [`Bundle`] that fills the window and centers its content.
-fn ui_root_bundle(name: impl Into<Cow<'static, str>>, overflow: Overflow) -> impl Bundle {
+fn ui_root_bundle(name: &'static str, overflow: Overflow) -> impl Bundle {
     (
         Name::new(name),
         Node {

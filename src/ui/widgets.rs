@@ -31,7 +31,7 @@ pub(crate) struct ButtonBase;
 #[reflect(Component)]
 pub(crate) struct ButtonText;
 
-/// A builder for creating [`Button`]s with customizable appearance, text, and interaction behavior.
+/// A builder for creating [`Button`] [`Bundle`]s with customizable appearance, text, and interaction behavior.
 struct ButtonBuilder {
     name: &'static str,
     base_background: Color,
@@ -62,7 +62,7 @@ impl ButtonBuilder {
         }
     }
 
-    /// Builds the [`Button`] and attaches an [`Observer`].
+    /// Builds a [`Button`] [`Bundle`] and attaches an [`Observer`].
     ///
     /// ## Traits
     ///
@@ -208,7 +208,7 @@ where
     )
 }
 
-/// A medium rounded [`Button`] with text and an action defined as an [`Observer`].
+/// A medium rounded switch [`Button`] with text and an action defined as an [`Observer`].
 ///
 /// ## Traits
 ///
@@ -234,7 +234,7 @@ where
     )
 }
 
-/// A small [`Button`] button with text and an action defined as an [`Observer`].
+/// A small circle [`Button`] with text and an action defined as an [`Observer`].
 ///
 /// ## Traits
 ///
@@ -316,7 +316,7 @@ where
     builder.build_with(action, base_bundle, surface_bundle)
 }
 
-/// Tuples meant to be used as [`Bundle`]s for [`Button`]
+/// Tuples meant to be used as [`Bundle`]s for [`Button`].
 fn button_bundles(
     width: Val,
     aspect_ratio: Option<f32>,

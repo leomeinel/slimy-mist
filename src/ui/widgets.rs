@@ -17,7 +17,13 @@ use bevy::{
     ui::auto_directional_navigation::AutoDirectionalNavigation,
 };
 
-use crate::ui::{prelude::*, scroll::AutoScroll};
+use crate::{
+    input::ui::UiNav,
+    ui::{
+        prelude::*,
+        scroll::{AutoScroll, InputScroll},
+    },
+};
 
 /// Button base marker
 #[derive(Component, Reflect)]
@@ -101,6 +107,7 @@ impl ButtonBuilder {
                             },
                             InteractionOverride::default(),
                             AutoDirectionalNavigation::default(),
+                            UiNav,
                             surface_bundle,
                             ZIndex(1),
                             children![(
@@ -131,6 +138,8 @@ pub(crate) fn ui_root_auto_scroll(name: &'static str) -> impl Bundle {
     (
         ui_root_bundle(name, Overflow::scroll_y()),
         AutoScroll(Vec2::new(0., BODY_FONT_SIZE / 100.)),
+        InputScroll(Vec2::new(0., BODY_FONT_SIZE)),
+        UiNav,
     )
 }
 

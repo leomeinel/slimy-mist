@@ -21,7 +21,7 @@ use crate::{
     characters::Movement,
     levels::overworld::OverworldProcGen,
     logging::error::*,
-    procgen::{ProcGenDespawning, ProcGenInit, ProcGenerated, TileDataCache},
+    procgen::{DespawnProcGen, ProcGenInit, ProcGenerated, TileDataCache},
     screens::Screen,
 };
 
@@ -34,7 +34,7 @@ pub(super) fn plugin(app: &mut App) {
                 find_path::<OverworldProcGen>,
                 refresh_path::<OverworldProcGen>,
             )
-                .run_if(in_state(ProcGenDespawning(false))),
+                .run_if(in_state(DespawnProcGen(false))),
             apply_path.in_set(PausableSystems),
         )
             .run_if(in_state(ProcGenInit(true)).and(in_state(Screen::Gameplay)))

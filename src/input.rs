@@ -7,12 +7,11 @@
  * URL: https://www.apache.org/licenses/LICENSE-2.0
  */
 
-// FIXME: We currently don't have a way to handle joystick drift.
-
 pub(crate) mod actions;
 pub(crate) mod joystick;
 mod mock;
 pub(crate) mod pointer;
+pub(crate) mod ui;
 
 use std::marker::PhantomData;
 
@@ -37,7 +36,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_plugins(EnhancedInputPlugin);
 
     // Add child plugins
-    app.add_plugins((joystick::plugin, mock::plugin, pointer::plugin));
+    app.add_plugins((joystick::plugin, mock::plugin, pointer::plugin, ui::plugin));
 
     // Order new `InitGameplaySystems` variants by adding them here:
     app.configure_sets(

@@ -1,5 +1,5 @@
 /*
- * File: directional_nav.rs
+ * File: nav.rs
  * Author: Leopold Johannes Meinel (leo@meinel.dev)
  * -----
  * Copyright (c) 2026 Leopold Johannes Meinel & contributors
@@ -9,6 +9,8 @@
  * Heavily inspired by: https://github.com/bevyengine/bevy/blob/latest/examples/ui/auto_directional_navigation.rs
  */
 
+// FIXME: Suppress warning if InputScroll is present
+
 use core::time::Duration;
 
 use bevy::{
@@ -17,17 +19,17 @@ use bevy::{
         InputDispatchPlugin, InputFocus, InputFocusVisible,
         directional_navigation::{AutoNavigationConfig, DirectionalNavigationPlugin},
     },
-    math::{CompassOctant, Dir2},
+    math::CompassOctant,
     picking::{
         backend::HitData,
         pointer::{Location, PointerId},
     },
-    platform::collections::HashSet,
     prelude::*,
     ui::auto_directional_navigation::{AutoDirectionalNavigation, AutoDirectionalNavigator},
 };
 
 use crate::{
+    input::ui::{UiNavAction, UiNavActionSet},
     logging::warn::*,
     ui::interaction::{InteractionOverride, OverrideInteraction},
     utils::run_conditions::component_is_present,
@@ -38,7 +40,6 @@ pub(super) fn plugin(app: &mut App) {
     app.add_plugins((InputDispatchPlugin, DirectionalNavigationPlugin));
 
     // Insert resources
-    app.init_resource::<DirectionalNavActionSet>();
     app.insert_resource(InputFocusVisible(true));
     // FIXME: This currently sometimes navigates in weird ways. This is especially visible in the `Settings`
     //        `Menu`. The current `min_alignment_factor` is usable, but still not great.
@@ -57,7 +58,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         PreUpdate,
         (
-            process_inputs.run_if(component_is_present::<AutoDirectionalNavigation>),
+            override_interaction.run_if(component_is_present::<AutoDirectionalNavigation>),
             (
                 reset_override,
                 override_interaction_on_release,
@@ -79,49 +80,25 @@ pub(super) fn plugin(app: &mut App) {
     app.add_observer(override_interaction_on_click);
 }
 
-/// Action for directional navigation.
-#[derive(Debug, PartialEq, Eq, Hash)]
-pub(crate) enum DirectionalNavAction {
-    Up,
-    Down,
-    Left,
-    Right,
-    Select(bool),
-}
-impl DirectionalNavAction {
-    fn variants() -> Vec<Self> {
-        vec![
-            DirectionalNavAction::Up,
-            DirectionalNavAction::Down,
-            DirectionalNavAction::Left,
-            DirectionalNavAction::Right,
-            DirectionalNavAction::Select(true),
-            DirectionalNavAction::Select(false),
-        ]
-    }
-    fn keycode(&self) -> KeyCode {
-        match self {
-            DirectionalNavAction::Up => KeyCode::ArrowUp,
-            DirectionalNavAction::Down => KeyCode::ArrowDown,
-            DirectionalNavAction::Left => KeyCode::ArrowLeft,
-            DirectionalNavAction::Right => KeyCode::ArrowRight,
-            DirectionalNavAction::Select(_) => KeyCode::Enter,
-        }
-    }
-    fn gamepad_button(&self) -> GamepadButton {
-        match self {
-            DirectionalNavAction::Up => GamepadButton::DPadUp,
-            DirectionalNavAction::Down => GamepadButton::DPadDown,
-            DirectionalNavAction::Left => GamepadButton::DPadLeft,
-            DirectionalNavAction::Right => GamepadButton::DPadRight,
-            DirectionalNavAction::Select(_) => GamepadButton::South,
-        }
+/// Set initial focus to top left-most [`AutoDirectionalNavigation`].
+fn set_input_focus(
+    query: Query<(Entity, &UiGlobalTransform), With<AutoDirectionalNavigation>>,
+    mut input_focus: ResMut<InputFocus>,
+) {
+    if let Some(button) = query
+        .iter()
+        .min_by(|(_, transform), (_, other)| {
+            transform
+                .translation
+                .y
+                .total_cmp(&other.translation.y)
+                .then_with(|| transform.translation.x.total_cmp(&other.translation.x))
+        })
+        .map(|(e, _)| e)
+    {
+        input_focus.set(button);
     }
 }
-
-/// [`HashSet`] containing currently relevant [`DirectionalNavAction`]s.
-#[derive(Default, Resource)]
-struct DirectionalNavActionSet(HashSet<DirectionalNavAction>);
 
 /// Reset all [`InteractionOverride`]s.
 fn reset_interaction_overrides(
@@ -132,36 +109,12 @@ fn reset_interaction_overrides(
     }
 }
 
-/// Process inputs and add correct [`DirectionalNavAction`] to [`DirectionalNavActionSet`].
-///
-/// This also sets [`OverrideInteraction`] to true if any input has been pressed.
-fn process_inputs(
-    gamepad_input: Query<&Gamepad>,
+/// Enable [`OverrideInteraction`] if [`UiNavActionSet`] is not empty.
+fn override_interaction(
     mut next_state: ResMut<NextState<OverrideInteraction>>,
-    mut action_set: ResMut<DirectionalNavActionSet>,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
+    action_set: Res<UiNavActionSet>,
 ) {
-    action_set.0.clear();
-
-    let mut any_pressed = false;
-    for action in DirectionalNavAction::variants() {
-        let on_just_pressed = action != DirectionalNavAction::Select(false);
-        let just_pressed = keyboard_input.just_pressed(action.keycode())
-            || gamepad_input
-                .iter()
-                .any(|g| g.just_pressed(action.gamepad_button()));
-        let just_released = keyboard_input.just_released(action.keycode())
-            || gamepad_input
-                .iter()
-                .any(|g| g.just_released(action.gamepad_button()));
-
-        if (on_just_pressed && just_pressed) || (!on_just_pressed && just_released) {
-            action_set.0.insert(action);
-            any_pressed = true;
-        }
-    }
-
-    if any_pressed {
+    if !action_set.0.is_empty() {
         (*next_state).set_if_neq(OverrideInteraction(true));
     }
 }
@@ -211,10 +164,10 @@ fn override_interaction_on_click(
 /// Set correct [`InteractionOverride`] for selected [`AutoDirectionalNavigation`]s on release.
 fn override_interaction_on_release(
     query: Query<&mut InteractionOverride, With<AutoDirectionalNavigation>>,
-    action_set: Res<DirectionalNavActionSet>,
+    action_set: Res<UiNavActionSet>,
     input_focus_visible: Res<InputFocusVisible>,
 ) {
-    if !input_focus_visible.0 || !action_set.0.contains(&DirectionalNavAction::Select(false)) {
+    if !input_focus_visible.0 || !action_set.0.contains(&UiNavAction::Select(false)) {
         return;
     }
     for mut interaction_override in query {
@@ -222,19 +175,11 @@ fn override_interaction_on_release(
     }
 }
 
-/// Determine direction from directional fields of [`DirectionalNavActionSet`] and navigate.
-fn navigate(mut navigator: AutoDirectionalNavigator, action_set: Res<DirectionalNavActionSet>) {
-    // Use `bool` values as i8 and determine expected `maybe_direction`.
-    let net_east_west = action_set.0.contains(&DirectionalNavAction::Right) as i8
-        - action_set.0.contains(&DirectionalNavAction::Left) as i8;
-    let net_north_south = action_set.0.contains(&DirectionalNavAction::Up) as i8
-        - action_set.0.contains(&DirectionalNavAction::Down) as i8;
-    let maybe_direction = Dir2::from_xy(net_east_west as f32, net_north_south as f32)
-        .ok()
-        .map(CompassOctant::from);
-
+/// Navigate to [`UiNavActionSet::direction()`].
+fn navigate(mut navigator: AutoDirectionalNavigator, action_set: Res<UiNavActionSet>) {
     // Navigate to `maybe_direction`.
-    if let Some(direction) = maybe_direction
+    let direction = action_set.direction().map(CompassOctant::from);
+    if let Some(direction) = direction
         && let Err(_e) = navigator.navigate(direction)
     {
         warn!("{}", WARN_INVALID_UI_NAV);
@@ -275,13 +220,13 @@ fn hover_focused(
     }
 }
 
-/// Trigger [`Pointer<Click>`] on focused [`Entity`]s mapped to [`DirectionalNavAction::Select`] in [`DirectionalNavActionSet`].
+/// Trigger [`Pointer<Click>`] on focused [`Entity`]s mapped to [`UiNavAction::Select`] in [`UiNavActionSet`].
 fn click_focused(
     mut commands: Commands,
-    action_set: Res<DirectionalNavActionSet>,
+    action_set: Res<UiNavActionSet>,
     input_focus: Res<InputFocus>,
 ) {
-    if action_set.0.contains(&DirectionalNavAction::Select(true))
+    if action_set.0.contains(&UiNavAction::Select(true))
         && let Some(entity) = input_focus.0
     {
         // NOTE: Since we only need to trigger the pointer click for the entity,
@@ -307,26 +252,6 @@ fn click_focused(
                 duration: Duration::from_secs_f32(0.1),
             },
         });
-    }
-}
-
-/// Set initial focus to top left-most [`AutoDirectionalNavigation`].
-fn set_input_focus(
-    query: Query<(Entity, &UiGlobalTransform), With<AutoDirectionalNavigation>>,
-    mut input_focus: ResMut<InputFocus>,
-) {
-    if let Some(button) = query
-        .iter()
-        .min_by(|(_, transform), (_, other)| {
-            transform
-                .translation
-                .y
-                .total_cmp(&other.translation.y)
-                .then_with(|| transform.translation.x.total_cmp(&other.translation.x))
-        })
-        .map(|(e, _)| e)
-    {
-        input_focus.set(button);
     }
 }
 

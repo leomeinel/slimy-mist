@@ -11,8 +11,8 @@
 
 //! Reusable UI widgets & theming.
 
-pub(crate) mod directional_nav;
 pub(crate) mod interaction;
+pub(crate) mod nav;
 pub(crate) mod palette;
 pub(crate) mod scroll;
 pub(crate) mod widgets;
@@ -31,7 +31,7 @@ use bevy::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
     // Add child plugins
-    app.add_plugins((directional_nav::plugin, interaction::plugin, scroll::plugin));
+    app.add_plugins((interaction::plugin, nav::plugin, scroll::plugin));
 }
 
 /// Font size for any header.

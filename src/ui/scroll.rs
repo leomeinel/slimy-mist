@@ -11,13 +11,25 @@
 
 use bevy::{prelude::*, ui::UiSystems};
 
+use crate::AppSystems;
+
 pub(super) fn plugin(app: &mut App) {
-    // Note: We are running this in `FixedUpdate` to ensure consistent scrolling.
-    app.add_systems(FixedUpdate, auto_scroll_hovered);
+    // NOTE: We are running this in `FixedUpdate` to ensure consistent auto scrolling.
+    app.add_systems(FixedUpdate, auto_scroll.after(AppSystems::RecordInput));
 
     app.add_systems(PostUpdate, reset_auto_scroll_nodes.after(UiSystems::Layout));
 
+    app.add_observer(on_scroll_action);
     app.add_observer(on_scroll);
+}
+
+/// UI scrolling action.
+#[derive(EntityEvent, Debug)]
+#[entity_event(propagate, auto_propagate)]
+pub(crate) struct ScrollAction {
+    pub(crate) entity: Entity,
+    /// Scroll delta in logical coordinates.
+    pub(crate) delta: Vec2,
 }
 
 /// UI scrolling event.
@@ -33,19 +45,20 @@ struct Scroll {
 #[derive(Component)]
 pub(crate) struct AutoScroll(pub(crate) Vec2);
 
-/// Trigger [`Scroll`] automatically for hovered [`Entity`]s with [`AutoScroll`].
-fn auto_scroll_hovered(query: Query<(Entity, &Node, &AutoScroll)>, mut commands: Commands) {
+/// Marker [`Component`] for input scrolling.
+#[derive(Component)]
+pub(crate) struct InputScroll(pub(crate) Vec2);
+
+/// Trigger [`Scroll`] automatically for [`Entity`]s with [`AutoScroll`].
+fn auto_scroll(query: Query<(Entity, &Node, &AutoScroll)>, mut commands: Commands) {
     for (entity, node, scroll) in query {
-        // Continue if content is centered
-        if node.justify_content == JustifyContent::Center && node.align_items == AlignItems::Center
+        let delta = scroll.0;
+        if (node.align_items == AlignItems::Center || delta.x == 0.)
+            && (node.justify_content == JustifyContent::Center || delta.y == 0.)
         {
             continue;
         }
-
-        commands.trigger(Scroll {
-            entity,
-            delta: scroll.0,
-        });
+        commands.trigger(Scroll { entity, delta });
     }
 }
 
@@ -74,18 +87,27 @@ fn reset_auto_scroll_nodes(query: Query<(&mut Node, &ComputedNode), With<AutoScr
     }
 }
 
+/// On a triggered [`ScrollAction`] trigger [`Scroll`].
+///
+/// This also overrides [`AutoScroll`].
+fn on_scroll_action(event: On<ScrollAction>, mut commands: Commands) {
+    let entity = event.entity;
+    commands.entity(entity).try_remove::<AutoScroll>();
+    commands.trigger(Scroll {
+        entity,
+        delta: event.delta,
+    });
+}
+
 /// On a triggered [`Scroll`], scroll associated [`Node`].
-fn on_scroll(
-    mut scroll: On<Scroll>,
-    mut query: Query<(&mut ScrollPosition, &Node, &ComputedNode)>,
-) {
-    let Ok((mut scroll_position, node, computed)) = query.get_mut(scroll.entity) else {
+fn on_scroll(mut event: On<Scroll>, mut query: Query<(&mut ScrollPosition, &Node, &ComputedNode)>) {
+    let Ok((mut scroll_position, node, computed)) = query.get_mut(event.entity) else {
         return;
     };
 
     let max_offset = (computed.content_size() - computed.size()) * computed.inverse_scale_factor();
 
-    let delta = &mut scroll.delta;
+    let delta = &mut event.delta;
     if node.overflow.x == OverflowAxis::Scroll && delta.x != 0. {
         // Is this node already scrolled all the way in the direction of the scroll?
         let max = if delta.x > 0. {
@@ -118,6 +140,6 @@ fn on_scroll(
 
     // Stop propagating when the delta is fully consumed.
     if *delta == Vec2::ZERO {
-        scroll.propagate(false);
+        event.propagate(false);
     }
 }

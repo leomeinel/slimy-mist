@@ -19,5 +19,5 @@ pub(crate) const WARN_INCOMPLETE_COLLISION_DATA: &str = "The collision data is i
 /// Warning on invalid [`crate::characters::attack::AttackData`]
 pub(crate) const WARN_INVALID_ATTACK_DATA: &str =
     "The attack data for the fired attack is invalid.";
-/// Warning on invalid [`crate::ui::directional_nav::DirectionalNavAction`]
+/// Warning on invalid [`crate::ui::directional_nav::UiNavAction`]
 pub(crate) const WARN_INVALID_UI_NAV: &str = "No next button found to navigate to.";

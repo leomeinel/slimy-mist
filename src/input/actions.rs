@@ -67,6 +67,7 @@ pub(crate) fn player_input() -> impl Bundle {
                     require_reset: true,
                     ..default()
                 },
+                DeadZone::default(),
                 Bindings::spawn(Axial::right_stick())
             ),
         ]

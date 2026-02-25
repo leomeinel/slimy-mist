@@ -32,7 +32,7 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
-/// Mock [`Walk`] from the virtual joystick
+/// Mock [`Walk`] from virtual [`VirtualJoystickMessage`].
 fn mock_walk_from_virtual_joystick(
     mut reader: MessageReader<VirtualJoystickMessage<u8>>,
     walk: Single<Entity, With<Player>>,
@@ -53,7 +53,7 @@ fn mock_walk_from_virtual_joystick(
     }
 }
 
-/// Mock [`Jump`] from touch inputs.
+/// Mock [`Jump`] from [`Touches`].
 fn mock_jump_from_touch(
     jump: Single<Entity, With<Player>>,
     mut commands: Commands,
@@ -73,7 +73,7 @@ fn mock_jump_from_touch(
     }
 }
 
-/// Mock [`Melee`] from touch inputs.
+/// Mock [`Melee`] from [`Touches`].
 fn mock_melee_from_touch(
     melee: Single<Entity, With<Player>>,
     mut commands: Commands,
@@ -97,7 +97,7 @@ fn mock_melee_from_touch(
     }
 }
 
-/// Mock [`Aim`] from touch inputs.
+/// Mock [`Aim`] from [`Touches`].
 fn mock_aim_from_touch(
     aim: Single<Entity, With<Player>>,
     camera: Single<(&Camera, &GlobalTransform), With<CanvasCamera>>,

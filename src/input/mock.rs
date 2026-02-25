@@ -23,7 +23,7 @@ pub(super) fn plugin(app: &mut App) {
         PreUpdate,
         (
             mock_walk_from_virtual_joystick,
-            (mock_jump_from_click, mock_jump_from_touch).chain(),
+            mock_jump_from_touch,
             (mock_melee_from_click, mock_melee_from_touch).chain(),
             (mock_aim_from_click, mock_aim_from_touch).chain(),
         )
@@ -123,29 +123,6 @@ fn mock_aim_from_touch(
             );
         }
     }
-}
-
-/// Mock [`Jump`] from clicks.
-fn mock_jump_from_click(
-    jump: Single<Entity, With<Player>>,
-    mut commands: Commands,
-    drag: Res<MouseDrag>,
-    mouse: Res<ButtonInput<MouseButton>>,
-    rect: Res<JoystickRect<{ JoystickID::Movement as u8 }>>,
-) {
-    let Some(start_pos) = drag.start_pos else {
-        return;
-    };
-    if !mouse.just_released(MouseButton::Left)
-        || rect.intersects_with(start_pos)
-        || !drag.is_swipe_up()
-    {
-        return;
-    }
-
-    commands
-        .entity(*jump)
-        .mock_once::<Player, Jump>(TriggerState::Fired, true);
 }
 
 /// Mock [`Melee`] from clicks.

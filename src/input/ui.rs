@@ -155,15 +155,13 @@ fn process_right_stick_input(
         return;
     }
 
-    for gamepad in gamepad_query {
-        let stick = gamepad.right_stick();
-        if stick.length() > 0. {
-            action_set
-                .0
-                .insert(UiNavAction::try_from_vec2(stick).unwrap());
-            return;
-        }
-    }
+    let Some(action) = gamepad_query
+        .iter()
+        .find_map(|g| UiNavAction::try_from_vec2(g.right_stick()))
+    else {
+        return;
+    };
+    action_set.0.insert(action);
 }
 
 /// Trigger [`Scroll`] for [`Entity`] with [`InputScroll`] from [`UiNavActionSet`].

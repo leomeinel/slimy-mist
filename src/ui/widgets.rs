@@ -115,7 +115,7 @@ impl ButtonBuilder {
                                 ButtonText,
                                 Text(self.text.to_uppercase()),
                                 TextFont::from(self.font).with_font_size(self.font_size),
-                                TextColor(BUTTON_TEXT.into()),
+                                TextColor(BUTTON_TEXT),
                                 // Don't bubble picking events from the text up to the button.
                                 Pickable::IGNORE,
                                 ZIndex(2),
@@ -165,12 +165,12 @@ fn ui_root_bundle(name: &'static str, overflow: Overflow) -> impl Bundle {
 
 /// A simple header label. Bigger than [`label`].
 pub(crate) fn header(text: impl Into<String>, font: Handle<Font>) -> impl Bundle {
-    styled_text("Header", HEADER_TEXT.into(), text, font, HEADER_FONT_SIZE)
+    styled_text("Header", HEADER_TEXT, text, font, HEADER_FONT_SIZE)
 }
 
 /// A simple text label.
 pub(crate) fn label(text: impl Into<String>, font: Handle<Font>) -> impl Bundle {
-    styled_text("Label", LABEL_TEXT.into(), text, font, BODY_FONT_SIZE)
+    styled_text("Label", LABEL_TEXT, text, font, BODY_FONT_SIZE)
 }
 
 /// A simple styled text

@@ -243,7 +243,7 @@ fn spawn_joystick<const ID: u8>(
                 (
                     VirtualJoystickUIBackground,
                     ImageNode {
-                        color: JOYSTICK_IMAGE.into(),
+                        color: JOYSTICK_IMAGE,
                         image: joystick_assets.background_image.clone(),
                         ..default()
                     },
@@ -258,7 +258,7 @@ fn spawn_joystick<const ID: u8>(
                 (
                     VirtualJoystickUIKnob,
                     ImageNode {
-                        color: JOYSTICK_IMAGE.into(),
+                        color: JOYSTICK_IMAGE,
                         image: joystick_assets.knob_image.clone(),
                         ..default()
                     },

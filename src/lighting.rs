@@ -115,9 +115,9 @@ fn reset_ambient(mut light: Single<&mut Light2d, With<CanvasCamera>>) {
 
 /// Interval in seconds to run logic in [`update_ambient_brightness`].
 const UPDATE_AMBIENT_INTERVAL_SECS: f32 = 5.;
-/// Minimum [`AmbientLight2d::intensity`].
+/// Minimum [`AmbientLight2d::brightness`].
 const MIN_AMBIENT: f32 = 0.01;
-/// Maximum [`AmbientLight2d::intensity`].
+/// Maximum [`AmbientLight2d::brightness`].
 const MAX_AMBIENT: f32 = 0.5;
 
 /// Update [`AmbientLight2d::brightness`] from [`EaseFunction::SmootherStep`].

@@ -106,6 +106,9 @@ impl UiNavActionSet {
     }
 }
 
+// FIXME: I'm pretty sure that right stick joystick input is broken. For now I can't further describe how
+//        since I only have gamepads that are very broken, but I will test this further.
+//        Also for future testing use https://gamepadtest.com
 /// Process inputs and insert [`UiNavAction`] into [`UiNavActionSet`].
 fn process_inputs(
     gamepad_query: Query<&Gamepad>,

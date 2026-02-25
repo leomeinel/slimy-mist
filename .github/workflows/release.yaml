@@ -284,14 +284,14 @@ jobs:
           cargo build --bin '${{ env.app_binary_name }}' --no-default-features --profile web-release --locked --target=${{ matrix.targets }} --features='${{ matrix.features }}' -j default
 
           # Install binaryen version 125
-          curl -LJO https://github.com/WebAssembly/binaryen/releases/download/version_125/binaryen-version_125-aarch64-linux.tar.gz
-          tar -xzf ./binaryen-version_125-aarch64-linux.tar.gz
+          curl -LJO https://github.com/WebAssembly/binaryen/releases/download/version_126/binaryen-version_126-aarch64-linux.tar.gz
+          tar -xzf ./binaryen-version_126-aarch64-linux.tar.gz
 
           # Optimize binary
           OUTPUT=target/${{ matrix.targets }}/web-release/${{ env.app_binary_name }}${{ matrix.binary_ext }}
           tmpfile="$(mktemp /tmp/${{ env.app_binary_name }}-XXXXXX${{ matrix.binary_ext }})"
           mv "${OUTPUT}" "${tmpfile}"
-          ./binaryen-version_125/bin/wasm-opt -Os -o "${OUTPUT}" "${tmpfile}" --enable-bulk-memory-opt --enable-nontrapping-float-to-int
+          ./binaryen-version_126/bin/wasm-opt -Os -o "${OUTPUT}" "${tmpfile}" --enable-bulk-memory-opt --enable-nontrapping-float-to-int
 
           cargo binstall --locked --no-confirm --force wasm-bindgen-cli
           wasm-bindgen --no-typescript --out-name bevy_game --out-dir ./web --target web "${OUTPUT}"

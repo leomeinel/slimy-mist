@@ -17,7 +17,10 @@ pub(super) fn plugin(app: &mut App) {
     // NOTE: We are running this in `FixedUpdate` to ensure consistent auto scrolling.
     app.add_systems(FixedUpdate, auto_scroll.after(AppSystems::RecordInput));
 
-    app.add_systems(PostUpdate, reset_auto_scroll_nodes.after(UiSystems::Layout));
+    app.add_systems(
+        PostUpdate,
+        reset_scroll_node_layout.after(UiSystems::Layout),
+    );
 
     app.add_observer(on_scroll_action);
     app.add_observer(on_scroll);
@@ -62,10 +65,12 @@ fn auto_scroll(query: Query<(Entity, &Node, &AutoScroll)>, mut commands: Command
     }
 }
 
-/// Reset [`Node`]s with [`AutoScroll`].
+/// Reset layout for scrolling [`Node`]s.
 ///
 /// This sets [`Node::justify_content`] and [`Node::align_items`] according to if there is any overflow.
-fn reset_auto_scroll_nodes(query: Query<(&mut Node, &ComputedNode), With<AutoScroll>>) {
+fn reset_scroll_node_layout(
+    query: Query<(&mut Node, &ComputedNode), Or<(With<AutoScroll>, With<InputScroll>)>>,
+) {
     for (mut node, computed) in query {
         let delta = computed.content_size() - computed.size();
 

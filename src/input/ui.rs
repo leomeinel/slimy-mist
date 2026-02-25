@@ -26,13 +26,7 @@ pub(super) fn plugin(app: &mut App) {
 
     app.add_systems(
         PreUpdate,
-        (
-            clear_action_set,
-            process_analog_inputs,
-            process_right_stick_input,
-        )
-            .run_if(component_is_present::<UiNav>)
-            .chain(),
+        process_inputs.run_if(component_is_present::<UiNav>),
     );
 
     app.add_systems(
@@ -112,21 +106,21 @@ impl UiNavActionSet {
     }
 }
 
-/// Clear [`UiNavActionSet`].
-fn clear_action_set(mut action_set: ResMut<UiNavActionSet>) {
-    action_set.0.clear();
-}
-
-/// Process analog inputs and add insert [`UiNavAction`] into [`UiNavActionSet`].
-fn process_analog_inputs(
+/// Process inputs and insert [`UiNavAction`] into [`UiNavActionSet`].
+fn process_inputs(
     gamepad_query: Query<&Gamepad>,
     mut action_set: ResMut<UiNavActionSet>,
     keyboard: Res<ButtonInput<KeyCode>>,
 ) {
-    // NOTE: Return if `action-set` is not empty to allow other systems to override.
-    if !action_set.0.is_empty() {
+    action_set.0.clear();
+
+    if let Some(action) = gamepad_query
+        .iter()
+        .find_map(|g| UiNavAction::try_from_vec2(g.right_stick()))
+    {
+        action_set.0.insert(action);
         return;
-    }
+    };
 
     for action in UiNavAction::variants() {
         let on_just_pressed = action != UiNavAction::Select(false);
@@ -143,25 +137,6 @@ fn process_analog_inputs(
             action_set.0.insert(action);
         }
     }
-}
-
-/// Process inputs and add insert [`UiNavAction`] into [`UiNavActionSet`].
-fn process_right_stick_input(
-    gamepad_query: Query<&Gamepad>,
-    mut action_set: ResMut<UiNavActionSet>,
-) {
-    // NOTE: Return if `action-set` is not empty to allow other systems to override.
-    if !action_set.0.is_empty() {
-        return;
-    }
-
-    let Some(action) = gamepad_query
-        .iter()
-        .find_map(|g| UiNavAction::try_from_vec2(g.right_stick()))
-    else {
-        return;
-    };
-    action_set.0.insert(action);
 }
 
 /// Trigger [`Scroll`] for [`Entity`] with [`InputScroll`] from [`UiNavActionSet`].

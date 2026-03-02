@@ -19,19 +19,19 @@ Further Contributors:
 -- Return the path to the dir containing a file.
 -- Source: https://stackoverflow.com/questions/9102126/lua-return-directory-path-from-path
 local function dirName(str)
-   return str:match("(.*" .. Sep .. ")")
+    return str:match("(.*" .. Sep .. ")")
 end
 
 -- Return the name of a file given its full path..
 -- Source: https://codereview.stackexchange.com/questions/90177/get-file-name-with-extension-and-get-only-extension
 local function baseName(str)
-   return str:match("^.*" .. Sep .. "(.+)$") or str
+    return str:match("^.*" .. Sep .. "(.+)$") or str
 end
 
 -- Return the name of a file excluding the extension, this being, everything after the dot.
 -- Source: https://stackoverflow.com/questions/18884396/extracting-filename-only-with-pattern-matching
 local function removeExtension(str)
-   return str:match("(.+)%..+")
+    return str:match("(.+)%..+")
 end
 
 -- sprite handling.
@@ -39,41 +39,41 @@ end
 -- Hides all layers and sub-layers inside a group, returning a list with all
 -- initial states of each layer's visibility.
 local function hideLayers(sprite)
-   local data = {} -- Save visibility status of each layer here.
-   for i,layer in ipairs(sprite.layers) do
-      if layer.isGroup then
-         -- Recursive for groups.
-         data[i] = hideLayers(layer)
-      else
-         data[i] = layer.isVisible
-         layer.isVisible = false
-      end
-   end
-   return data
+    local data = {} -- Save visibility status of each layer here.
+    for i,layer in ipairs(sprite.layers) do
+        if layer.isGroup then
+            -- Recursive for groups.
+            data[i] = hideLayers(layer)
+        else
+            data[i] = layer.isVisible
+            layer.isVisible = false
+        end
+    end
+    return data
 end
 
 -- Restore layers visibility.
 local function restoreLayersVisibility(sprite, data)
-   for i,layer in ipairs(sprite.layers) do
-      if layer.isGroup then
-         -- Recursive for groups.
-         restoreLayersVisibility(layer, data[i])
-      else
-         layer.isVisible = data[i]
-      end
-   end
+    for i,layer in ipairs(sprite.layers) do
+        if layer.isGroup then
+            -- Recursive for groups.
+            restoreLayersVisibility(layer, data[i])
+        else
+            layer.isVisible = data[i]
+        end
+    end
 end
 
 -- Dialog
 local function msgDialog(title, msg)
-   local dialog = Dialog(title)
-   dialog:label{
-      id = "msg",
-      text = msg
-   }
-   dialog:newrow()
-   dialog:button{id = "close", text = "Close", onclick = function() dialog:close() end }
-   return dialog
+    local dialog = Dialog(title)
+    dialog:label{
+        id = "msg",
+        text = msg
+    }
+    dialog:newrow()
+    dialog:button{id = "close", text = "Close", onclick = function() dialog:close() end }
+    return dialog
 end
 
 -- Function to calculate the bounding box of the non-transparent pixels in a layer

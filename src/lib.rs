@@ -39,7 +39,7 @@ mod visual;
 use bevy::window::WindowMode;
 use bevy::{asset::AssetMetaCheck, prelude::*, window::ScreenEdge};
 use bevy_ecs_tilemap::TilemapPlugin;
-use bevy_light_2d::prelude::*;
+use bevy_fast_light::prelude::*;
 use bevy_prng::WyRand;
 use bevy_rand::plugin::EntropyPlugin;
 use bevy_rapier2d::plugin::RapierPhysicsPlugin;
@@ -91,7 +91,7 @@ impl Plugin for AppPlugin {
         // Add library plugins
         app.add_plugins((
             EntropyPlugin::<WyRand>::default(),
-            Light2dPlugin,
+            FastLightPlugin,
             RapierPhysicsPlugin::<()>::default(),
             TilemapPlugin,
         ));

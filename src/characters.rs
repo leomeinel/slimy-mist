@@ -103,9 +103,8 @@ where
     fn shadow_bundle(&self, height: f32, shadow: &StaticShadow) -> impl Bundle {
         (
             Mesh2d(shadow.mesh.clone()),
-            // FIXME: Using `LightOccluder2d` might be a good idea instead, but performance is unacceptable.
-            //        We'd also have to wait for ellipse occluder shapes.
-            //        Also see: https://github.com/jgayfer/bevy_light_2d/issues/41
+            // FIXME: Using `LightOccluder2d` might be a good idea instead, but we will
+            //        have to wait for occluder support in `bevy_fast_light`.
             MeshMaterial2d(shadow.material.clone()),
             Transform::from_xyz(0., -height / 2., BACKGROUND_Z_DELTA),
         )

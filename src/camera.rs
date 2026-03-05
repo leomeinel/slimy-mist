@@ -44,6 +44,8 @@ pub(crate) const LEVEL_Z: f32 = 1.;
 pub(crate) const FOREGROUND_Z: f32 = 5.;
 /// Z-level for any overlay object
 pub(crate) const OVERLAY_Z: f32 = 10.;
+/// Z-level for light
+pub(crate) const LIGHT_Z: f32 = 10.;
 
 /// Z-level delta for background objects
 ///

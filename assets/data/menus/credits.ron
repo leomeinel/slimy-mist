@@ -21,7 +21,7 @@ CreditsData (
         ("Float Wrapper Types", "ordered-float"),
         ("Game Engine", "bevy"),
         ("Input", "bevy_enhanced_input"),
-        ("Lighting", "bevy_light_2d"),
+        ("Lighting", "bevy_fast_light"),
         ("Loading Progress", "iyes_progress"),
         ("Localization", "bevy_fluent"),
         ("Mobile Joystick", "virtual_joystick"),

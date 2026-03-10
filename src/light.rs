@@ -1,5 +1,5 @@
 /*
- * File: lighting.rs
+ * File: light.rs
  * Author: Leopold Johannes Meinel (leo@meinel.dev)
  * -----
  * Copyright (c) 2026 Leopold Johannes Meinel & contributors

@@ -23,7 +23,7 @@ use crate::{
         pointer::{MouseDrag, PointerStartTimeSecs},
     },
     levels::overworld::{Overworld, OverworldProcGen, spawn_overworld},
-    lighting::{DayTimer, StreetLight},
+    light::{DayTimer, StreetLight},
     menus::Menu,
     procgen::{ProcGenCache, navmesh::spawn_navmesh},
     screens::Screen,

@@ -13,7 +13,7 @@ use rand::seq::IndexedRandom as _;
 
 use crate::{
     levels::Level,
-    lighting::LightWrapper,
+    light::LightWrapper,
     procgen::{CHUNK_SIZE, ProcGen, ProcGenCache, ProcGenRng, ProcGenerated, TileDataCache},
     visual::Visible,
 };

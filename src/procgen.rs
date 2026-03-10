@@ -23,7 +23,7 @@
 
 pub(crate) mod characters;
 pub(crate) mod chunks;
-pub(crate) mod lighting;
+pub(crate) mod lights;
 pub(crate) mod navmesh;
 
 use std::marker::PhantomData;
@@ -42,12 +42,12 @@ use crate::{
         Level,
         overworld::{Overworld, OverworldAssets, OverworldProcGen},
     },
-    lighting::StreetLight,
+    light::StreetLight,
     log::error::*,
     procgen::{
         characters::spawn_on_procgen_characters,
         chunks::{spawn_chunks, spawn_on_procgen_chunks},
-        lighting::spawn_on_procgen_lights,
+        lights::spawn_on_procgen_lights,
         navmesh::move_navmesh,
     },
     screens::Screen,

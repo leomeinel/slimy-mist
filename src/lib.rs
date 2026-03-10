@@ -24,7 +24,7 @@ mod characters;
 mod dev_tools;
 mod input;
 mod levels;
-mod lighting;
+mod light;
 mod log;
 mod menus;
 #[cfg(any(target_os = "android", target_os = "ios"))]
@@ -106,7 +106,7 @@ impl Plugin for AppPlugin {
             dev_tools::plugin,
             input::plugin,
             levels::plugin,
-            lighting::plugin,
+            light::plugin,
             menus::plugin,
             #[cfg(any(target_os = "android", target_os = "ios"))]
             mobile::plugin,

@@ -118,7 +118,10 @@ fn update_ambient_brightness(
 ) {
     // Restrict to run only on `UPDATE_INTERVAL_SECS`
     let elapsed_secs = timer.0.elapsed_secs();
-    if let Some(inner) = *last_update {
+    // FIXME: Checking elapsed_secs > 1. is a hack to make sure this triggers when reentering gameplay.
+    if elapsed_secs > 1.
+        && let Some(inner) = *last_update
+    {
         if inner > elapsed_secs {
             *last_update = None;
             return;

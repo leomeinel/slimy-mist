@@ -959,9 +959,9 @@ dependencies = [
 
 [[package]]
 name = "bevy_fast_light"
-version = "0.4.1"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7cea253e9110d713a4d7743487d5f71defd092b5a1c8aebb05dea4a529e91a22"
+checksum = "4bd8f8332eaf6c4610befa899e3225aab38b4dd14289271514659b91a98c207d"
 dependencies = [
  "bevy",
  "smallvec",
@@ -5922,9 +5922,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-subscriber"
-version = "0.3.22"
+version = "0.3.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2f30143827ddab0d256fd843b7a66d164e9f271cfa0dde49142c5ca0ca291f1e"
+checksum = "cb7f578e5945fb242538965c2d0b04418d38ec25c79d160cd279bf0731c8d319"
 dependencies = [
  "matchers",
  "nu-ansi-term",

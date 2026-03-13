@@ -67,7 +67,7 @@ impl Default for StreetLight {
     fn default() -> Self {
         Self(PointLight2d {
             color: tailwind::AMBER_500.into(),
-            outer_radius: 64.,
+            outer_radius: 96.,
             ..default()
         })
     }
@@ -108,7 +108,7 @@ impl Default for DayUpdateTimer {
 }
 
 /// Minimum [`AmbientLight2d::intensity`].
-const MIN_AMBIENT: f32 = 0.01;
+const MIN_AMBIENT: f32 = 0.05;
 /// Maximum [`AmbientLight2d::intensity`].
 const MAX_AMBIENT: f32 = 0.5;
 

@@ -11,7 +11,7 @@ fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
     let is_within_circle = length_sq <= RADIUS_SQ;
 
     let radius_delta_frac = length_sq * INV_RADIUS_SQ;
-    let falloff = smoothstep(0., 1., 1. - radius_delta_frac);
+    let falloff = smoothstep(1., 0., radius_delta_frac);
     let attenuation = falloff * falloff;
 
     return in.color * attenuation * select(0., 1., is_within_circle);

@@ -150,8 +150,8 @@ where
         T: Visible,
     {
         (
+            MeshOccluder2d,
             Mesh2d(shadow.mesh.clone()),
-            Light2dOccluder,
             Transform::from_xyz(0., shadow.y_offset, -BASE_Z_DELTA),
         )
     }

@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use bevy::{color::palettes::tailwind, prelude::*};
 use bevy_fast_light::prelude::*;
 
@@ -37,8 +39,9 @@ pub(crate) trait LightWrapper
 where
     Self: Component + Default + Clone,
 {
-    type Inner: Component;
+    type Inner: Bundle;
     fn into_inner(self) -> Self::Inner;
+    fn new(mesh: Handle<Mesh>) -> Self;
     fn spawn(&self, commands: &mut Commands, pos: Vec2) -> Entity {
         commands
             .spawn((
@@ -53,20 +56,46 @@ where
     }
 }
 
-/// Light that is attached to a street lamp.
-#[derive(Component, Reflect, Clone)]
-pub(crate) struct StreetLight(PointLight2d);
-impl Default for StreetLight {
-    fn default() -> Self {
-        Self(PointLight2d {
-            color: tailwind::AMBER_500.into(),
-            outer_radius: 96.,
+/// [Handle<Mesh>] for light `T`.
+#[derive(Resource, Default)]
+pub(crate) struct LightMeshHandle<T>
+where
+    T: LightWrapper,
+{
+    pub(crate) handle: Handle<Mesh>,
+    _phantom: PhantomData<T>,
+}
+impl<T> LightMeshHandle<T>
+where
+    T: LightWrapper,
+{
+    pub(crate) fn new(handle: Handle<Mesh>) -> Self {
+        Self {
+            handle,
             ..default()
-        })
+        }
+    }
+}
+
+/// Light that is attached to a street lamp.
+#[derive(Component, Reflect, Clone, Default)]
+pub(crate) struct StreetLight((MeshLight2d, Mesh2d));
+impl StreetLight {
+    pub(crate) fn primitive() -> Circle {
+        Circle::new(96.)
     }
 }
 impl LightWrapper for StreetLight {
-    type Inner = PointLight2d;
+    type Inner = (MeshLight2d, Mesh2d);
+    fn new(mesh: Handle<Mesh>) -> Self {
+        Self((
+            MeshLight2d {
+                color: tailwind::AMBER_500.into(),
+                intensity: 1.,
+            },
+            Mesh2d(mesh),
+        ))
+    }
     fn into_inner(self) -> Self::Inner {
         self.0
     }

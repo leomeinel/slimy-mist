@@ -57,8 +57,9 @@ impl Plugin for LoadingPlugin {
         app.add_systems(
             OnEnter(Screen::Loading),
             (
+                // After initial `LoadingState<Screen::Loading>` insert additional resources.
                 insert_material_handle_resources,
-                // After initial `LoadingState<Screen::Loading>` insert resources with handles for data
+                insert_mesh_handle_resources,
                 insert_handle_resources.after(LoadingStateSet(Screen::Loading)),
                 spawn_loading_screen,
             )
@@ -113,6 +114,14 @@ fn insert_material_handle_resources(
     ));
     commands.insert_resource(Particle2dMaterialHandle::<MeleeParticleMaterial>(
         melee_particle_materials.add(MeleeParticleMaterial::default()),
+    ));
+}
+
+/// Insert handle [`Resource`]s for [`Mesh`]s.
+fn insert_mesh_handle_resources(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
+    // `LightMeshHandle`
+    commands.insert_resource(LightMeshHandle::<StreetLight>::new(
+        meshes.add(StreetLight::primitive()),
     ));
 }
 

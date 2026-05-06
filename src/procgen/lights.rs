@@ -14,6 +14,7 @@ pub(super) fn spawn_on_procgen_lights<T, A, B>(
     mut procgen_rng: Single<&mut WyRand, With<ProcGenRng>>,
     mut commands: Commands,
     mut object_cache: ResMut<ProcGenCache<T>>,
+    mesh: Res<LightMeshHandle<T>>,
     tile_data: Res<TileDataCache<A>>,
 ) where
     T: LightWrapper + ProcGenerated + Visible,
@@ -34,7 +35,7 @@ pub(super) fn spawn_on_procgen_lights<T, A, B>(
     for origin in target_origins {
         // Spawn entity in chosen tile and store in `object_cache`
         let target_pos = world_pos + origin * tile_data.tile_size;
-        let entity = T::default().spawn(&mut commands, target_pos);
+        let entity = T::new(mesh.handle.clone()).spawn(&mut commands, target_pos);
         object_cache.chunk_positions.insert(entity, event.chunk_pos);
 
         // Add entity to level so that level handles despawning

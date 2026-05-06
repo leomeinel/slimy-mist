@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use crate::render::prelude::*;
 
-/// [`PointLight2d`](bevy_fast_light::prelude::PointLight2d) shadow for all type `T`.
+/// [`MeshLight2d`](bevy_fast_light::prelude::MeshLight2d) shadow for all type `T`.
 ///
 /// The size of the [`Mesh`] is meant to be derived from [`CollisionDataCache`](crate::physics::prelude::CollisionDataCache).
 #[derive(Resource, Default)]

@@ -18,7 +18,6 @@ CreditsData (
         ("Asset Loading", "bevy_asset_loader"),
         ("Debug UI", "bevy-inspector-egui"),
         ("Dialogue", "bevy_yarnspinner"),
-        ("Float Wrapper Types", "ordered-float"),
         ("Game Engine", "bevy"),
         ("Input", "bevy_enhanced_input"),
         ("Lighting", "bevy_fast_light"),

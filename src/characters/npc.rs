@@ -7,7 +7,7 @@
 
 //! Npc-specific behavior.
 
-use bevy::{platform::collections::HashSet, prelude::*};
+use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
 use bevy_rapier2d::prelude::*;
 
@@ -67,7 +67,7 @@ impl Character for Slime {
                 Health::new(5.),
                 AimDirection::default(),
                 AttackStats {
-                    _attacks: HashSet::from([punch()]),
+                    _attacks: vec![punch()],
                     damage_factor: 1.,
                     melee: Some(punch()),
                     _ranged: None,

@@ -1,6 +1,5 @@
-use bevy::{platform::collections::HashSet, prelude::*};
+use bevy::prelude::*;
 use bevy_rapier2d::{parry::shape, prelude::*};
-use ordered_float::OrderedFloat;
 
 use crate::{characters::prelude::*, log::prelude::*, physics::prelude::*, render::prelude::*};
 
@@ -14,16 +13,15 @@ impl Default for AimDirection {
 }
 
 /// Relevant data for an attack.
-#[derive(Default, PartialEq, Eq, Hash)]
 pub(crate) struct AttackData {
-    pub(crate) name: &'static str,
-    pub(crate) damage: OrderedFloat<f32>,
+    pub(crate) _name: &'static str,
+    pub(crate) damage: f32,
     /// Attack range in pixels.
     ///
     /// First value is width, second is height.
-    pub(crate) range: (OrderedFloat<f32>, OrderedFloat<f32>),
+    pub(crate) range: Vec2,
     /// Cooldown in seconds after attack is done
-    pub(crate) cooldown_secs: OrderedFloat<f32>,
+    pub(crate) cooldown_secs: f32,
 }
 
 /// [`Message`] that is written if the source [`Entity`] has attacked.
@@ -64,7 +62,7 @@ pub(crate) struct DelayAttack {
 /// Stats for [`Attack`]
 #[derive(Component, Default)]
 pub(crate) struct AttackStats {
-    pub(crate) _attacks: HashSet<AttackData>,
+    pub(crate) _attacks: Vec<AttackData>,
     pub(crate) damage_factor: f32,
     pub(crate) melee: Option<AttackData>,
     pub(crate) _ranged: Option<AttackData>,
@@ -78,10 +76,10 @@ pub(crate) struct AttackTimer(pub(crate) Timer);
 /// Simple punch [`Attack`] with short range
 pub(crate) fn punch() -> AttackData {
     AttackData {
-        name: "punch",
-        damage: OrderedFloat(1.),
-        range: (OrderedFloat(8.), OrderedFloat(16.)),
-        cooldown_secs: OrderedFloat(0.5),
+        _name: "punch",
+        damage: 1.,
+        range: Vec2::new(8., 16.),
+        cooldown_secs: 0.5,
     }
 }
 
@@ -124,7 +122,7 @@ pub(super) fn on_melee_attack<T>(
         };
 
         // Collect all entities within attack range
-        let shape_half_size = Vec2::new(*melee.range.0, *melee.range.1) / 2.;
+        let shape_half_size = melee.range / 2.;
         let offset = direction.0 * (extent + shape_half_size.x);
         let shape_pos = pos + offset;
         let shape_rot = direction.0.to_angle();
@@ -142,7 +140,7 @@ pub(super) fn on_melee_attack<T>(
         });
 
         // Apply attack
-        let damage = stats.damage_factor * *melee.damage;
+        let damage = stats.damage_factor * melee.damage;
         commands.trigger(Damage { targets, damage });
         commands.trigger(SpawnChildParticleOnce::<MeleeParticle>::new(
             *entity,

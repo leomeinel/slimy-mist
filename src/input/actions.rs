@@ -150,7 +150,7 @@ pub(super) fn init_melee_attack(
 
     commands.trigger(DelayAttack {
         entity,
-        cooldown_secs: *melee.cooldown_secs,
+        cooldown_secs: melee.cooldown_secs,
     });
     writer.write(InitAttack::Melee(entity));
 }

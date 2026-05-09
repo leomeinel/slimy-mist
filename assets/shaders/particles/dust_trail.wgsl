@@ -1,4 +1,4 @@
-#import bevy_enoki::particle_vertex_out::{ VertexOutput }
+#import bevy_enoki::particle_vertex_out::VertexOutput
 
 const HALF_UV = vec2<f32>(0.5);
 const RADIUS_SQ = 0.5 * 0.5;

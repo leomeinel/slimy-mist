@@ -1,4 +1,4 @@
-#import bevy_enoki::particle_vertex_out::{ VertexOutput }
+#import bevy_enoki::particle_vertex_out::VertexOutput
 
 const HALF_UV = vec2<f32>(0.5);
 const LINE_WIDTH = 0.25;

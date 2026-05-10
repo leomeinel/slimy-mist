@@ -970,13 +970,11 @@ dependencies = [
 
 [[package]]
 name = "bevy_fast_mist"
-version = "0.0.2"
+version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ceb8726c41c733c678070066c1453c49026516ae271f3dfdc0ea596674b697cc"
+checksum = "436689d364e82d1280856361962c9da7e24b809bc6545ba2483857b6ffd83b78"
 dependencies = [
  "bevy",
- "bytemuck",
- "fixedbitset",
  "noise-functions",
 ]
 

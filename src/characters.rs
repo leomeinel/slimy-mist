@@ -152,7 +152,7 @@ where
         (
             MeshOccluder2d,
             Mesh2d(shadow.mesh.clone()),
-            Transform::from_xyz(0., shadow.y_offset, -BASE_Z_DELTA),
+            Transform::from_xyz(0., shadow.y_offset, -Y_SORT_OVERRIDE_Z_DELTA),
         )
     }
 }

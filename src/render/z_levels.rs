@@ -17,8 +17,7 @@ pub(crate) const LIGHT_Z: f32 = 10.;
 ///
 /// This is set to a somewhat arbitrary meant to be rendering safe minimal delta to only impact local layer rendering.
 pub(crate) const LAYER_Z_DELTA: f32 = 1e-5;
-/// Z-level delta for objects.
+/// Z-level delta for moving beyond y-sorted objects.
 ///
-/// This is set to a delta compatible with relative y-sorting that should never subtract/add more than this
-/// from [`YSort`](crate::render::prelude::YSort)'s field.
-pub(crate) const BASE_Z_DELTA: f32 = 1.;
+/// This is set to a higher delta than anything y-sorted could have from the y-sorted entity this is applied to.
+pub(crate) const Y_SORT_OVERRIDE_Z_DELTA: f32 = 1.;

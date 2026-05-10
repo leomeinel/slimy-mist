@@ -49,7 +49,7 @@ pub(super) fn on_damage(
         if health.is_alive() {
             commands.trigger(SpawnChildParticleOnce::<BloodParticle>::new(
                 *entity,
-                Vec3::new(0., 0., -LAYER_Z_DELTA),
+                Vec3::new(0., 0., -Y_SORT_OVERRIDE_Z_DELTA),
                 blood_particle.handle.clone(),
             ));
         } else {

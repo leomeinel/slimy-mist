@@ -9,6 +9,7 @@ pub(crate) const FOREGROUND_Z: f32 = 5.;
 pub(crate) const OVERLAY_Z: f32 = 9.;
 // NOTE: Since light is rendered in a full screen render pass, this currently has no effect.
 //       Multiplicative blending is missing from bevy 2d, therefore this can't be avoided in bevy_fast_light.
+//       Also see: https://github.com/bevyengine/bevy/issues/24230
 /// Z-level for light.
 pub(crate) const LIGHT_Z: f32 = 10.;
 

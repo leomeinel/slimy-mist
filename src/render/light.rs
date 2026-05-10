@@ -91,7 +91,7 @@ impl LightWrapper for StreetLight {
         Self((
             MeshLight2d {
                 color: tailwind::AMBER_500.into(),
-                intensity: 1.,
+                ..default()
             },
             Mesh2d(mesh),
         ))

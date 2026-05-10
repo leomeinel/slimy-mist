@@ -79,17 +79,17 @@ where
 
 /// Light that is attached to a street lamp.
 #[derive(Component, Reflect, Clone, Default)]
-pub(crate) struct StreetLight((MeshLight2d, Mesh2d));
+pub(crate) struct StreetLight((MeshLight, Mesh2d));
 impl StreetLight {
     pub(crate) fn primitive() -> Circle {
         Circle::new(96.)
     }
 }
 impl LightWrapper for StreetLight {
-    type Inner = (MeshLight2d, Mesh2d);
+    type Inner = (MeshLight, Mesh2d);
     fn new(mesh: Handle<Mesh>) -> Self {
         Self((
-            MeshLight2d {
+            MeshLight {
                 color: tailwind::AMBER_500.into(),
                 ..default()
             },

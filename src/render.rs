@@ -14,7 +14,7 @@ pub(crate) mod prelude {
     pub(crate) use super::light::{
         DayTimer, DayUpdateTimer, LightMeshHandle, LightWrapper, StreetLight,
     };
-    pub(crate) use super::materials::Light2dShadow;
+    pub(crate) use super::materials::MeshLightShadow;
     pub(crate) use super::mist::{MistMeshHandle, MistWrapper, StandardMist};
     pub(crate) use super::palette::*;
     pub(crate) use super::particles::effects::{

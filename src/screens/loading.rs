@@ -260,7 +260,7 @@ fn cache_collision_data_and_related<T>(
         y_offset,
         ..default()
     });
-    commands.insert_resource(Light2dShadow::<T> {
+    commands.insert_resource(MeshLightShadow::<T> {
         mesh: meshes.add(Ellipse::new(width / 2., height / 2.)),
         // NOTE: Move to the bottom but exclude the outline.
         y_offset: -height / 2. + 1.,

@@ -145,12 +145,12 @@ where
         }
     }
 
-    fn shadow_bundle<T>(shadow: &Light2dShadow<T>) -> impl Bundle
+    fn shadow_bundle<T>(shadow: &MeshLightShadow<T>) -> impl Bundle
     where
         T: Visible,
     {
         (
-            MeshOccluder2d,
+            MeshOccluder,
             Mesh2d(shadow.mesh.clone()),
             Transform::from_xyz(0., shadow.y_offset, -Y_SORT_OVERRIDE_Z_DELTA),
         )
@@ -177,7 +177,7 @@ fn on_spawn_character<T, A>(
     mut commands: Commands,
     sprite_animations: Res<SpriteAnimations<T>>,
     collision_data: Res<CollisionDataCache<T>>,
-    shadow: Res<Light2dShadow<T>>,
+    shadow: Res<MeshLightShadow<T>>,
 ) where
     T: Character + Visible,
     A: Level,

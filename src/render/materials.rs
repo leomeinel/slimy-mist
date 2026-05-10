@@ -4,11 +4,11 @@ use bevy::prelude::*;
 
 use crate::render::prelude::*;
 
-/// [`MeshLight2d`](bevy_fast_light::prelude::MeshLight2d) shadow for all type `T`.
+/// [`MeshLight`](bevy_fast_light::prelude::MeshLight) shadow for all type `T`.
 ///
 /// The size of the [`Mesh`] is meant to be derived from [`CollisionDataCache`](crate::physics::prelude::CollisionDataCache).
 #[derive(Resource, Default)]
-pub(crate) struct Light2dShadow<T>
+pub(crate) struct MeshLightShadow<T>
 where
     T: Visible,
 {

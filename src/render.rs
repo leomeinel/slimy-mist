@@ -1,6 +1,7 @@
 mod camera;
 mod light;
 mod materials;
+mod mist;
 mod palette;
 mod particles;
 mod ysort;
@@ -14,6 +15,7 @@ pub(crate) mod prelude {
         DayTimer, DayUpdateTimer, LightMeshHandle, LightWrapper, StreetLight,
     };
     pub(crate) use super::materials::Light2dShadow;
+    pub(crate) use super::mist::{MistMeshHandle, MistWrapper, StandardMist};
     pub(crate) use super::palette::*;
     pub(crate) use super::particles::effects::{
         BloodParticle, DeathParticle, DustTrailParticle, MeleeParticle,
@@ -31,6 +33,7 @@ pub(crate) mod prelude {
 }
 
 use bevy::{prelude::*, reflect::Reflectable};
+use bevy_fast_mist::prelude::FastMistPlugin;
 
 use crate::{
     characters::prelude::*, core::prelude::*, levels::prelude::*, procgen::prelude::*,
@@ -40,6 +43,8 @@ use crate::{
 pub(super) struct RenderPlugin;
 impl Plugin for RenderPlugin {
     fn build(&self, app: &mut App) {
+        app.add_plugins(FastMistPlugin::default());
+
         app.add_plugins((particles::ParticlesPlugin, light::LightPlugin));
 
         app.add_systems(

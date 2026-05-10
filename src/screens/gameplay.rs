@@ -58,6 +58,7 @@ fn insert_resources(mut commands: Commands) {
     commands.init_resource::<ProcGenCache<OverworldProcGen>>();
     commands.init_resource::<ProcGenCache<Slime>>();
     commands.init_resource::<ProcGenCache<StreetLight>>();
+    commands.init_resource::<ProcGenCache<StandardMist>>();
     commands.init_resource::<WorldUiHealthBarMap>();
 }
 
@@ -74,5 +75,6 @@ fn remove_resources(mut commands: Commands) {
     commands.remove_resource::<ProcGenCache<OverworldProcGen>>();
     commands.remove_resource::<ProcGenCache<Slime>>();
     commands.remove_resource::<ProcGenCache<StreetLight>>();
+    commands.remove_resource::<ProcGenCache<StandardMist>>();
     commands.remove_resource::<WorldUiHealthBarMap>();
 }

@@ -123,6 +123,10 @@ fn insert_mesh_handle_resources(mut commands: Commands, mut meshes: ResMut<Asset
     commands.insert_resource(LightMeshHandle::<StreetLight>::new(
         meshes.add(StreetLight::primitive()),
     ));
+    // `MistMeshHandle`
+    commands.insert_resource(MistMeshHandle::<StandardMist>::new(
+        meshes.add(StandardMist::primitive()),
+    ));
 }
 
 /// Insert handle [`Resource`]s for deserialized data.

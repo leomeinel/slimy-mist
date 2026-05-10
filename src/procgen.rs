@@ -16,6 +16,7 @@ mod characters;
 mod chunks;
 mod common;
 mod lights;
+mod mist;
 
 pub(crate) mod prelude {
     pub(crate) use super::{
@@ -51,6 +52,7 @@ impl Plugin for ProcGenPlugin {
                 (
                     common::spawn_objects::<Slime, OverworldProcGen, Overworld>,
                     common::spawn_objects::<StreetLight, OverworldProcGen, Overworld>,
+                    common::spawn_objects::<StandardMist, OverworldProcGen, Overworld>,
                 ),
             )
                 .run_if(in_state(Screen::Gameplay))
@@ -71,6 +73,7 @@ impl Plugin for ProcGenPlugin {
                 common::collect_to_despawn::<OverworldProcGen, OverworldProcGen, true>,
                 common::collect_to_despawn::<Slime, OverworldProcGen, false>,
                 common::collect_to_despawn::<StreetLight, OverworldProcGen, false>,
+                common::collect_to_despawn::<StandardMist, OverworldProcGen, false>,
             )
                 .run_if(in_state(ProcGenState::Despawn).and(in_state(Screen::Gameplay)))
                 .in_set(AppSystems::Update)
@@ -83,10 +86,12 @@ impl Plugin for ProcGenPlugin {
                     common::set_despawning::<OverworldProcGen>,
                     common::set_despawning::<Slime>,
                     common::set_despawning::<StreetLight>,
+                    common::set_despawning::<StandardMist>,
                 ),
                 (
                     common::despawn::<Slime>,
                     common::despawn::<StreetLight>,
+                    common::despawn::<StandardMist>,
                     common::despawn::<OverworldProcGen>,
                 )
                     .run_if(in_state(DespawnProcGen(true)))
@@ -104,6 +109,7 @@ impl Plugin for ProcGenPlugin {
         app.add_observer(
             lights::spawn_on_procgen_lights::<StreetLight, OverworldProcGen, Overworld>,
         );
+        app.add_observer(mist::spawn_on_procgen_mist::<StandardMist, OverworldProcGen, Overworld>);
     }
 }
 

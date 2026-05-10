@@ -43,7 +43,7 @@ use crate::{
 pub(super) struct RenderPlugin;
 impl Plugin for RenderPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(FastMistPlugin::default());
+        app.add_plugins(FastMistPlugin);
 
         app.add_plugins((particles::ParticlesPlugin, light::LightPlugin));
 
